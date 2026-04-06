@@ -9,10 +9,11 @@ const api = axios.create({
     },
 });
 
-// Request Interceptor: Attach JWT token
+// Request Interceptor: Attach JWT token from sessionStorage
 api.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem('access_token');
+        // CHANGED: Pull from sessionStorage for auto-logout support
+        const token = sessionStorage.getItem('access_token');
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
@@ -30,22 +31,27 @@ api.interceptors.response.use(
         if (error.response && error.response.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
             try {
-                const refreshToken = localStorage.getItem('refresh_token');
+                // CHANGED: Pull from sessionStorage
+                const refreshToken = sessionStorage.getItem('refresh_token');
+                
                 if (refreshToken) {
                     const response = await axios.post(`${API_URL}/auth/token/refresh/`, {
                         refresh: refreshToken
                     });
                     
                     const newAccessToken = response.data.access;
-                    localStorage.setItem('access_token', newAccessToken);
+                    
+                    // CHANGED: Save back to sessionStorage
+                    sessionStorage.setItem('access_token', newAccessToken);
                     
                     originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
                     return api(originalRequest);
                 }
             } catch (err) {
                 // If refresh token is expired or invalid, log out user
-                localStorage.removeItem('access_token');
-                localStorage.removeItem('refresh_token');
+                // CHANGED: Clear sessionStorage
+                sessionStorage.removeItem('access_token');
+                sessionStorage.removeItem('refresh_token');
                 window.location.href = '/login';
             }
         }

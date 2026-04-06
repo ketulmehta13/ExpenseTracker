@@ -15,7 +15,9 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const checkUserStatus = () => {
-        const token = localStorage.getItem('access_token');
+        // CHANGED: Using sessionStorage for auto-logout when tab closes
+        const token = sessionStorage.getItem('access_token');
+        
         if (token) {
             try {
                 const decoded = jwtDecode(token);
@@ -24,7 +26,6 @@ export const AuthProvider = ({ children }) => {
                     logout();
                 } else {
                     setUser({ id: decoded.user_id });
-                    // Optionally fetch more user details from /api/auth/me/
                 }
             } catch (error) {
                 logout();
@@ -34,27 +35,45 @@ export const AuthProvider = ({ children }) => {
     };
 
     const login = async (username, password) => {
-        const response = await api.post('/auth/login/', { username, password });
-        localStorage.setItem('access_token', response.data.access);
-        localStorage.setItem('refresh_token', response.data.refresh);
-        checkUserStatus();
+        try {
+            const response = await api.post('/auth/login/', { username, password });
+            
+            // CHANGED: Storing in sessionStorage so it clears on exit
+            sessionStorage.setItem('access_token', response.data.access);
+            sessionStorage.setItem('refresh_token', response.data.refresh);
+            
+            // Update the user state immediately
+            const decoded = jwtDecode(response.data.access);
+            setUser({ id: decoded.user_id });
+            
+            return response.data;
+        } catch (error) {
+            // Ensure state is clean if login fails
+            logout();
+            throw error; 
+        }
     };
 
     const register = async (username, email, password) => {
+        // 1. Hit the register endpoint
         await api.post('/auth/register/', { username, email, password });
-        // Automatically login after successful registration
+        
+        // 2. Automatically login. 
+        // NOTE: If this fails (e.g., password @Fast rejected by login but not register), 
+        // the error will bubble up to your Register.js catch block.
         await login(username, password);
     };
 
     const logout = () => {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
+        // CHANGED: Clear sessionStorage
+        sessionStorage.removeItem('access_token');
+        sessionStorage.removeItem('refresh_token');
         setUser(null);
     };
 
     return (
         <AuthContext.Provider value={{ user, login, register, logout, loading }}>
-            {children}
+            {!loading && children}
         </AuthContext.Provider>
     );
 };

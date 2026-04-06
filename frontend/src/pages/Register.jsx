@@ -20,17 +20,30 @@ const Register = () => {
         e.preventDefault();
         setError(null);
         setIsLoading(true);
+
+        // Basic Frontend Validation for "@Fast" issues
+        if (password.length < 6) {
+            setError("Password must be at least 6 characters long.");
+            setIsLoading(false);
+            return;
+        }
+
         try {
             await register(username, email, password);
             navigate('/');
         } catch (err) {
+            // Enhanced Error Parsing for Django/DRF
             const errorData = err.response?.data;
-            if (errorData) {
-                const messages = Object.keys(errorData).map(key => `${key}: ${errorData[key].join(', ')}`);
+            if (errorData && typeof errorData === 'object') {
+                const messages = Object.entries(errorData).map(([key, value]) => {
+                    const detail = Array.isArray(value) ? value.join(', ') : value;
+                    return `${key}: ${detail}`;
+                });
                 setError(messages.join(' | '));
             } else {
-                setError('Registration failed. Please try again.');
+                setError('Registration failed. Please check your connection.');
             }
+            console.error("Signup error detail:", errorData);
         } finally {
             setIsLoading(false);
         }
@@ -51,7 +64,7 @@ const Register = () => {
                 <CardContent>
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {error && (
-                            <div className="p-3 bg-destructive/15 text-destructive text-sm rounded-lg border border-destructive/30">
+                            <div className="p-3 bg-destructive/15 text-destructive text-sm rounded-lg border border-destructive/30 animate-in fade-in duration-300">
                                 {error}
                             </div>
                         )}
@@ -84,7 +97,7 @@ const Register = () => {
                                     id="password"
                                     type="password"
                                     required
-                                    placeholder="Create a password"
+                                    placeholder="Create a password (min. 6 chars)"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                 />
@@ -98,8 +111,7 @@ const Register = () => {
                         >
                             {isLoading ? (
                                 <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                            ) : null}
-                            Sign up
+                            ) : "Sign up"}
                         </Button>
                     </form>
                 </CardContent>

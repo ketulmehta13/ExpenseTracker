@@ -6,17 +6,26 @@ import axios from 'axios';
  * 2. Falls back to localhost for local development.
  */
 const getBaseUrl = () => {
-    // 1. If we are on a LAN/Mobile device (not localhost), dynamically construct URL
+    // 0. If in production (like Vercel) and URL is provided, ALWAYS use it first!
+    if (import.meta.env.PROD && import.meta.env.VITE_API_URL) {
+        return import.meta.env.VITE_API_URL;
+    }
+
+    // 1. If we are on a LAN/Mobile device testing locally, dynamically construct URL
     if (typeof window !== 'undefined') {
         const hostname = window.location.hostname;
-        if (hostname !== 'localhost' && hostname !== '127.0.0.1' && hostname !== '') {
+        // Verify it is an actual IP address (e.g., 192.168.1.5) and not a full domain like vercel.app
+        const isIpAddress = /^[0-9.]+$/.test(hostname);
+        if (isIpAddress && hostname !== '127.0.0.1') {
             return `http://${hostname}:8000/api`;
         }
     }
-    // 2. Otherwise use the env variable if provided
+    
+    // 2. Otherwise use the env variable if provided (for local dev)
     if (import.meta.env.VITE_API_URL) {
         return import.meta.env.VITE_API_URL;
     }
+    
     // 3. Fallback
     return 'http://localhost:8000/api';
 };

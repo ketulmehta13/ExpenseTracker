@@ -36,7 +36,8 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (username, password) => {
         try {
-            const response = await api.post('/auth/login/', { username, password });
+            const lowerUsername = username.toLowerCase();
+            const response = await api.post('/auth/login/', { username: lowerUsername, password });
             
             // CHANGED: Storing in sessionStorage so it clears on exit
             sessionStorage.setItem('access_token', response.data.access);
@@ -56,12 +57,14 @@ export const AuthProvider = ({ children }) => {
 
     const register = async (username, email, password) => {
         // 1. Hit the register endpoint
-        await api.post('/auth/register/', { username, email, password });
+        const lowerUsername = username.toLowerCase();
+        const lowerEmail = email.toLowerCase();
+        await api.post('/auth/register/', { username: lowerUsername, email: lowerEmail, password });
         
         // 2. Automatically login. 
         // NOTE: If this fails (e.g., password @Fast rejected by login but not register), 
         // the error will bubble up to your Register.js catch block.
-        await login(username, password);
+        await login(lowerUsername, password);
     };
 
     const logout = () => {

@@ -21,10 +21,10 @@ const Register = () => {
         setError(null);
         setIsLoading(true);
 
-        // 1. Username Validation (Alphanumeric, underscores, 3-20 chars)
-        const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+        // 1. Username Validation (Alphanumeric, @/./+/-/_ 3-20 chars)
+        const usernameRegex = /^[\w.@+-]{3,20}$/;
         if (!usernameRegex.test(username)) {
-            setError("Username must be 3-20 characters long and can only contain capital/small letters, numbers, and underscores.");
+            setError("Username must be 3-20 characters long and can only contain letters, numbers, and @/./+/-/_ characters.");
             setIsLoading(false);
             return;
         }
@@ -37,8 +37,9 @@ const Register = () => {
             return;
         }
 
-        // 3. Password Validation (min 6 chars, allows letters and numbers)
-        if (password.length < 6) {
+        // 3. Password Validation (min 6 chars)
+        const passwordRegex = /^.{6,}$/;
+        if (!passwordRegex.test(password)) {
             setError("Password must be at least 6 characters long.");
             setIsLoading(false);
             return;

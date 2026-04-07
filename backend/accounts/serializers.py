@@ -18,6 +18,20 @@ class RegisterSerializer(serializers.ModelSerializer):
             'email': {'required': True}
         }
 
+    def validate_username(self, value):
+        # Case-insensitive username validation
+        value = value.lower()
+        if User.objects.filter(username__iexact=value).exists():
+            raise serializers.ValidationError("A user with that username already exists.")
+        return value
+
+    def validate_email(self, value):
+        # Case-insensitive email validation
+        value = value.lower()
+        if User.objects.filter(email__iexact=value).exists():
+            raise serializers.ValidationError("A user with that email already exists.")
+        return value
+
     def create(self, validated_data):
         user = User.objects.create_user(
             username=validated_data['username'],

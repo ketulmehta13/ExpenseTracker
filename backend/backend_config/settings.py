@@ -160,10 +160,7 @@ if frontend_url:
 CSRF_TRUSTED_ORIGINS = []
 if frontend_url and frontend_url.startswith('https://'):
     CSRF_TRUSTED_ORIGINS.append(frontend_url.rstrip('/'))
-# Also trust Railway's own backend URL if needed
-backend_url = os.environ.get('RAILWAY_STATIC_URL', '')
-if backend_url:
-    CSRF_TRUSTED_ORIGINS.append(f"https://{backend_url}")
+
 # Django REST Framework
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (

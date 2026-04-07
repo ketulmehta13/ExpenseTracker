@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ThemeToggle } from '../components/ThemeToggle';
 import { 
     LayoutDashboard, 
     ReceiptText, 
@@ -86,8 +85,7 @@ const MainLayout = () => {
 
                     <div className="p-4 border-t space-y-4">
                         <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-muted-foreground">Dark Mode</span>
-                            <ThemeToggle />
+                            <span className="text-sm font-medium text-muted-foreground">Version 1.0</span>
                         </div>
                         <Button 
                             variant="destructive" 
@@ -110,7 +108,6 @@ const MainLayout = () => {
                         <h1 className="text-lg font-bold">Expensify</h1>
                     </div>
                     <div className="flex items-center space-x-2">
-                        <ThemeToggle />
                         <Button 
                             variant="ghost" 
                             size="icon" 

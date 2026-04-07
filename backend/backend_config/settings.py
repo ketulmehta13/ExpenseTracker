@@ -141,9 +141,29 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # Custom User Model
 AUTH_USER_MODEL = 'accounts.User'
 
-# CORS
-CORS_ALLOW_ALL_ORIGINS = True  # Allows all origins for development. Can be restricted in production.
+# ALLOWED_HOSTS configuration
+ALLOWED_HOSTS = ['*']  # Default for development. Railway sets RAILWAY_STATIC_URL, or you can pass it explicit domains via env
 
+frontend_url = os.environ.get('FRONTEND_URL', '')
+
+# CORS
+CORS_ALLOW_ALL_ORIGINS = True  # Allowed all for dev. 
+
+if frontend_url:
+    # If a specific frontend URL is provided in production via env variables, restrict CORS
+    CORS_ALLOW_ALL_ORIGINS = False
+    CORS_ALLOWED_ORIGINS = [
+        frontend_url.rstrip('/'), # Ensure no trailing slash
+    ]
+
+# Trust the frontend origin for CSRF if it's HTTPS
+CSRF_TRUSTED_ORIGINS = []
+if frontend_url and frontend_url.startswith('https://'):
+    CSRF_TRUSTED_ORIGINS.append(frontend_url.rstrip('/'))
+# Also trust Railway's own backend URL if needed
+backend_url = os.environ.get('RAILWAY_STATIC_URL', '')
+if backend_url:
+    CSRF_TRUSTED_ORIGINS.append(f"https://{backend_url}")
 # Django REST Framework
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (

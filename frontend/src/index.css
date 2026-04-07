@@ -42,48 +42,26 @@
 
 @layer base {
   :root {
-    --background: 240 100% 99%;
+    --background: 160 20% 96%; /* #F1F5F4 very light teal-grey background */
     --foreground: 240 10% 10%;
-    --card: 0 0% 100%;
+    --card: 0 0% 100%; /* Pure white interior cards */
     --card-foreground: 240 10% 10%;
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 10%;
-    --primary: 262 83% 58%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --primary: 172 63% 14%; /* Dark Teal #0d3a35 */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 160 84% 39%; /* Light Mint Green #10b981 */
+    --secondary-foreground: 0 0% 100%;
     --muted: 210 40% 96%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 160 84% 39%;
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 262 83% 58%;
-    --radius: 0.75rem;
-  }
-
-  .dark {
-    --background: 224 71% 4%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 11%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 262 83% 58%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 217 32% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 32% 17%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217 32% 17%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217 32% 17%;
-    --input: 217 32% 17%;
-    --ring: 262 83% 58%;
+    --ring: 172 63% 14%;
+    --radius: 1.5rem; /* Highly rounded corners like the design */
   }
 
   * {

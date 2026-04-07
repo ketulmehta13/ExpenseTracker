@@ -21,7 +21,23 @@ const Register = () => {
         setError(null);
         setIsLoading(true);
 
-        // Basic Frontend Validation for "@Fast" issues
+        // 1. Username Validation (Alphanumeric, underscores, 3-20 chars)
+        const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+        if (!usernameRegex.test(username)) {
+            setError("Username must be 3-20 characters long and can only contain capital/small letters, numbers, and underscores.");
+            setIsLoading(false);
+            return;
+        }
+
+        // 2. Email Validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            setError("Please enter a valid email address.");
+            setIsLoading(false);
+            return;
+        }
+
+        // 3. Password Validation (min 6 chars, allows letters and numbers)
         if (password.length < 6) {
             setError("Password must be at least 6 characters long.");
             setIsLoading(false);

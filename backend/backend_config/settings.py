@@ -147,14 +147,14 @@ ALLOWED_HOSTS = ['*']  # Default for development. Railway sets RAILWAY_STATIC_UR
 frontend_url = os.environ.get('FRONTEND_URL', '')
 
 # CORS
-CORS_ALLOW_ALL_ORIGINS = True  # Allowed all for dev. 
+CORS_ALLOW_ALL_ORIGINS = True  # Always allow for easier frontend integration. 
 
 if frontend_url:
-    # If a specific frontend URL is provided in production via env variables, restrict CORS
-    CORS_ALLOW_ALL_ORIGINS = False
-    CORS_ALLOWED_ORIGINS = [
-        frontend_url.rstrip('/'), # Ensure no trailing slash
-    ]
+    # We still keep CSRF trusted origins for security if needed
+    clean_url = frontend_url.strip().rstrip('/')
+    if not clean_url.startswith('http'):
+        clean_url = f'https://{clean_url}'
+    CORS_ALLOWED_ORIGINS = [clean_url]
 
 # Trust the frontend origin for CSRF if it's HTTPS
 CSRF_TRUSTED_ORIGINS = []

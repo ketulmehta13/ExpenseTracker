@@ -2,19 +2,16 @@ import axios from 'axios';
 
 /**
  * Resolves the Backend API URL.
- * 1. Checks for VITE_API_URL (set in Vercel/Local Environment Variables).
- * 2. Falls back to your specific Railway production URL.
- * 3. Falls back to localhost for local development.
  */
 const getBaseUrl = () => {
-    // 1. Check for the Environment Variable (Best practice for Vercel)
+    // 1. Check for Environment Variable (Priority for Vercel)
     if (import.meta.env.VITE_API_URL) {
         return import.meta.env.VITE_API_URL;
     }
 
-    // 2. Hardcoded Production Fallback (Your specific Railway URL)
-    // We add /api at the end to match your Django URL patterns
-    if (import.meta.env.PROD) {
+    // 2. Hardcoded Production Fallback (Your exact Railway URL)
+    // We check if the app is built for production OR if it's running on a vercel domain
+    if (import.meta.env.PROD || (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app'))) {
         return 'https://expensetracker-production-9e2d.up.railway.app/api';
     }
 
@@ -31,7 +28,8 @@ const getBaseUrl = () => {
     return 'http://localhost:8000/api';
 };
 
-const API_URL = getBaseUrl();
+// Ensure the URL ends with a slash because Django is picky about trailing slashes
+const API_URL = getBaseUrl().endsWith('/') ? getBaseUrl() : `${getBaseUrl()}/`;
 
 const api = axios.create({
     baseURL: API_URL,
@@ -58,6 +56,7 @@ api.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
+        // If error is 401 and we haven't retried yet
         if (error.response && error.response.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
 
@@ -65,17 +64,20 @@ api.interceptors.response.use(
                 const refreshToken = sessionStorage.getItem('refresh_token');
 
                 if (refreshToken) {
-                    const response = await axios.post(`${API_URL}/auth/token/refresh/`, {
+                    // We use axios (not api) here to avoid the interceptor loop
+                    const response = await axios.post(`${API_URL}auth/token/refresh/`, {
                         refresh: refreshToken
                     });
 
                     const newAccessToken = response.data.access;
                     sessionStorage.setItem('access_token', newAccessToken);
 
+                    // Update headers and retry original request
                     originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
                     return api(originalRequest);
                 }
             } catch (err) {
+                // If refresh fails, log out the user
                 sessionStorage.removeItem('access_token');
                 sessionStorage.removeItem('refresh_token');
                 window.location.href = '/login';

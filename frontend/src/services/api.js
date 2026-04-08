@@ -9,10 +9,11 @@ const getBaseUrl = () => {
         return import.meta.env.VITE_API_URL;
     }
 
-    // 2. Hardcoded Production Fallback (Your exact Railway URL)
-    // We check if the app is built for production OR if it's running on a vercel domain
+    // 2. Hardcoded Production Fallback
+    // This is used for easy testing of specific environments
     if (import.meta.env.PROD || (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app'))) {
-        return 'https://expensetracker-production-9e2d.up.railway.app/api';
+        // Updated to the most likely recent URL found in .env.local
+        return 'https://expensetracker-production-de67.up.railway.app/api';
     }
 
     // 3. Logic for LAN/Mobile device testing locally
@@ -25,7 +26,7 @@ const getBaseUrl = () => {
     }
     
     // 4. Final Local Fallback
-    return 'http://localhost:8000/api';
+    return 'http://127.0.0.1:8000/api';
 };
 
 // Ensure the URL ends with a slash because Django is picky about trailing slashes

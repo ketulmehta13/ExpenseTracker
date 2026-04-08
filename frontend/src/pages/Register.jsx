@@ -57,10 +57,13 @@ const Register = () => {
                     return `${key}: ${detail}`;
                 });
                 setError(messages.join(' | '));
+            } else if (err.request) {
+                // The request was made but no response was received (Network error)
+                setError('Registration failed: Backend server is unreachable. Please check the API URL configuration.');
             } else {
-                setError('Registration failed. Please check your connection.');
+                setError('Registration failed: ' + (err.message || 'Unknown error'));
             }
-            console.error("Signup error detail:", errorData);
+            console.error("Signup error detail:", err);
         } finally {
             setIsLoading(false);
         }

@@ -147,8 +147,11 @@ ALLOWED_HOSTS = ['*']  # Default for development. Railway sets RAILWAY_STATIC_UR
 frontend_url = os.environ.get('FRONTEND_URL', '')
 
 # CORS
-CORS_ALLOW_ALL_ORIGINS = True  # Always allow for easier frontend integration. 
-
+# Make sure you have 'corsheaders' in INSTALLED_APPS and MIDDLEWARE
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "https://ketuls-expense-tracker.vercel.app", # Add your actual Vercel URL here
+]
 if frontend_url:
     # We still keep CSRF trusted origins for security if needed
     clean_url = frontend_url.strip().rstrip('/')

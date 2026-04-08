@@ -2,35 +2,29 @@ import axios from 'axios';
 
 /**
  * Resolves the Backend API URL.
+ * Priority:
+ *   1. VITE_API_URL environment variable (set in Vercel or .env file)
+ *   2. Production fallback (when deployed to Vercel)
+ *   3. Local development fallback
  */
 const getBaseUrl = () => {
-    // 1. Check for Environment Variable (Priority for Vercel)
+    // 1. Environment variable (works locally via .env and on Vercel via dashboard)
     if (import.meta.env.VITE_API_URL) {
         return import.meta.env.VITE_API_URL;
     }
 
-    // 2. Hardcoded Production Fallback
-    // This is used for easy testing of specific environments
-    if (import.meta.env.PROD || (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app'))) {
-        // Updated to the active URL shown in your Railway dashboard
+    // 2. Production fallback (when deployed but env var is missing)
+    if (import.meta.env.PROD) {
         return 'https://expensetracker-production-9e2d.up.railway.app/api';
     }
 
-    // 3. Logic for LAN/Mobile device testing locally
-    if (typeof window !== 'undefined') {
-        const hostname = window.location.hostname;
-        const isIpAddress = /^[0-9.]+$/.test(hostname);
-        if (isIpAddress && hostname !== '127.0.0.1') {
-            return `http://${hostname}:8000/api`;
-        }
-    }
-    
-    // 4. Final Local Fallback
+    // 3. Local development fallback
     return 'http://127.0.0.1:8000/api';
 };
 
-// Ensure the URL ends with a slash because Django is picky about trailing slashes
-const API_URL = getBaseUrl().endsWith('/') ? getBaseUrl() : `${getBaseUrl()}/`;
+// Ensure the URL ends with a slash because Django requires trailing slashes
+const baseUrl = getBaseUrl();
+const API_URL = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
 
 const api = axios.create({
     baseURL: API_URL,

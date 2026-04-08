@@ -21,10 +21,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-k@zkbye+8fpt#(bx8@jj-v+t0phh=q$1*7nk)uer$us%3=+d0m'
+SECRET_KEY = os.environ.get(
+    'SECRET_KEY',
+    'django-insecure-k@zkbye+8fpt#(bx8@jj-v+t0phh=q$1*7nk)uer$us%3=+d0m'
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
 ALLOWED_HOSTS = ['*']
 
@@ -87,17 +90,12 @@ WSGI_APPLICATION = 'backend_config.wsgi.application'
 
 DATABASES = {
     'default': dj_database_url.config(
-        # If DATABASE_URL is found (Online), use it. 
+        # If DATABASE_URL is found (Railway), use it.
         # If not (Local), use the SQLite file.
         default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
         conn_max_age=600
     )
 }
-
-# Override database settings if DATABASE_URL is present in the environment
-db_from_env = dj_database_url.config(conn_max_age=500)
-if db_from_env:
-    DATABASES['default'].update(db_from_env)
 
 
 # Password validation
@@ -136,33 +134,50 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Django 6.0 uses STORAGES instead of deprecated STATICFILES_STORAGE
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
+# Ensure Django appends trailing slashes to URLs
+APPEND_SLASH = True
 
 # Custom User Model
 AUTH_USER_MODEL = 'accounts.User'
 
-# ALLOWED_HOSTS configuration
-ALLOWED_HOSTS = ['*']  # Default for development. Railway sets RAILWAY_STATIC_URL, or you can pass it explicit domains via env
+# Default primary key field type
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-frontend_url = os.environ.get('FRONTEND_URL', '')
-
-# CORS
-# Make sure you have 'corsheaders' in INSTALLED_APPS and MIDDLEWARE
+# --- CORS Configuration ---
+# Base allowed origins (always allowed)
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
-    "https://ketuls-expense-tracker.vercel.app", # Add your actual Vercel URL here
+    "http://127.0.0.1:5173",
+    "https://ketuls-expense-tracker.vercel.app",
 ]
+
+# If FRONTEND_URL is set in environment (Railway), add it to the list
+frontend_url = os.environ.get('FRONTEND_URL', '')
 if frontend_url:
-    # We still keep CSRF trusted origins for security if needed
     clean_url = frontend_url.strip().rstrip('/')
     if not clean_url.startswith('http'):
         clean_url = f'https://{clean_url}'
-    CORS_ALLOWED_ORIGINS = [clean_url]
+    if clean_url not in CORS_ALLOWED_ORIGINS:
+        CORS_ALLOWED_ORIGINS.append(clean_url)
 
-# Trust the frontend origin for CSRF if it's HTTPS
-CSRF_TRUSTED_ORIGINS = []
-if frontend_url and frontend_url.startswith('https://'):
-    CSRF_TRUSTED_ORIGINS.append(frontend_url.rstrip('/'))
+# Allow credentials (cookies, auth headers) in cross-origin requests
+CORS_ALLOW_CREDENTIALS = True
+
+# Trust the frontend origins for CSRF
+CSRF_TRUSTED_ORIGINS = [
+    origin for origin in CORS_ALLOWED_ORIGINS if origin.startswith('https://')
+]
 
 # Django REST Framework
 REST_FRAMEWORK = {

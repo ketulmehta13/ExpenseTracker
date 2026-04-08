@@ -12,8 +12,8 @@ const getBaseUrl = () => {
     // 2. Hardcoded Production Fallback
     // This is used for easy testing of specific environments
     if (import.meta.env.PROD || (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app'))) {
-        // Updated to the most likely recent URL found in .env.local
-        return 'https://expensetracker-production-de67.up.railway.app/api';
+        // Updated to the active URL shown in your Railway dashboard
+        return 'https://expensetracker-production-9e2d.up.railway.app/api';
     }
 
     // 3. Logic for LAN/Mobile device testing locally

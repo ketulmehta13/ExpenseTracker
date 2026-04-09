@@ -78,7 +78,7 @@ const Analytics = () => {
                                         </linearGradient>
                                     </defs>
                                     <XAxis dataKey="date" fontSize={12} tickLine={false} axisLine={false} />
-                                    <YAxis fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} />
+                                    <YAxis fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `₹${value}`} />
                                     <RTooltip contentStyle={{borderRadius: '8px', backgroundColor: 'var(--card)', border: '1px solid var(--border)'}} />
                                     <Legend />
                                     <Area type="monotone" dataKey="Income" stroke="#10b981" fillOpacity={1} fill="url(#colorIncome)" />
@@ -114,7 +114,7 @@ const Analytics = () => {
                                         ))}
                                     </Pie>
                                     <RTooltip 
-                                        formatter={(value) => `$${value}`} 
+                                        formatter={(value) => `₹${value}`} 
                                         contentStyle={{borderRadius: '8px', backgroundColor: 'var(--card)', border: '1px solid var(--border)'}} 
                                     />
                                     <Legend verticalAlign="bottom" height={36} />
@@ -143,7 +143,7 @@ const Analytics = () => {
                                             <span className="font-semibold text-sm">{t.title}</span>
                                             <span className="text-xs text-muted-foreground">{new Date(t.date).toLocaleDateString()} &middot; {t.category_name || 'Uncategorized'}</span>
                                         </div>
-                                        <span className="font-bold text-destructive">-${parseFloat(t.amount).toFixed(2)}</span>
+                                        <span className="font-bold text-destructive">-₹{parseFloat(t.amount).toFixed(2)}</span>
                                     </div>
                                 ))}
                             {transactions.filter(t => t.type === 'EXPENSE').length === 0 && (

@@ -82,7 +82,7 @@ const Dashboard = () => {
                     <AlertTriangle className="h-5 w-5 mt-0.5 flex-shrink-0" />
                     <div>
                         <p className="font-semibold text-sm">Budget Exceeded</p>
-                        <p className="text-sm">You have exceeded your monthly budget of ${parseFloat(budget.limit).toFixed(2)}!</p>
+                        <p className="text-sm">You have exceeded your monthly budget of ₹{parseFloat(budget.limit).toFixed(2)}!</p>
                     </div>
                 </div>
             )}
@@ -95,7 +95,7 @@ const Dashboard = () => {
                         <Wallet className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">${parseFloat(current_month.balance).toFixed(2)}</div>
+                        <div className="text-2xl font-bold">₹{parseFloat(current_month.balance).toFixed(2)}</div>
                     </CardContent>
                 </Card>
                 
@@ -105,7 +105,7 @@ const Dashboard = () => {
                         <ArrowUpCircle className="h-4 w-4 text-emerald-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-emerald-500">${parseFloat(current_month.income).toFixed(2)}</div>
+                        <div className="text-2xl font-bold text-emerald-500">₹{parseFloat(current_month.income).toFixed(2)}</div>
                     </CardContent>
                 </Card>
                 
@@ -115,7 +115,7 @@ const Dashboard = () => {
                         <ArrowDownCircle className="h-4 w-4 text-destructive" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-destructive">${parseFloat(current_month.expense).toFixed(2)}</div>
+                        <div className="text-2xl font-bold text-destructive">₹{parseFloat(current_month.expense).toFixed(2)}</div>
                     </CardContent>
                 </Card>
 
@@ -125,7 +125,7 @@ const Dashboard = () => {
                         <Target className="h-4 w-4 text-blue-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">${parseFloat(budget.limit).toFixed(2)}</div>
+                        <div className="text-2xl font-bold">₹{parseFloat(budget.limit).toFixed(2)}</div>
                         {parseFloat(budget.limit) > 0 && (
                             <div className="w-full bg-secondary h-2 mt-3 rounded-full overflow-hidden">
                                 <div 
@@ -152,7 +152,7 @@ const Dashboard = () => {
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={barData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
                                 <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
-                                <YAxis fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} />
+                                <YAxis fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `₹${value}`} />
                                 <RTooltip cursor={{fill: 'transparent'}} contentStyle={{borderRadius: '8px', backgroundColor: 'var(--card)', border: '1px solid var(--border)'}} />
                                 <Legend />
                                 <Bar dataKey="Income" fill="#10b981" radius={[4, 4, 0, 0]} />
@@ -185,7 +185,7 @@ const Dashboard = () => {
                                         ))}
                                     </Pie>
                                     <RTooltip 
-                                        formatter={(value) => `$${value}`} 
+                                        formatter={(value) => `₹${value}`} 
                                         contentStyle={{borderRadius: '8px', backgroundColor: 'var(--card)', border: '1px solid var(--border)'}} 
                                     />
                                     <Legend verticalAlign="bottom" height={36} />

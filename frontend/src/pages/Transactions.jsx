@@ -231,7 +231,7 @@ const Transactions = () => {
                                             </span>
                                         </td>
                                         <td className={`px-6 py-4 font-bold ${t.type === 'INCOME' ? 'text-emerald-500' : 'text-destructive'}`}>
-                                            {t.type === 'INCOME' ? '+' : '-'}${parseFloat(t.amount).toFixed(2)}
+                                            {t.type === 'INCOME' ? '+' : '-'}₹{parseFloat(t.amount).toFixed(2)}
                                         </td>
                                         <td className="px-6 py-4 text-right flex justify-end space-x-1">
                                             <Button variant="ghost" size="icon" onClick={() => handleOpenModal(t)}>
@@ -324,10 +324,15 @@ const Transactions = () => {
                                     <select 
                                         id="category"
                                         value={formData.category}
-                                        onChange={(e) => setFormData({...formData, category: e.target.value})}
-                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            setFormData(prev => ({...prev, category: val}));
+                                        }}
+                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 appearance-none cursor-pointer"
+                                        style={{ WebkitAppearance: 'menulist', MozAppearance: 'menulist' }}
                                     >
                                         <option value="">Select Category</option>
+                                        {categories.length === 0 && <option disabled>No categories found</option>}
                                         {categories.map(c => (
                                             <option key={c.id} value={c.id}>{c.name}</option>
                                         ))}

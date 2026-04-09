@@ -31,6 +31,10 @@ DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
 ALLOWED_HOSTS = ['*']
 
+render_host = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if render_host:
+    ALLOWED_HOSTS.append(render_host)
+
 
 # Application definition
 
@@ -160,6 +164,15 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
+
+frontend_url = os.environ.get('FRONTEND_URL')
+if frontend_url:
+    # Safely format the URL to match CORS requirements without trailing slashes
+    clean_url = frontend_url.strip().rstrip('/')
+    if not clean_url.startswith('http'):
+        clean_url = f'https://{clean_url}'
+    if clean_url not in CORS_ALLOWED_ORIGINS:
+        CORS_ALLOWED_ORIGINS.append(clean_url)
 
 
 

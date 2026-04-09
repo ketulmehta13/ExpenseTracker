@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
 import Analytics from './pages/Analytics';
 import Profile from './pages/Profile';
+import Home from './pages/Home';
 
 const ProtectedRoute = ({ children }) => {
     const { user, loading } = useAuth();
@@ -24,10 +25,11 @@ const ProtectedRoute = ({ children }) => {
 function AppRoutes() {
     return (
         <Routes>
+            <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             
-            <Route path="/" element={
+            <Route path="/dashboard" element={
                 <ProtectedRoute>
                     <MainLayout />
                 </ProtectedRoute>

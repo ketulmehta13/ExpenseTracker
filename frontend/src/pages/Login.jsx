@@ -21,7 +21,7 @@ const Login = () => {
         setIsLoading(true);
         try {
             await login(username, password);
-            navigate('/');
+            navigate('/dashboard');
         } catch (err) {
             setError(err.response?.data?.detail || 'Invalid username or password');
         } finally {

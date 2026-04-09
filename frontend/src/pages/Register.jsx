@@ -47,7 +47,7 @@ const Register = () => {
 
         try {
             await register(username, email, password);
-            navigate('/');
+            navigate('/dashboard');
         } catch (err) {
             // Enhanced Error Parsing for Django/DRF
             const errorData = err.response?.data;

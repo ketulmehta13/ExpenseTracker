@@ -13,12 +13,7 @@ const getBaseUrl = () => {
         return import.meta.env.VITE_API_URL;
     }
 
-    // 2. Production fallback (when deployed but env var is missing)
-    if (import.meta.env.PROD) {
-        return 'https://expensetracker-production-9e2d.up.railway.app/api';
-    }
-
-    // 3. Local development fallback
+    // 2. Local development fallback
     return 'http://127.0.0.1:8000/api';
 };
 

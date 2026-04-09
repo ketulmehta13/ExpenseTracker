@@ -159,17 +159,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-    "https://ketuls-expense-tracker.vercel.app",
 ]
 
-# If FRONTEND_URL is set in environment (Railway), add it to the list
-frontend_url = os.environ.get('FRONTEND_URL', '')
-if frontend_url:
-    clean_url = frontend_url.strip().rstrip('/')
-    if not clean_url.startswith('http'):
-        clean_url = f'https://{clean_url}'
-    if clean_url not in CORS_ALLOWED_ORIGINS:
-        CORS_ALLOWED_ORIGINS.append(clean_url)
+
 
 # Allow credentials (cookies, auth headers) in cross-origin requests
 CORS_ALLOW_CREDENTIALS = True

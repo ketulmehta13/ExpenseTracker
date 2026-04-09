@@ -24,10 +24,10 @@ const Home = () => {
                         Expense Tracker
                     </span>
                 </div>
-                
+
                 <div className="flex items-center gap-3">
                     {user ? (
-                        <button 
+                        <button
                             onClick={() => navigate('/dashboard')}
                             className="group px-5 py-2 bg-primary text-primary-foreground font-semibold rounded-full shadow-lg shadow-primary/25 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2 text-sm"
                         >
@@ -35,7 +35,7 @@ const Home = () => {
                             <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
                         </button>
                     ) : (
-                        <button 
+                        <button
                             onClick={() => navigate('/login')}
                             className="group px-5 py-2 bg-primary text-primary-foreground font-semibold rounded-full shadow-lg shadow-primary/25 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2 text-sm"
                         >
@@ -49,9 +49,9 @@ const Home = () => {
             {/* Main Content - fills remaining height */}
             <main className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto w-full z-10">
                 <div className="flex flex-col lg:flex-row items-center justify-between gap-10 w-full">
-                    
+
                     {/* Left Side - Hero Text */}
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0, x: -30 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.6 }}
@@ -64,18 +64,18 @@ const Home = () => {
                                 Money Flow
                             </span>
                         </h1>
-                        
+
                         <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-lg mx-auto lg:mx-0 mb-6">
                             Track expenses in ₹, set budgets, analyze spending — all in one clean dashboard.
                         </p>
-                        
-                        <motion.div 
+
+                        <motion.div
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.3, duration: 0.4 }}
                             className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start"
                         >
-                            <button 
+                            <button
                                 onClick={() => navigate(user ? '/dashboard' : '/register')}
                                 className="group px-7 py-3.5 bg-gradient-to-r from-primary to-primary/90 text-primary-foreground text-base font-bold rounded-full shadow-xl shadow-primary/30 hover:-translate-y-0.5 hover:shadow-2xl transition-all duration-300 flex items-center justify-center gap-2"
                             >
@@ -84,7 +84,7 @@ const Home = () => {
                                 <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                             </button>
                             {!user && (
-                                <button 
+                                <button
                                     onClick={() => navigate('/login')}
                                     className="px-7 py-3.5 text-foreground text-base font-semibold rounded-full border-2 border-border hover:border-primary/30 hover:bg-primary/5 transition-all duration-300"
                                 >
@@ -95,7 +95,7 @@ const Home = () => {
                     </motion.div>
 
                     {/* Right Side - Feature Cards */}
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0, x: 30 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.3, duration: 0.6 }}
@@ -107,7 +107,7 @@ const Home = () => {
                             { icon: IndianRupee, color: 'text-blue-500', bg: 'bg-blue-500/10', title: 'Budgets', desc: 'Set monthly limits' },
                             { icon: ShieldCheck, color: 'text-secondary', bg: 'bg-secondary/10', title: 'Secure', desc: 'Your data stays private' },
                         ].map((f, i) => (
-                            <motion.div 
+                            <motion.div
                                 key={i}
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -129,7 +129,6 @@ const Home = () => {
             <footer className="w-full py-3 border-t border-border/30 bg-card/20 backdrop-blur-sm flex-shrink-0 z-10">
                 <div className="max-w-6xl mx-auto px-6 flex justify-between items-center text-xs text-muted-foreground">
                     <span>© 2026 Expense Tracker by Ketul</span>
-                    <span>Built with ❤️ in India</span>
                 </div>
             </footer>
         </div>

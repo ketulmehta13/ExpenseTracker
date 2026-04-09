@@ -25,10 +25,10 @@ const MainLayout = () => {
     };
 
     const navItems = [
-        { path: '/', name: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
-        { path: '/transactions', name: 'Transactions', icon: <ReceiptText className="h-5 w-5" /> },
-        { path: '/analytics', name: 'Analytics', icon: <BarChart3 className="h-5 w-5" /> },
-        { path: '/profile', name: 'Profile', icon: <UserCircle className="h-5 w-5" /> },
+        { path: '/dashboard', name: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
+        { path: '/dashboard/transactions', name: 'Transactions', icon: <ReceiptText className="h-5 w-5" /> },
+        { path: '/dashboard/analytics', name: 'Analytics', icon: <BarChart3 className="h-5 w-5" /> },
+        { path: '/dashboard/profile', name: 'Profile', icon: <UserCircle className="h-5 w-5" /> },
     ];
 
     return (
@@ -67,6 +67,7 @@ const MainLayout = () => {
                             <NavLink
                                 key={item.name}
                                 to={item.path}
+                                end={item.path === '/dashboard'}
                                 onClick={() => setSidebarOpen(false)}
                                 className={({ isActive }) => 
                                     cn(

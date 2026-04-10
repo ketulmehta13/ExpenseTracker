@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { 
-    LayoutDashboard, 
-    ReceiptText, 
+import {
+    LayoutDashboard,
+    ReceiptText,
     BarChart3,
     UserCircle,
     LogOut,
@@ -35,7 +35,7 @@ const MainLayout = () => {
         <div className="flex h-screen w-full bg-background overflow-hidden relative">
             {/* Mobile Sidebar Overlay */}
             {sidebarOpen && (
-                <div 
+                <div
                     className="fixed inset-0 z-40 bg-black/80 lg:hidden"
                     onClick={() => setSidebarOpen(false)}
                 ></div>
@@ -51,16 +51,16 @@ const MainLayout = () => {
                     <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-400">
                         Expensify
                     </h2>
-                    <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="ml-auto lg:hidden" 
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="ml-auto lg:hidden"
                         onClick={() => setSidebarOpen(false)}
                     >
                         <X className="h-5 w-5" />
                     </Button>
                 </div>
-                
+
                 <div className="flex-1 overflow-y-auto py-4 flex flex-col">
                     <nav className="flex-1 px-4 space-y-1.5">
                         {navItems.map((item) => (
@@ -69,11 +69,11 @@ const MainLayout = () => {
                                 to={item.path}
                                 end={item.path === '/dashboard'}
                                 onClick={() => setSidebarOpen(false)}
-                                className={({ isActive }) => 
+                                className={({ isActive }) =>
                                     cn(
                                         "flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                                        isActive 
-                                            ? "bg-primary/10 text-primary" 
+                                        isActive
+                                            ? "bg-primary/10 text-primary"
                                             : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                                     )
                                 }
@@ -85,11 +85,9 @@ const MainLayout = () => {
                     </nav>
 
                     <div className="p-4 border-t space-y-4">
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-muted-foreground">Version 1.0</span>
-                        </div>
-                        <Button 
-                            variant="destructive" 
+
+                        <Button
+                            variant="destructive"
                             className="w-full justify-start mt-2"
                             onClick={handleLogout}
                         >
@@ -109,9 +107,9 @@ const MainLayout = () => {
                         <h1 className="text-lg font-bold">Expensify</h1>
                     </div>
                     <div className="flex items-center space-x-2">
-                        <Button 
-                            variant="ghost" 
-                            size="icon" 
+                        <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => setSidebarOpen(true)}
                         >
                             <Menu className="h-6 w-6" />

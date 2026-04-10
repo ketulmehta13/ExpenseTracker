@@ -4,9 +4,12 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 class UserSerializer(serializers.ModelSerializer):
+    date_joined = serializers.DateTimeField(read_only=True)
+
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'monthly_budget')
+        fields = ('id', 'username', 'email', 'first_name', 'last_name', 'phone', 'profile_photo', 'monthly_budget', 'date_joined')
+        read_only_fields = ('id', 'username', 'date_joined')
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)

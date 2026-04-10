@@ -104,7 +104,7 @@ const MainLayout = () => {
                 <header className="lg:hidden flex h-16 flex-shrink-0 items-center justify-between px-4 border-b bg-card">
                     <div className="flex items-center">
                         <img src={logoIcon} alt="Ketul Expense Tracker" className="h-8 w-8 rounded-lg mr-2 object-contain" />
-                        <h1 className="text-lg font-bold">Ketul Expense Tracker</h1>
+                        <h1 className="text-lg font-bold">Expense Tracker</h1>
                     </div>
                     <div className="flex items-center space-x-2">
                         <Button

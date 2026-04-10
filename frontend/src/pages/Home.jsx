@@ -19,9 +19,9 @@ const Home = () => {
             {/* Header */}
             <header className="w-full px-6 md:px-12 py-3 flex justify-between items-center backdrop-blur-md bg-background/60 border-b border-border/40 z-50 flex-shrink-0">
                 <div className="flex items-center gap-3">
-                    <img src={logoIcon} alt="Ketul Expense Tracker" className="w-9 h-9 rounded-xl shadow-lg shadow-primary/30 object-contain" />
+                    <img src={logoIcon} alt="Expense Tracker" className="w-9 h-9 rounded-xl shadow-lg shadow-primary/30 object-contain" />
                     <span className="text-lg font-bold tracking-tight bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                        Ketul Expense Tracker
+                        Expense Tracker
                     </span>
                 </div>
 
@@ -128,7 +128,7 @@ const Home = () => {
             {/* Footer - slim */}
             <footer className="w-full py-3 border-t border-border/30 bg-card/20 backdrop-blur-sm flex-shrink-0 z-10">
                 <div className="max-w-6xl mx-auto px-6 flex justify-between items-center text-xs text-muted-foreground">
-                    <span>© 2026 Expense Tracker by Ketul</span>
+                    <span>© 2026 Expense Tracker by Ketul Mehta</span>
                 </div>
             </footer>
         </div>

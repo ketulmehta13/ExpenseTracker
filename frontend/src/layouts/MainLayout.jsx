@@ -8,9 +8,9 @@ import {
     UserCircle,
     LogOut,
     Menu,
-    X,
-    Wallet
+    X
 } from 'lucide-react';
+import logoIcon from '../assets/logo-icon.png';
 import { Button } from '../components/ui/button';
 import { cn } from '../lib/utils';
 
@@ -47,9 +47,9 @@ const MainLayout = () => {
                 sidebarOpen ? 'translate-x-0' : '-translate-x-full'
             )}>
                 <div className="flex h-16 items-center flex-shrink-0 px-6 border-b">
-                    <Wallet className="h-8 w-8 text-primary mr-3" />
-                    <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-400">
-                        Expensify
+                    <img src={logoIcon} alt="Ketul Expense Tracker" className="h-9 w-9 rounded-lg mr-3 object-contain" />
+                    <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-400 leading-tight">
+                        Ketul Expense<br className="hidden sm:block" /> Tracker
                     </h2>
                     <Button
                         variant="ghost"
@@ -103,8 +103,8 @@ const MainLayout = () => {
                 {/* Header (Mobile Only Toggle) */}
                 <header className="lg:hidden flex h-16 flex-shrink-0 items-center justify-between px-4 border-b bg-card">
                     <div className="flex items-center">
-                        <Wallet className="h-6 w-6 text-primary mr-2" />
-                        <h1 className="text-lg font-bold">Expensify</h1>
+                        <img src={logoIcon} alt="Ketul Expense Tracker" className="h-8 w-8 rounded-lg mr-2 object-contain" />
+                        <h1 className="text-lg font-bold">Ketul Expense Tracker</h1>
                     </div>
                     <div className="flex items-center space-x-2">
                         <Button

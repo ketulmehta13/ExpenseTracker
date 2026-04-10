@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Wallet, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import logoIcon from '../assets/logo-icon.png';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -73,8 +74,8 @@ const Register = () => {
         <div className="min-h-screen flex items-center justify-center bg-background px-4">
             <Card className="w-full max-w-md border-border/50 shadow-2xl bg-card/50 backdrop-blur-md">
                 <CardHeader className="space-y-3 text-center flex flex-col items-center pt-8">
-                    <div className="bg-primary/20 p-3 rounded-full mb-2">
-                        <Wallet className="h-8 w-8 text-primary" />
+                    <div className="mb-2">
+                        <img src={logoIcon} alt="Ketul Expense Tracker" className="h-14 w-14 rounded-xl object-contain" />
                     </div>
                     <CardTitle className="text-3xl font-extrabold tracking-tight">Create an account</CardTitle>
                     <CardDescription className="text-muted-foreground text-sm">

@@ -1,7 +1,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Wallet, PieChart, TrendingUp, ShieldCheck, IndianRupee, ArrowRight } from 'lucide-react';
+import { PieChart, TrendingUp, ShieldCheck, IndianRupee, ArrowRight } from 'lucide-react';
+import logoIcon from '../assets/logo-icon.png';
+import logo from '../assets/logo.png';
 import { useAuth } from '../context/AuthContext';
 
 const Home = () => {
@@ -17,11 +19,9 @@ const Home = () => {
             {/* Header */}
             <header className="w-full px-6 md:px-12 py-3 flex justify-between items-center backdrop-blur-md bg-background/60 border-b border-border/40 z-50 flex-shrink-0">
                 <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center shadow-lg shadow-primary/30">
-                        <Wallet className="text-white" size={18} />
-                    </div>
+                    <img src={logoIcon} alt="Ketul Expense Tracker" className="w-9 h-9 rounded-xl shadow-lg shadow-primary/30 object-contain" />
                     <span className="text-lg font-bold tracking-tight bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                        Expense Tracker
+                        Ketul Expense Tracker
                     </span>
                 </div>
 

@@ -120,6 +120,19 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# --- Performance: Reduce password hashing iterations ---
+# Django 6.0 defaults to 870,000 PBKDF2 iterations which is very slow on
+# limited-CPU hosting (Railway free tier). Using 260,000 iterations
+# (Django 4.2 default) for a balance of security and speed.
+PASSWORD_HASHERS = [
+    'backend_config.hashers.FastPBKDF2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
+    'django.contrib.auth.hashers.Argon2PasswordHasher',
+    'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
+    'django.contrib.auth.hashers.ScryptPasswordHasher',
+]
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/

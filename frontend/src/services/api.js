@@ -23,6 +23,7 @@ const API_URL = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
 
 const api = axios.create({
     baseURL: API_URL,
+    timeout: 30000, // 30 second timeout — prevents infinite hanging if server is cold-starting
     headers: {
         'Content-Type': 'application/json',
     },

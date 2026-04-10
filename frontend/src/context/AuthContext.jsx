@@ -56,15 +56,19 @@ export const AuthProvider = ({ children }) => {
     };
 
     const register = async (username, email, password) => {
-        // 1. Hit the register endpoint
         const lowerUsername = username.toLowerCase();
         const lowerEmail = email.toLowerCase();
-        await api.post('/auth/register/', { username: lowerUsername, email: lowerEmail, password });
+        const response = await api.post('/auth/register/', { username: lowerUsername, email: lowerEmail, password });
         
-        // 2. Automatically login. 
-        // NOTE: If this fails (e.g., password @Fast rejected by login but not register), 
-        // the error will bubble up to your Register.js catch block.
-        await login(lowerUsername, password);
+        // The register endpoint now returns tokens directly — no need for a second login call
+        const { access, refresh } = response.data;
+        sessionStorage.setItem('access_token', access);
+        sessionStorage.setItem('refresh_token', refresh);
+        
+        const decoded = jwtDecode(access);
+        setUser({ id: decoded.user_id });
+        
+        return response.data;
     };
 
     const logout = () => {

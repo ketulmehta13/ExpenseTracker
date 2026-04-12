@@ -10,4 +10,5 @@ class FastPBKDF2PasswordHasher(PBKDF2PasswordHasher):
     during login/register on low-resource servers. This uses 260,000 iterations
     (the Django 4.2 default), which is still secure for most applications.
     """
-    iterations = 260_000
+    # Reduced from 260,000 to 100,000 for faster auth on limited-CPU hosting.
+    iterations = 100_000

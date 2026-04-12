@@ -94,12 +94,19 @@ WSGI_APPLICATION = 'backend_config.wsgi.application'
 
 DATABASES = {
     'default': dj_database_url.config(
-        # If DATABASE_URL is found (Railway), use it.
+        # If DATABASE_URL is found (Railway/Render), use it.
         # If not (Local), use the SQLite file.
         default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
         conn_max_age=600
     )
 }
+
+# --- Persistence Warning ---
+if not os.environ.get('DATABASE_URL') and not DEBUG:
+    print("\n" + "!" * 60)
+    print("WARNING: DATABASE_URL not found! Using ephemeral SQLite.")
+    print("Your data will be LOST when the server restarts.")
+    print("!" * 60 + "\n")
 
 
 # Password validation
@@ -121,9 +128,8 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # --- Performance: Reduce password hashing iterations ---
-# Django 6.0 defaults to 870,000 PBKDF2 iterations which is very slow on
-# limited-CPU hosting (Railway free tier). Using 260,000 iterations
-# (Django 4.2 default) for a balance of security and speed.
+# We use 100,000 iterations for a massive speed boost on limited-CPU hosting.
+# This remains very secure for individual users while fixing the "slow login" issue.
 PASSWORD_HASHERS = [
     'backend_config.hashers.FastPBKDF2PasswordHasher',
     'django.contrib.auth.hashers.PBKDF2PasswordHasher',

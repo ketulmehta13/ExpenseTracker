@@ -8,22 +8,17 @@ import {
     UserCircle,
     LogOut,
     Menu,
-    X,
-    Moon,
-    Sun
+    X
 } from 'lucide-react';
 import logoIcon from '../assets/logo-icon.png';
 import { Button } from '../components/ui/button';
 import { cn } from '../lib/utils';
-import { useTheme } from '../components/ThemeProvider';
 
 const MainLayout = () => {
     const { logout, user } = useAuth();
     const navigate = useNavigate();
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const { theme, setTheme } = useTheme();
-
-    const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
 
     const handleLogout = () => {
         logout();
@@ -91,17 +86,7 @@ const MainLayout = () => {
                     </nav>
 
                     <div className="p-4 border-t space-y-2">
-                        <Button
-                            variant="outline"
-                            className="w-full justify-start"
-                            onClick={() => setTheme(isDark ? 'light' : 'dark')}
-                        >
-                            {isDark ? (
-                                <><Sun className="h-4 w-4 mr-2" /> Light Mode</>
-                            ) : (
-                                <><Moon className="h-4 w-4 mr-2" /> Dark Mode</>
-                            )}
-                        </Button>
+
 
                         <Button
                             variant="destructive"

@@ -139,8 +139,8 @@ const Dashboard = () => {
             </div>
 
             {/* Charts Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
-                <Card className="lg:col-span-4">
+            <div className="grid grid-cols-1 gap-4">
+                <Card className="w-full">
                     <CardHeader>
                         <CardTitle className="flex items-center">
                             <TrendingUp className="mr-2 h-5 w-5 text-primary" /> 
@@ -159,43 +159,6 @@ const Dashboard = () => {
                                 <Bar dataKey="Expense" fill="#ef4444" radius={[4, 4, 0, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
-                    </CardContent>
-                </Card>
-
-                <Card className="lg:col-span-3">
-                    <CardHeader>
-                        <CardTitle>Expenses by Category</CardTitle>
-                        <CardDescription>This month's breakdown</CardDescription>
-                    </CardHeader>
-                    <CardContent className="h-[300px] flex justify-center items-center pb-8">
-                        {pieData.length > 0 ? (
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                        data={pieData}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={60}
-                                        outerRadius={90}
-                                        paddingAngle={5}
-                                        dataKey="value"
-                                    >
-                                        {pieData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                        ))}
-                                    </Pie>
-                                    <RTooltip 
-                                        formatter={(value) => `₹${value}`} 
-                                        contentStyle={{borderRadius: '8px', backgroundColor: 'var(--card)', border: '1px solid var(--border)'}} 
-                                    />
-                                    <Legend verticalAlign="bottom" height={36} />
-                                </PieChart>
-                            </ResponsiveContainer>
-                        ) : (
-                            <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
-                                <p>No expenses this month</p>
-                            </div>
-                        )}
                     </CardContent>
                 </Card>
             </div>

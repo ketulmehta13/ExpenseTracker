@@ -10,12 +10,10 @@ import 'jspdf-autotable';
 
 const Transactions = () => {
     const [transactions, setTransactions] = useState([]);
-    const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     
     // Filters
     const [filterType, setFilterType] = useState('');
-    const [filterCategory, setFilterCategory] = useState('');
     
     // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -24,7 +22,6 @@ const Transactions = () => {
         title: '',
         amount: '',
         type: 'EXPENSE',
-        category: '',
         date: new Date().toISOString().split('T')[0],
         notes: '',
         is_recurring: false
@@ -32,17 +29,13 @@ const Transactions = () => {
 
     useEffect(() => {
         fetchData();
-    }, [filterType, filterCategory]);
+    }, [filterType]);
 
     const fetchData = async () => {
         setLoading(true);
         try {
-            const catRes = await api.get('/categories/');
-            setCategories(catRes.data);
-
             let params = new URLSearchParams();
             if (filterType) params.append('type', filterType);
-            if (filterCategory) params.append('category', filterCategory);
             
             const transRes = await api.get(`/transactions/?${params.toString()}`);
             setTransactions(transRes.data);
@@ -82,11 +75,10 @@ const Transactions = () => {
         doc.text(`User: ${api.defaults.headers.common['Authorization'] ? 'Authenticated User' : 'Guest'}`, 14, 35);
 
         // Prepare table data
-        const tableColumn = ["Date", "Title", "Category", "Type", "Amount"];
+        const tableColumn = ["Date", "Title", "Type", "Amount"];
         const tableRows = transactions.map(t => [
             new Date(t.date).toLocaleDateString(),
             t.title,
-            t.category_name || 'None',
             t.type,
             `${t.type === 'INCOME' ? '+' : '-'}₹${parseFloat(t.amount).toFixed(2)}`
         ]);
@@ -136,7 +128,6 @@ const Transactions = () => {
                 title: transaction.title,
                 amount: transaction.amount,
                 type: transaction.type,
-                category: transaction.category || '',
                 date: transaction.date,
                 notes: transaction.notes || '',
                 is_recurring: transaction.is_recurring || false
@@ -147,7 +138,6 @@ const Transactions = () => {
                 title: '',
                 amount: '',
                 type: 'EXPENSE',
-                category: '',
                 date: new Date().toISOString().split('T')[0],
                 notes: '',
                 is_recurring: false
@@ -172,23 +162,10 @@ const Transactions = () => {
         }
     };
 
-    // Auto-categorize based on title
+    // Auto-categorize removal - no longer needed as categories are hidden
     useEffect(() => {
-        if (formData.title.length > 2 && formData.type === 'EXPENSE' && !formData.category && !editingTransaction) {
-            const fetchSuggestion = async () => {
-                try {
-                    const res = await api.get(`/transactions/suggest_category/?title=${formData.title}`);
-                    if (res.data.suggested_category) {
-                        setFormData(prev => ({ ...prev, category: res.data.suggested_category }));
-                    }
-                } catch (err) {}
-            };
-            const delayDebounceFn = setTimeout(() => {
-                fetchSuggestion();
-            }, 800);
-            return () => clearTimeout(delayDebounceFn);
-        }
-    }, [formData.title, formData.type, formData.category, editingTransaction]);
+        // Categories are disabled
+    }, []);
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
@@ -228,20 +205,9 @@ const Transactions = () => {
                         <option value="EXPENSE">Expense</option>
                     </select>
 
-                    <select 
-                        value={filterCategory} 
-                        onChange={(e) => setFilterCategory(e.target.value)}
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 sm:w-[200px]"
-                    >
-                        <option value="">All Categories</option>
-                        {categories.map(c => (
-                            <option key={c.id} value={c.id}>{c.name}</option>
-                        ))}
-                    </select>
-
                     <Button 
                         variant="ghost"
-                        onClick={() => { setFilterType(''); setFilterCategory(''); }}
+                        onClick={() => { setFilterType(''); }}
                     >
                         Clear
                     </Button>
@@ -263,7 +229,6 @@ const Transactions = () => {
                                 <tr>
                                     <th className="px-6 py-4 font-semibold">Date</th>
                                     <th className="px-6 py-4 font-semibold">Title</th>
-                                    <th className="px-6 py-4 font-semibold">Category</th>
                                     <th className="px-6 py-4 font-semibold">Amount</th>
                                     <th className="px-6 py-4 font-semibold text-right">Actions</th>
                                 </tr>
@@ -279,11 +244,6 @@ const Transactions = () => {
                                                     Recurring
                                                 </span>
                                             )}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className="inline-block px-2.5 py-1 bg-secondary text-secondary-foreground text-xs rounded-full">
-                                                {t.category_name || 'None'}
-                                            </span>
                                         </td>
                                         <td className={`px-6 py-4 font-bold ${t.type === 'INCOME' ? 'text-emerald-500' : 'text-destructive'}`}>
                                             {t.type === 'INCOME' ? '+' : '-'}₹{parseFloat(t.amount).toFixed(2)}
@@ -374,25 +334,7 @@ const Transactions = () => {
                                     </div>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <Label htmlFor="category">Category</Label>
-                                    <select 
-                                        id="category"
-                                        value={formData.category}
-                                        onChange={(e) => {
-                                            const val = e.target.value;
-                                            setFormData(prev => ({...prev, category: val}));
-                                        }}
-                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 appearance-none cursor-pointer"
-                                        style={{ WebkitAppearance: 'menulist', MozAppearance: 'menulist' }}
-                                    >
-                                        <option value="">Select Category</option>
-                                        {categories.length === 0 && <option disabled>No categories found</option>}
-                                        {categories.map(c => (
-                                            <option key={c.id} value={c.id}>{c.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
+
                                 
                                 <div className="space-y-2">
                                     <Label htmlFor="notes">Notes (Optional)</Label>

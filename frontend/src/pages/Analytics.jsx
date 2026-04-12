@@ -91,42 +91,7 @@ const Analytics = () => {
                     </CardContent>
                 </Card>
 
-                <Card className="shadow-sm">
-                    <CardHeader>
-                        <CardTitle>All-Time Expense Categories</CardTitle>
-                        <CardDescription>Where your money goes</CardDescription>
-                    </CardHeader>
-                    <CardContent className="h-[300px] flex justify-center items-center pb-8">
-                        {pieData.length > 0 ? (
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                        data={pieData}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={60}
-                                        outerRadius={90}
-                                        paddingAngle={5}
-                                        dataKey="value"
-                                    >
-                                        {pieData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                        ))}
-                                    </Pie>
-                                    <RTooltip 
-                                        formatter={(value) => `₹${value}`} 
-                                        contentStyle={{borderRadius: '8px', backgroundColor: 'var(--card)', border: '1px solid var(--border)'}} 
-                                    />
-                                    <Legend verticalAlign="bottom" height={36} />
-                                </PieChart>
-                            </ResponsiveContainer>
-                        ) : (
-                            <div className="h-full flex items-center justify-center text-muted-foreground">No data available</div>
-                        )}
-                    </CardContent>
-                </Card>
-                
-                <Card className="shadow-sm">
+                <Card className="col-span-1 lg:col-span-2 shadow-sm">
                     <CardHeader>
                         <CardTitle>Top Expenses</CardTitle>
                         <CardDescription>Your highest transactions</CardDescription>
@@ -141,7 +106,7 @@ const Analytics = () => {
                                     <div key={i} className="flex items-center justify-between border-b border-border/50 pb-3 last:border-0 last:pb-0">
                                         <div className="flex flex-col">
                                             <span className="font-semibold text-sm">{t.title}</span>
-                                            <span className="text-xs text-muted-foreground">{new Date(t.date).toLocaleDateString()} &middot; {t.category_name || 'Uncategorized'}</span>
+                                            <span className="text-xs text-muted-foreground">{new Date(t.date).toLocaleDateString()}</span>
                                         </div>
                                         <span className="font-bold text-destructive">-₹{parseFloat(t.amount).toFixed(2)}</span>
                                     </div>

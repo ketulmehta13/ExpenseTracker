@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { PieChart, TrendingUp, ShieldCheck, IndianRupee, ArrowRight } from 'lucide-react';
 import logoIcon from '../assets/logo-icon.png';
-import logo from '../assets/logo.png';
 import { useAuth } from '../context/AuthContext';
 
 const Home = () => {

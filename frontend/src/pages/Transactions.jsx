@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, X, Pencil, Trash2, Filter, Download } from 'lucide-react';
+import { Plus, X, Pencil, Trash2, Filter, Download, FileText } from 'lucide-react';
 import api from '../services/api';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
+import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';
 
 const Transactions = () => {
     const [transactions, setTransactions] = useState([]);
@@ -64,6 +66,56 @@ const Transactions = () => {
         } catch (error) {
             console.error('Error exporting CSV', error);
         }
+    };
+
+    const handleExportPDF = () => {
+        const doc = new jsPDF();
+        
+        // Add Title
+        doc.setFontSize(20);
+        doc.setTextColor(13, 58, 53); // Dark teal color from theme
+        doc.text('Expense Tracker - Transactions Report', 14, 22);
+        
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
+        doc.text(`User: ${api.defaults.headers.common['Authorization'] ? 'Authenticated User' : 'Guest'}`, 14, 35);
+
+        // Prepare table data
+        const tableColumn = ["Date", "Title", "Category", "Type", "Amount"];
+        const tableRows = transactions.map(t => [
+            new Date(t.date).toLocaleDateString(),
+            t.title,
+            t.category_name || 'None',
+            t.type,
+            `${t.type === 'INCOME' ? '+' : '-'}₹${parseFloat(t.amount).toFixed(2)}`
+        ]);
+
+        // Add table
+        doc.autoTable({
+            head: [tableColumn],
+            body: tableRows,
+            startY: 45,
+            theme: 'striped',
+            headStyles: { fillColor: [13, 58, 53], textColor: [255, 255, 255] },
+            alternateRowStyles: { fillColor: [241, 245, 244] },
+            margin: { top: 45 },
+            styles: { fontSize: 9, cellPadding: 3 }
+        });
+
+        // Add summary footer
+        const finalY = doc.lastAutoTable.finalY + 10;
+        const totalIncome = transactions.filter(t => t.type === 'INCOME').reduce((sum, t) => sum + parseFloat(t.amount), 0);
+        const totalExpense = transactions.filter(t => t.type === 'EXPENSE').reduce((sum, t) => sum + parseFloat(t.amount), 0);
+        
+        doc.setFontSize(12);
+        doc.setTextColor(0);
+        doc.text(`Total Income: ₹${totalIncome.toFixed(2)}`, 14, finalY);
+        doc.text(`Total Expense: ₹${totalExpense.toFixed(2)}`, 14, finalY + 7);
+        doc.setFontSize(14);
+        doc.text(`Net Balance: ₹${(totalIncome - totalExpense).toFixed(2)}`, 14, finalY + 16);
+
+        doc.save('transactions_report.pdf');
     };
 
     const handleDelete = async (id) => {
@@ -145,11 +197,14 @@ const Transactions = () => {
                     <h1 className="text-3xl font-bold tracking-tight">Transactions</h1>
                     <p className="text-muted-foreground">Manage your past and recurring transactions.</p>
                 </div>
-                <div className="flex items-center gap-2 w-full sm:w-auto">
-                    <Button variant="outline" onClick={handleExportCSV}>
-                        <Download className="mr-2 h-4 w-4" /> Export CSV
+                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                    <Button variant="outline" size="sm" onClick={handleExportCSV}>
+                        <Download className="mr-2 h-4 w-4" /> CSV
                     </Button>
-                    <Button onClick={() => handleOpenModal()}>
+                    <Button variant="outline" size="sm" onClick={handleExportPDF}>
+                        <FileText className="mr-2 h-4 w-4" /> PDF
+                    </Button>
+                    <Button size="sm" onClick={() => handleOpenModal()}>
                         <Plus className="mr-2 h-4 w-4" /> Add New
                     </Button>
                 </div>

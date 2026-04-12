@@ -165,7 +165,7 @@ const Profile = () => {
     ];
 
     return (
-        <div className="animate-in fade-in duration-500 -m-4 md:-m-8 min-h-[calc(100vh-64px)] bg-[#f0f4f8]">
+        <div className="animate-in fade-in duration-500 -m-4 md:-m-8 min-h-[calc(100vh-64px)] bg-background">
             {/* Toast */}
             {toast && (
                 <div className={`fixed top-6 right-6 z-[100] flex items-center gap-3 px-5 py-3.5 rounded-xl shadow-2xl border animate-in slide-in-from-right duration-300 ${
@@ -180,22 +180,22 @@ const Profile = () => {
             )}
 
             {/* Page Header */}
-            <div className="bg-white border-b border-gray-200 px-6 md:px-10 py-5">
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">My Profile</h1>
-                <p className="text-gray-500 mt-0.5 text-sm">Manage your account, preferences, and security settings.</p>
+            <div className="bg-card border-b border-border px-6 md:px-10 py-5">
+                <h1 className="text-2xl sm:text-3xl font-bold text-foreground">My Profile</h1>
+                <p className="text-muted-foreground mt-0.5 text-sm">Manage your account, preferences, and security settings.</p>
             </div>
 
             <div className="px-4 sm:px-6 md:px-10 py-6 space-y-5 max-w-[1400px] mx-auto">
 
                 {/* Profile Card */}
-                <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
                     {/* Teal accent bar */}
                     <div className="h-20 sm:h-24 bg-gradient-to-r from-[#0c4a4a] via-[#0e6b5e] to-[#1a8a70]" />
                     <div className="px-5 sm:px-8 pb-6 -mt-10 sm:-mt-12">
                         <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4">
                             {/* Avatar */}
                             <div className="relative group flex-shrink-0">
-                                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white border-4 border-white shadow-lg flex items-center justify-center overflow-hidden">
+                                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-card border-4 border-card shadow-lg flex items-center justify-center overflow-hidden">
                                     {photoPreview ? (
                                         <img src={photoPreview} alt="Profile" className="w-full h-full object-cover" />
                                     ) : (
@@ -212,26 +212,26 @@ const Profile = () => {
                             </div>
                             {/* Name */}
                             <div className="text-center sm:text-left flex-1 sm:pb-0.5">
-                                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">{displayName}</h2>
-                                <p className="text-gray-500 text-sm">@{userData?.username} • {userData?.email}</p>
+                                <h2 className="text-xl sm:text-2xl font-bold text-foreground">{displayName}</h2>
+                                <p className="text-muted-foreground text-sm">@{userData?.username} • {userData?.email}</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Personal Information */}
-                <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-                    <div className="flex items-center justify-between px-5 sm:px-8 py-4 border-b border-gray-100">
+                <div className="bg-card rounded-xl border border-border shadow-sm">
+                    <div className="flex items-center justify-between px-5 sm:px-8 py-4 border-b border-border/50">
                         <div className="flex items-center gap-3">
                             <div className="w-9 h-9 bg-[#e8f5f0] rounded-lg flex items-center justify-center">
                                 <UserIcon size={18} className="text-[#0c4a4a]" />
                             </div>
-                            <h3 className="text-base sm:text-lg font-semibold text-gray-900">Personal Information</h3>
+                            <h3 className="text-base sm:text-lg font-semibold text-foreground">Personal Information</h3>
                         </div>
                         {editing ? (
                             <div className="flex items-center gap-2">
                                 <Button variant="outline" size="sm" onClick={handleCancelEdit} disabled={saving}
-                                    className="h-8 text-xs border-gray-300">
+                                    className="h-8 text-xs border-border">
                                     Cancel
                                 </Button>
                                 <Button size="sm" onClick={handleSaveProfile} disabled={saving}
@@ -253,35 +253,35 @@ const Profile = () => {
                         <div className="px-5 sm:px-8 py-5">
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4">
                                 <div className="space-y-1.5">
-                                    <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">First Name</Label>
+                                    <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">First Name</Label>
                                     <Input placeholder="Enter first name" value={form.first_name}
-                                        className="h-10 bg-gray-50 border-gray-200 focus:border-[#0c4a4a] focus:ring-[#0c4a4a]/10"
+                                        className="h-10 bg-muted/50 border-border focus:border-primary focus:ring-primary/10"
                                         onChange={(e) => setForm(prev => ({ ...prev, first_name: e.target.value }))} />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Last Name</Label>
+                                    <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Last Name</Label>
                                     <Input placeholder="Enter last name" value={form.last_name}
-                                        className="h-10 bg-gray-50 border-gray-200 focus:border-[#0c4a4a] focus:ring-[#0c4a4a]/10"
+                                        className="h-10 bg-muted/50 border-border focus:border-primary focus:ring-primary/10"
                                         onChange={(e) => setForm(prev => ({ ...prev, last_name: e.target.value }))} />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Email Address</Label>
+                                    <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Email Address</Label>
                                     <div className="relative">
-                                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={15} />
-                                        <Input type="email" placeholder="you@example.com" className="h-10 pl-9 bg-gray-50 border-gray-200"
+                                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={15} />
+                                        <Input type="email" placeholder="you@example.com" className="h-10 pl-9 bg-muted/50 border-border"
                                             value={form.email} onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))} />
                                     </div>
                                 </div>
                                 <div className="space-y-1.5">
-                                    <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Phone Number</Label>
+                                    <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Phone Number</Label>
                                     <div className="relative">
-                                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={15} />
-                                        <Input type="tel" placeholder="+91 98765 43210" className="h-10 pl-9 bg-gray-50 border-gray-200"
+                                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={15} />
+                                        <Input type="tel" placeholder="+91 98765 43210" className="h-10 pl-9 bg-muted/50 border-border"
                                             value={form.phone} onChange={(e) => setForm(prev => ({ ...prev, phone: e.target.value }))} />
                                     </div>
                                 </div>
                             </div>
-                            <p className="text-xs text-gray-400 mt-4">📷 Click on your profile photo to upload a new one (max 2MB, JPG/PNG/WebP)</p>
+                            <p className="text-xs text-muted-foreground mt-4">📷 Click on your profile photo to upload a new one (max 2MB, JPG/PNG/WebP)</p>
                         </div>
                     ) : (
                         /* Read-only Mode */
@@ -289,8 +289,8 @@ const Profile = () => {
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-8 gap-y-5">
                                 {infoFields.map((field, i) => (
                                     <div key={i}>
-                                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">{field.label}</p>
-                                        <p className="text-sm font-medium text-gray-800">{field.value}</p>
+                                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">{field.label}</p>
+                                        <p className="text-sm font-medium text-foreground">{field.value}</p>
                                     </div>
                                 ))}
                             </div>
@@ -305,10 +305,10 @@ const Profile = () => {
                         { label: 'This Month Expense', value: currentMonth?.expense, color: '#dc2626', bg: '#fef2f2', icon: Wallet },
                         { label: 'Net Balance', value: currentMonth?.balance, color: '#2563eb', bg: '#eff6ff', icon: IndianRupee },
                     ].map((stat, i) => (
-                        <div key={i} className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 hover:shadow-md transition-shadow">
+                        <div key={i} className="bg-card rounded-xl border border-border shadow-sm p-5 hover:shadow-md transition-shadow">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{stat.label}</p>
+                                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{stat.label}</p>
                                     <p className="text-2xl font-bold mt-1.5" style={{ color: stat.color }}>
                                         ₹{stat.value ? parseFloat(stat.value).toFixed(2) : '0.00'}
                                     </p>
@@ -324,40 +324,40 @@ const Profile = () => {
                 {/* Budget & Password — 2 column */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                     {/* Monthly Budget */}
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-                        <div className="flex items-center gap-3 px-5 sm:px-6 py-4 border-b border-gray-100">
+                    <div className="bg-card rounded-xl border border-border shadow-sm">
+                        <div className="flex items-center gap-3 px-5 sm:px-6 py-4 border-b border-border/50">
                             <div className="w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center">
                                 <Target size={18} className="text-blue-600" />
                             </div>
                             <div>
-                                <h3 className="text-base font-semibold text-gray-900">Monthly Budget</h3>
-                                <p className="text-xs text-gray-400">Set a spending limit</p>
+                                <h3 className="text-base font-semibold text-foreground">Monthly Budget</h3>
+                                <p className="text-xs text-muted-foreground">Set a spending limit</p>
                             </div>
                         </div>
                         <form onSubmit={handleUpdateBudget}>
                             <div className="px-5 sm:px-6 py-5 space-y-4">
                                 {budgetData && parseFloat(budgetData.limit) > 0 && (
-                                    <div className="p-3.5 rounded-lg bg-gray-50 space-y-2.5">
+                                    <div className="p-3.5 rounded-lg bg-muted/50 space-y-2.5">
                                         <div className="flex justify-between text-xs font-medium">
-                                            <span className="text-gray-500">Spent this month</span>
-                                            <span className="text-gray-700">
+                                            <span className="text-muted-foreground">Spent this month</span>
+                                            <span className="text-foreground">
                                                 ₹{currentMonth ? parseFloat(currentMonth.expense).toFixed(0) : 0} / ₹{parseFloat(budgetData.limit).toFixed(0)}
                                             </span>
                                         </div>
-                                        <div className="w-full bg-gray-200 h-2.5 rounded-full overflow-hidden">
+                                        <div className="w-full bg-muted h-2.5 rounded-full overflow-hidden">
                                             <div className={`h-full rounded-full transition-all duration-500 ${budgetData.exceeded ? 'bg-red-500' : 'bg-[#0c4a4a]'}`}
                                                 style={{ width: `${Math.min((currentMonth?.expense / budgetData.limit) * 100, 100)}%` }} />
                                         </div>
-                                        <p className="text-xs text-gray-500">
+                                        <p className="text-xs text-muted-foreground">
                                             {budgetData.exceeded ? '⚠️ Budget exceeded!' : `₹${(parseFloat(budgetData.limit) - parseFloat(currentMonth?.expense || 0)).toFixed(0)} remaining`}
                                         </p>
                                     </div>
                                 )}
                                 <div className="space-y-1.5">
-                                    <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Budget Limit (₹)</Label>
-                                    <Input type="number" step="0.01" placeholder="e.g. 20000" className="h-10 bg-gray-50 border-gray-200"
+                                    <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Budget Limit (₹)</Label>
+                                    <Input type="number" step="0.01" placeholder="e.g. 20000" className="h-10 bg-muted/50 border-border"
                                         value={budget} onChange={(e) => setBudget(e.target.value)} />
-                                    <p className="text-xs text-gray-400">Set to 0 to disable.</p>
+                                    <p className="text-xs text-muted-foreground">Set to 0 to disable.</p>
                                 </div>
                             </div>
                             <div className="px-5 sm:px-6 pb-5">
@@ -370,14 +370,14 @@ const Profile = () => {
                     </div>
 
                     {/* Change Password */}
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-                        <div className="flex items-center gap-3 px-5 sm:px-6 py-4 border-b border-gray-100">
+                    <div className="bg-card rounded-xl border border-border shadow-sm">
+                        <div className="flex items-center gap-3 px-5 sm:px-6 py-4 border-b border-border/50">
                             <div className="w-9 h-9 bg-amber-50 rounded-lg flex items-center justify-center">
                                 <KeyRound size={18} className="text-amber-600" />
                             </div>
                             <div>
-                                <h3 className="text-base font-semibold text-gray-900">Change Password</h3>
-                                <p className="text-xs text-gray-400">Keep your account secure</p>
+                                <h3 className="text-base font-semibold text-foreground">Change Password</h3>
+                                <p className="text-xs text-muted-foreground">Keep your account secure</p>
                             </div>
                         </div>
                         <form onSubmit={handleChangePassword}>
@@ -388,15 +388,15 @@ const Profile = () => {
                                     { id: 'confirm_password', label: 'Confirm Password', placeholder: 'Confirm new password', show: showConfirmPw, toggle: setShowConfirmPw, key: 'confirm_password' },
                                 ].map((field) => (
                                     <div key={field.id} className="space-y-1.5">
-                                        <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{field.label}</Label>
+                                        <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{field.label}</Label>
                                         <div className="relative">
-                                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={15} />
+                                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={15} />
                                             <Input id={field.id} type={field.show ? 'text' : 'password'}
-                                                placeholder={field.placeholder} className="h-10 pl-9 pr-10 bg-gray-50 border-gray-200"
+                                                placeholder={field.placeholder} className="h-10 pl-9 pr-10 bg-muted/50 border-border"
                                                 value={passwordForm[field.key]}
                                                 onChange={(e) => setPasswordForm(prev => ({ ...prev, [field.key]: e.target.value }))} />
                                             <button type="button" tabIndex={-1}
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                                                 onClick={() => field.toggle(v => !v)}>
                                                 {field.show ? <EyeOff size={15} /> : <Eye size={15} />}
                                             </button>
@@ -406,7 +406,7 @@ const Profile = () => {
                             </div>
                             <div className="px-5 sm:px-6 pb-5">
                                 <Button type="submit" disabled={passwordSaving} variant="outline"
-                                    className="w-full h-10 border-gray-300 text-gray-700 hover:bg-gray-50">
+                                    className="w-full h-10 border-border text-foreground hover:bg-muted/50">
                                     {passwordSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <KeyRound className="mr-2 h-4 w-4" />}
                                     Change Password
                                 </Button>

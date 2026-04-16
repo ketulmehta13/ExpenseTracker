@@ -4,10 +4,16 @@ import { motion } from 'framer-motion';
 import { PieChart, TrendingUp, ShieldCheck, IndianRupee, ArrowRight } from 'lucide-react';
 import logoIcon from '../assets/logo-icon.png';
 import { useAuth } from '../context/AuthContext';
+import { warmUp } from '../services/api';
+import { useEffect } from 'react';
 
 const Home = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
+
+    useEffect(() => {
+        warmUp();
+    }, []);
 
     return (
         <div className="h-screen w-full bg-background text-foreground flex flex-col font-sans overflow-hidden relative">

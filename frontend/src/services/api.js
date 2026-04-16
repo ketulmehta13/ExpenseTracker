@@ -21,6 +21,21 @@ const getBaseUrl = () => {
 const baseUrl = getBaseUrl();
 const API_URL = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
 
+/**
+ * Proactively triggers a request to the backend health endpoint.
+ * This is used to "wake up" the Render free tier server from cold starts.
+ * It's fire-and-forget; we don't need to wait for the response.
+ */
+export const warmUp = () => {
+    try {
+        axios.get(`${API_URL}health/`).catch(() => {
+            // Ignore errors for warm-up requests
+        });
+    } catch (e) {
+        // Fail silently
+    }
+};
+
 const api = axios.create({
     baseURL: API_URL,
     timeout: 30000, // 30 second timeout — prevents infinite hanging if server is cold-starting

@@ -49,7 +49,7 @@ const MainLayout = () => {
                 <div className="flex h-16 items-center flex-shrink-0 px-6 border-b">
                     <img src={logoIcon} alt="Ketul Expense Tracker" className="h-9 w-9 rounded-lg mr-3 object-contain" />
                     <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-400 leading-tight">
-                        Ketul Expense<br className="hidden sm:block" /> Tracker
+                         Expense<br className="hidden sm:block" /> Tracker
                     </h2>
                     <Button
                         variant="ghost"

@@ -8,7 +8,7 @@ import {
     Target, Wallet, Camera, Pencil, X, Check, Phone, User as UserIcon,
     CheckCircle2, AlertCircle, Lock, Eye, EyeOff, KeyRound
 } from 'lucide-react';
-import api from '../services/api';
+import { getProfile, updateProfile, getTransactions, computeSummary, authChangePassword } from '../services/api';
 
 const Profile = () => {
     const { user, logout } = useAuth();
@@ -31,9 +31,8 @@ const Profile = () => {
     const [photoPreview, setPhotoPreview] = useState(null);
 
     const [passwordForm, setPasswordForm] = useState({
-        current_password: '', new_password: '', confirm_password: '',
+        new_password: '', confirm_password: '',
     });
-    const [showCurrentPw, setShowCurrentPw] = useState(false);
     const [showNewPw, setShowNewPw] = useState(false);
     const [showConfirmPw, setShowConfirmPw] = useState(false);
 
@@ -45,24 +44,28 @@ const Profile = () => {
     useEffect(() => {
         const fetchAll = async () => {
             try {
-                const [userRes, summaryRes] = await Promise.all([
-                    api.get('/auth/me/'),
-                    api.get('/transactions/summary/'),
+                const [profileData, transactions] = await Promise.all([
+                    getProfile(user.id),
+                    getTransactions(),
                 ]);
-                setUserData(userRes.data);
-                setSummary(summaryRes.data);
+                setUserData(profileData);
+
+                // Compute summary client-side
+                const summaryData = computeSummary(transactions, profileData.monthly_budget);
+                setSummary(summaryData);
+
                 setForm({
-                    first_name: userRes.data.first_name || '',
-                    last_name: userRes.data.last_name || '',
-                    email: userRes.data.email || '',
-                    phone: userRes.data.phone || '',
-                    profile_photo: userRes.data.profile_photo || '',
+                    first_name: profileData.first_name || '',
+                    last_name: profileData.last_name || '',
+                    email: user.email || '',
+                    phone: profileData.phone || '',
+                    profile_photo: profileData.profile_photo || '',
                 });
-                if (userRes.data.monthly_budget !== null && userRes.data.monthly_budget !== undefined) {
-                    setBudget(userRes.data.monthly_budget);
+                if (profileData.monthly_budget !== null && profileData.monthly_budget !== undefined) {
+                    setBudget(profileData.monthly_budget);
                 }
-                if (userRes.data.profile_photo) {
-                    setPhotoPreview(userRes.data.profile_photo);
+                if (profileData.profile_photo) {
+                    setPhotoPreview(profileData.profile_photo);
                 }
             } catch (err) {
                 console.error('Failed to fetch user data', err);
@@ -71,7 +74,7 @@ const Profile = () => {
             }
         };
         fetchAll();
-    }, []);
+    }, [user]);
 
     const handlePhotoChange = (e) => {
         const file = e.target.files[0];
@@ -88,25 +91,22 @@ const Profile = () => {
     const handleSaveProfile = async () => {
         setSaving(true);
         try {
-            const res = await api.patch('/auth/me/', {
+            const res = await updateProfile(user.id, {
                 first_name: form.first_name, last_name: form.last_name,
-                email: form.email, phone: form.phone, profile_photo: form.profile_photo,
+                phone: form.phone, profile_photo: form.profile_photo,
             });
-            setUserData(res.data);
+            setUserData(res);
             setEditing(false);
             showToast('success', 'Profile updated successfully!');
         } catch (err) {
-            const ed = err.response?.data;
-            if (ed && typeof ed === 'object') {
-                showToast('error', Object.entries(ed).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join(' | '));
-            } else { showToast('error', 'Failed to update profile'); }
+            showToast('error', err.message || 'Failed to update profile');
         } finally { setSaving(false); }
     };
 
     const handleCancelEdit = () => {
         setForm({
             first_name: userData?.first_name || '', last_name: userData?.last_name || '',
-            email: userData?.email || '', phone: userData?.phone || '',
+            email: user?.email || '', phone: userData?.phone || '',
             profile_photo: userData?.profile_photo || '',
         });
         setPhotoPreview(userData?.profile_photo || null);
@@ -116,9 +116,12 @@ const Profile = () => {
     const handleUpdateBudget = async (e) => {
         e.preventDefault();
         setBudgetSaving(true);
-        try { await api.patch('/auth/me/', { monthly_budget: budget || 0 }); showToast('success', 'Budget updated!'); }
-        catch { showToast('error', 'Failed to update budget'); }
-        finally { setBudgetSaving(false); }
+        try {
+            await updateProfile(user.id, { monthly_budget: budget || 0 });
+            showToast('success', 'Budget updated!');
+        } catch {
+            showToast('error', 'Failed to update budget');
+        } finally { setBudgetSaving(false); }
     };
 
     const handleChangePassword = async (e) => {
@@ -127,10 +130,10 @@ const Profile = () => {
         if (passwordForm.new_password.length < 6) { showToast('error', 'Password must be at least 6 characters'); return; }
         setPasswordSaving(true);
         try {
-            await api.post('/auth/change-password/', passwordForm);
+            await authChangePassword(passwordForm.new_password);
             showToast('success', 'Password changed successfully!');
-            setPasswordForm({ current_password: '', new_password: '', confirm_password: '' });
-        } catch (err) { showToast('error', err.response?.data?.detail || 'Failed to change password'); }
+            setPasswordForm({ new_password: '', confirm_password: '' });
+        } catch (err) { showToast('error', err.message || 'Failed to change password'); }
         finally { setPasswordSaving(false); }
     };
 
@@ -150,15 +153,15 @@ const Profile = () => {
     const initials = userData?.first_name
         ? `${userData.first_name.charAt(0)}${(userData.last_name || '').charAt(0)}`.toUpperCase()
         : (userData?.username?.charAt(0)?.toUpperCase() || 'U');
-    const joinDate = userData?.date_joined
-        ? new Date(userData.date_joined).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })
+    const joinDate = userData?.created_at
+        ? new Date(userData.created_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })
         : '';
 
     // Info fields for read-only display
     const infoFields = [
         { label: 'First Name', value: userData?.first_name || '—' },
         { label: 'Last Name', value: userData?.last_name || '—' },
-        { label: 'Email Address', value: userData?.email || '—' },
+        { label: 'Email Address', value: user?.email || '—' },
         { label: 'Phone Number', value: userData?.phone || '—' },
         { label: 'Username', value: `@${userData?.username}` || '—' },
         { label: 'Member Since', value: joinDate || '—' },
@@ -213,7 +216,7 @@ const Profile = () => {
                             {/* Name */}
                             <div className="text-center sm:text-left flex-1 sm:pb-0.5">
                                 <h2 className="text-xl sm:text-2xl font-bold text-foreground">{displayName}</h2>
-                                <p className="text-muted-foreground text-sm">@{userData?.username} • {userData?.email}</p>
+                                <p className="text-muted-foreground text-sm">@{userData?.username} • {user?.email}</p>
                             </div>
                         </div>
                     </div>
@@ -268,8 +271,8 @@ const Profile = () => {
                                     <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Email Address</Label>
                                     <div className="relative">
                                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={15} />
-                                        <Input type="email" placeholder="you@example.com" className="h-10 pl-9 bg-muted/50 border-border"
-                                            value={form.email} onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))} />
+                                        <Input type="email" placeholder="you@example.com" className="h-10 pl-9 bg-muted/50 border-border opacity-60"
+                                            value={form.email} disabled />
                                     </div>
                                 </div>
                                 <div className="space-y-1.5">
@@ -383,7 +386,6 @@ const Profile = () => {
                         <form onSubmit={handleChangePassword}>
                             <div className="px-5 sm:px-6 py-5 space-y-4">
                                 {[
-                                    { id: 'current_password', label: 'Current Password', placeholder: 'Enter current password', show: showCurrentPw, toggle: setShowCurrentPw, key: 'current_password' },
                                     { id: 'new_password', label: 'New Password', placeholder: 'Min 6 characters', show: showNewPw, toggle: setShowNewPw, key: 'new_password' },
                                     { id: 'confirm_password', label: 'Confirm Password', placeholder: 'Confirm new password', show: showConfirmPw, toggle: setShowConfirmPw, key: 'confirm_password' },
                                 ].map((field) => (

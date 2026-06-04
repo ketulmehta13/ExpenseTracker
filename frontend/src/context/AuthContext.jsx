@@ -1,6 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import api from '../services/api';
-import { jwtDecode } from 'jwt-decode';
+import { supabase } from '../services/supabaseClient';
 
 export const AuthContext = createContext();
 
@@ -11,70 +10,46 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        checkUserStatus();
+        // Check the current session on mount
+        const getSession = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            setUser(session?.user ?? null);
+            setLoading(false);
+        };
+        getSession();
+
+        // Listen for auth state changes (login, logout, token refresh — all automatic)
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            setUser(session?.user ?? null);
+        });
+
+        return () => subscription.unsubscribe();
     }, []);
 
-    const checkUserStatus = () => {
-        // CHANGED: Using sessionStorage for auto-logout when tab closes
-        const token = sessionStorage.getItem('access_token');
-        
-        if (token) {
-            try {
-                const decoded = jwtDecode(token);
-                // Check if token expired
-                if (decoded.exp * 1000 < Date.now()) {
-                    logout();
-                } else {
-                    setUser({ id: decoded.user_id });
-                }
-            } catch (error) {
-                logout();
-            }
-        }
-        setLoading(false);
-    };
-
-    const login = async (username, password) => {
-        try {
-            const lowerUsername = username.toLowerCase();
-            const response = await api.post('/auth/login/', { username: lowerUsername, password });
-            
-            // CHANGED: Storing in sessionStorage so it clears on exit
-            sessionStorage.setItem('access_token', response.data.access);
-            sessionStorage.setItem('refresh_token', response.data.refresh);
-            
-            // Update the user state immediately
-            const decoded = jwtDecode(response.data.access);
-            setUser({ id: decoded.user_id });
-            
-            return response.data;
-        } catch (error) {
-            // Ensure state is clean if login fails
-            logout();
-            throw error; 
-        }
+    const login = async (email, password) => {
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email: email.toLowerCase(),
+            password,
+        });
+        if (error) throw error;
+        return data;
     };
 
     const register = async (username, email, password) => {
-        const lowerUsername = username.toLowerCase();
-        const lowerEmail = email.toLowerCase();
-        const response = await api.post('/auth/register/', { username: lowerUsername, email: lowerEmail, password });
-        
-        // The register endpoint now returns tokens directly — no need for a second login call
-        const { access, refresh } = response.data;
-        sessionStorage.setItem('access_token', access);
-        sessionStorage.setItem('refresh_token', refresh);
-        
-        const decoded = jwtDecode(access);
-        setUser({ id: decoded.user_id });
-        
-        return response.data;
+        const { data, error } = await supabase.auth.signUp({
+            email: email.toLowerCase(),
+            password,
+            options: {
+                data: { username: username.toLowerCase() },
+            },
+        });
+        if (error) throw error;
+        return data;
     };
 
-    const logout = () => {
-        // CHANGED: Clear sessionStorage
-        sessionStorage.removeItem('access_token');
-        sessionStorage.removeItem('refresh_token');
+    const logout = async () => {
+        const { error } = await supabase.auth.signOut();
+        if (error) throw error;
         setUser(null);
     };
 

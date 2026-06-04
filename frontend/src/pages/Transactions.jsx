@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, X, Pencil, Trash2, Filter, Download, FileText } from 'lucide-react';
-import api from '../services/api';
+import { getTransactions, createTransaction, updateTransaction, deleteTransaction, exportTransactionsCSV } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
@@ -9,6 +10,7 @@ import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 
 const Transactions = () => {
+    const { user } = useAuth();
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     
@@ -34,11 +36,8 @@ const Transactions = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            let params = new URLSearchParams();
-            if (filterType) params.append('type', filterType);
-            
-            const transRes = await api.get(`/transactions/?${params.toString()}`);
-            setTransactions(transRes.data);
+            const data = await getTransactions(filterType);
+            setTransactions(data);
         } catch (error) {
             console.error('Error fetching data', error);
         } finally {
@@ -46,19 +45,8 @@ const Transactions = () => {
         }
     };
 
-    const handleExportCSV = async () => {
-        try {
-            const res = await api.get('/transactions/export/', { responseType: 'blob' });
-            const url = window.URL.createObjectURL(new Blob([res.data]));
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', 'transactions.csv');
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-        } catch (error) {
-            console.error('Error exporting CSV', error);
-        }
+    const handleExportCSV = () => {
+        exportTransactionsCSV(transactions);
     };
 
     const handleExportPDF = () => {
@@ -72,7 +60,7 @@ const Transactions = () => {
         doc.setFontSize(10);
         doc.setTextColor(100);
         doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
-        doc.text(`User: ${api.defaults.headers.common['Authorization'] ? 'Authenticated User' : 'Guest'}`, 14, 35);
+        doc.text(`User: Authenticated User`, 14, 35);
 
         // Prepare table data
         const tableColumn = ["Date", "Title", "Type", "Amount"];
@@ -113,7 +101,7 @@ const Transactions = () => {
     const handleDelete = async (id) => {
         if (confirm('Are you sure you want to delete this transaction?')) {
             try {
-                await api.delete(`/transactions/${id}/`);
+                await deleteTransaction(id);
                 fetchData();
             } catch (error) {
                 console.error('Failed to delete', error);
@@ -150,9 +138,9 @@ const Transactions = () => {
         e.preventDefault();
         try {
             if (editingTransaction) {
-                await api.put(`/transactions/${editingTransaction.id}/`, formData);
+                await updateTransaction(editingTransaction.id, formData);
             } else {
-                await api.post('/transactions/', formData);
+                await createTransaction(user.id, formData);
             }
             setIsModalOpen(false);
             fetchData();

@@ -1,49 +1,31 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Loader2, Eye, EyeOff, Coffee } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 import logoIcon from '../assets/logo-icon.png';
-import { warmUp } from '../services/api';
-import { useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 
 const Login = () => {
-    const [username, setUsername] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-    const [isWakingUp, setIsWakingUp] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
-
-    useEffect(() => {
-        // Trigger warm-up
-        warmUp();
-        
-        // Check if server is potentially sleeping (Render free tier logic)
-        // If it was already warm, this check might fail or return quickly.
-        // We just want to show a subtle hint if it's slow.
-        const timer = setTimeout(() => {
-            setIsWakingUp(true);
-        }, 1500); // Show after 1.5s if not already "warm" (conceptually)
-
-        // Hide it after a reasonable time or if user starts typing (simplified)
-        return () => clearTimeout(timer);
-    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError(null);
         setIsLoading(true);
         try {
-            await login(username, password);
+            await login(email, password);
             navigate('/dashboard');
         } catch (err) {
-            setError(err.response?.data?.detail || 'Invalid username or password');
+            setError(err.message || 'Invalid email or password');
         } finally {
             setIsLoading(false);
         }
@@ -68,22 +50,16 @@ const Login = () => {
                                 {error}
                             </div>
                         )}
-                        {isWakingUp && !isLoading && !error && (
-                            <div className="p-3 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-sm rounded-lg border border-amber-500/20 flex items-center gap-2 animate-pulse">
-                                <Coffee size={16} />
-                                Server is waking up from sleep...
-                            </div>
-                        )}
                         <div className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="username">Username</Label>
+                                <Label htmlFor="email">Email</Label>
                                 <Input
-                                    id="username"
-                                    type="text"
+                                    id="email"
+                                    type="email"
                                     required
-                                    placeholder="Enter your username"
-                                    value={username}
-                                    onChange={(e) => setUsername(e.target.value)}
+                                    placeholder="you@example.com"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
                                 />
                             </div>
                             <div className="space-y-2">

@@ -10,23 +10,31 @@ import {
     Target
 } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip as RTooltip, Cell, PieChart, Pie, Legend } from 'recharts';
-import api from '../services/api';
+import { getTransactions, getProfile, computeSummary } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 
 const COLORS = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#14b8a6'];
 
 const Dashboard = () => {
+    const { user } = useAuth();
     const [summary, setSummary] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetchSummary();
-    }, []);
+    }, [user]);
 
     const fetchSummary = async () => {
         try {
-            const res = await api.get('/transactions/summary/');
-            setSummary(res.data);
+            // Fetch transactions and profile in parallel
+            const [transactions, profile] = await Promise.all([
+                getTransactions(),
+                getProfile(user.id),
+            ]);
+            // Compute summary client-side (replaces Django /transactions/summary/ endpoint)
+            const summaryData = computeSummary(transactions, profile.monthly_budget);
+            setSummary(summaryData);
         } catch (error) {
             console.error('Failed to fetch summary', error);
         } finally {

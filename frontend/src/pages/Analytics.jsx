@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip as RTooltip, PieChart, Pie, Cell, Legend } from 'recharts';
-import api from '../services/api';
+import { getTransactions } from '../services/api';
 import { Loader2 } from 'lucide-react';
 
 const COLORS = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#14b8a6'];
@@ -16,8 +16,8 @@ const Analytics = () => {
 
     const fetchData = async () => {
         try {
-            const res = await api.get('/transactions/');
-            setTransactions(res.data);
+            const data = await getTransactions();
+            setTransactions(data);
         } catch (error) {
             console.error('Error fetching analytics data', error);
         } finally {

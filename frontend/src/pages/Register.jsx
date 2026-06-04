@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Loader2, Eye, EyeOff, Coffee } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 import logoIcon from '../assets/logo-icon.png';
-import { warmUp } from '../services/api';
-import { useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -17,21 +15,8 @@ const Register = () => {
     const [error, setError] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-    const [isWakingUp, setIsWakingUp] = useState(false);
     const { register } = useAuth();
     const navigate = useNavigate();
-
-    useEffect(() => {
-        // Trigger warm-up
-        warmUp();
-        
-        // Show subtle hint if server takes a moment to respond
-        const timer = setTimeout(() => {
-            setIsWakingUp(true);
-        }, 1500);
-
-        return () => clearTimeout(timer);
-    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -55,8 +40,7 @@ const Register = () => {
         }
 
         // 3. Password Validation (min 6 chars)
-        const passwordRegex = /^.{6,}$/;
-        if (!passwordRegex.test(password)) {
+        if (password.length < 6) {
             setError("Password must be at least 6 characters long.");
             setIsLoading(false);
             return;
@@ -66,20 +50,7 @@ const Register = () => {
             await register(username, email, password);
             navigate('/dashboard');
         } catch (err) {
-            // Enhanced Error Parsing for Django/DRF
-            const errorData = err.response?.data;
-            if (errorData && typeof errorData === 'object') {
-                const messages = Object.entries(errorData).map(([key, value]) => {
-                    const detail = Array.isArray(value) ? value.join(', ') : value;
-                    return `${key}: ${detail}`;
-                });
-                setError(messages.join(' | '));
-            } else if (err.request) {
-                // The request was made but no response was received (Network error)
-                setError('Registration failed: Backend server is unreachable. Please check the API URL configuration.');
-            } else {
-                setError('Registration failed: ' + (err.message || 'Unknown error'));
-            }
+            setError(err.message || 'Registration failed. Please try again.');
             console.error("Signup error detail:", err);
         } finally {
             setIsLoading(false);
@@ -103,12 +74,6 @@ const Register = () => {
                         {error && (
                             <div className="p-3 bg-destructive/15 text-destructive text-sm rounded-lg border border-destructive/30 animate-in fade-in duration-300">
                                 {error}
-                            </div>
-                        )}
-                        {isWakingUp && !isLoading && !error && (
-                            <div className="p-3 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-sm rounded-lg border border-amber-500/20 flex items-center gap-2 animate-pulse">
-                                <Coffee size={16} />
-                                Server is waking up from sleep...
                             </div>
                         )}
                         <div className="space-y-4">

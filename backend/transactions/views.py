@@ -150,3 +150,30 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 return Response({'suggested_category': cat.id})
                 
         return Response({'suggested_category': None})
+
+    @action(detail=False, methods=['get'], url_path='insights/category-stats')
+    def category_stats(self, request):
+        import numpy as np
+        from collections import defaultdict
+        
+        expenses = Transaction.objects.filter(user=request.user, type='EXPENSE').select_related('category')
+        
+        category_amounts = defaultdict(list)
+        for tx in expenses:
+            cat_name = tx.category.name if tx.category else 'Uncategorized'
+            category_amounts[cat_name].append(float(tx.amount))
+            
+        stats = []
+        for cat_name, amounts in category_amounts.items():
+            count = len(amounts)
+            if count > 0:
+                mean = np.mean(amounts)
+                std = np.std(amounts)
+                stats.append({
+                    "category": cat_name,
+                    "mean": round(float(mean), 2),
+                    "std": round(float(std), 2),
+                    "count": count
+                })
+                
+        return Response(stats)

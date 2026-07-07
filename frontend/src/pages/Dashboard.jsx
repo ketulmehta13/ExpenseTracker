@@ -19,6 +19,7 @@ const COLORS = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#ec4899'
 const Dashboard = () => {
     const { user } = useAuth();
     const [summary, setSummary] = useState(null);
+    const [categoryStats, setCategoryStats] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -35,6 +36,17 @@ const Dashboard = () => {
             // Compute summary client-side (replaces Django /transactions/summary/ endpoint)
             const summaryData = computeSummary(transactions, profile.monthly_budget);
             setSummary(summaryData);
+            
+            try {
+                // Fetch smart insights from Django backend
+                const response = await fetch('http://localhost:8000/api/transactions/insights/category-stats/');
+                if (response.ok) {
+                    const stats = await response.json();
+                    setCategoryStats(stats);
+                }
+            } catch (err) {
+                console.warn('Could not fetch category stats from backend', err);
+            }
         } catch (error) {
             console.error('Failed to fetch summary', error);
         } finally {
@@ -67,6 +79,27 @@ const Dashboard = () => {
 
     const budgetPct = budget.limit > 0 ? (current_month.expense / budget.limit) * 100 : 0;
     
+    // Find top category insight
+    let topCategoryInsight = null;
+    if (categoryStats.length > 0 && summary.category_breakdown.length > 0) {
+        const topCatThisMonth = [...summary.category_breakdown].sort((a, b) => parseFloat(b.total) - parseFloat(a.total))[0];
+        if (topCatThisMonth) {
+            const stats = categoryStats.find(s => s.category === topCatThisMonth.category__name);
+            if (stats) {
+                const currentSpend = parseFloat(topCatThisMonth.total);
+                const avgSpend = stats.mean;
+                const pctDiff = avgSpend > 0 ? ((currentSpend - avgSpend) / avgSpend) * 100 : 0;
+                topCategoryInsight = {
+                    category: stats.category,
+                    currentSpend,
+                    avgSpend,
+                    pctDiff,
+                    isAbove: pctDiff > 0
+                };
+            }
+        }
+    }
+    
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
             <div className="flex flex-col gap-1">
@@ -93,6 +126,25 @@ const Dashboard = () => {
                         <p className="text-sm">You have exceeded your monthly budget of ₹{parseFloat(budget.limit).toFixed(2)}!</p>
                     </div>
                 </div>
+            )}
+
+            {topCategoryInsight && (
+                <Card className="border-indigo-200 bg-indigo-50/50 dark:bg-indigo-900/10 dark:border-indigo-800">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium flex items-center text-indigo-700 dark:text-indigo-400">
+                            <Lightbulb className="w-4 h-4 mr-2" />
+                            Smart Spending Insights: {topCategoryInsight.category}
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-2xl font-bold text-indigo-900 dark:text-indigo-100">
+                            ₹{topCategoryInsight.currentSpend.toFixed(2)} spent this month
+                        </p>
+                        <p className="text-sm text-indigo-700/80 dark:text-indigo-300/80 mt-1">
+                            Your average spend here is ₹{topCategoryInsight.avgSpend.toFixed(2)} — this is {Math.abs(topCategoryInsight.pctDiff).toFixed(1)}% {topCategoryInsight.isAbove ? 'above' : 'below'} normal.
+                        </p>
+                    </CardContent>
+                </Card>
             )}
 
             {/* Top Cards */}

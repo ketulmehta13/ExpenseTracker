@@ -6,6 +6,7 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
+import UnusualSpendingBadge from '../components/UnusualSpendingBadge';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 
@@ -230,6 +231,11 @@ const Transactions = () => {
                                             {t.is_recurring && (
                                                 <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300">
                                                     Recurring
+                                                </span>
+                                            )}
+                                            {t.spending_insight?.is_unusual && (
+                                                <span className="ml-2">
+                                                    <UnusualSpendingBadge />
                                                 </span>
                                             )}
                                         </td>

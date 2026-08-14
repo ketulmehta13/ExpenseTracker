@@ -1,4 +1,4 @@
-# Full-Stack Expense Tracker
+# Expense Tracker
 
 A modern, full-stack expense tracker application featuring a Django REST Framework backend and a React (Vite) frontend styled with Tailwind CSS v4.
 

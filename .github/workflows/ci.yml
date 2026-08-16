@@ -1,0 +1,52 @@
+name: CI - Build, Lint & Security Checks
+
+on:
+  push:
+    branches: [ main, 'backend/**', 'redesign/**' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  frontend-build-and-lint:
+    name: Frontend Build & Typecheck
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Build frontend production bundle
+        working-directory: ./frontend
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://dummy-test.supabase.co' }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'dummy-anon-key' }}
+        run: npm run build
+
+  sql-migration-lint:
+    name: Validate Supabase SQL Migrations
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify SQL migration files exist and are well-formed
+        run: |
+          test -d supabase/migrations
+          for file in supabase/migrations/*.sql; do
+            echo "Checking $file..."
+            test -s "$file"
+            grep -q "ROW LEVEL SECURITY" "$file" || (echo "Missing RLS in $file" && exit 1)
+          done
+          echo "All SQL migrations passed security structure checks."

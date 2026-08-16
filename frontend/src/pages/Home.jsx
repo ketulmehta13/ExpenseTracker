@@ -56,7 +56,7 @@ const Home = () => {
                         transition={{ duration: 0.6 }}
                         className="flex-1 text-center lg:text-left"
                     >
-                        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.1] mb-4">
+                        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-display font-bold tracking-tight leading-[1.1] mb-4">
                             <span className="text-foreground">Master Your</span>
                             <br />
                             <span className="bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent">

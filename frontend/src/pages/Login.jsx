@@ -29,58 +29,58 @@ const Login = () => {
 
     return (
         <div className="min-h-screen flex bg-background">
-            {/* ── LEFT PANEL — branded (desktop) ── */}
-            <div className="hidden lg:flex flex-col justify-between w-1/2 bg-sidebar p-12 relative overflow-hidden">
-                {/* Decorative circles */}
-                <div className="absolute top-[-10%] right-[-10%] w-72 h-72 rounded-full bg-income/10 blur-[80px]" />
-                <div className="absolute bottom-[-10%] left-[-10%] w-72 h-72 rounded-full bg-expense/10 blur-[80px]" />
+            {/* ── LEFT PANEL — Green Branded Panel (Desktop) ── */}
+            <div className="hidden lg:flex flex-col justify-between w-1/2 bg-gradient-to-br from-[#0d3a35] via-[#107555] to-[#093c2f] p-12 relative overflow-hidden text-white shadow-2xl">
+                {/* Decorative ambient elements */}
+                <div className="absolute top-[-10%] right-[-10%] w-80 h-80 rounded-full bg-white/10 blur-[90px] pointer-events-none" />
+                <div className="absolute bottom-[-10%] left-[-10%] w-80 h-80 rounded-full bg-[#059669]/20 blur-[90px] pointer-events-none" />
 
                 {/* Logo */}
                 <div className="flex items-center gap-3 relative z-10">
-                    <img src={logoIcon} alt="Expense Tracker" className="h-10 w-10 rounded-xl object-contain" />
-                    <span className="font-display text-xl font-semibold text-white">Expense Tracker</span>
+                    <img src={logoIcon} alt="Expense Tracker" className="h-10 w-10 rounded-xl object-contain bg-white/15 p-1 backdrop-blur-md shadow-md" />
+                    <span className="font-display text-xl font-bold text-white tracking-tight">Expense Tracker</span>
                 </div>
 
                 {/* Hero text */}
                 <div className="relative z-10 space-y-6">
                     <div>
-                        <p className="text-white/50 text-sm font-medium tracking-widest uppercase mb-3">
-                            ✦ All-in-one
+                        <p className="text-white/70 text-xs font-semibold tracking-widest uppercase mb-3 bg-white/10 px-3 py-1 rounded-full inline-block backdrop-blur-sm">
+                            ✦ Simple & Mindful Finance
                         </p>
                         <h1 className="font-display text-5xl font-bold text-white leading-tight">
                             No spreadsheets.<br />
-                            <span className="text-expense italic">Just clarity.</span>
+                            <span className="text-[#a7f3d0] italic">Just clarity.</span>
                         </h1>
-                        <p className="mt-4 text-white/60 text-base leading-relaxed max-w-xs">
-                            Track income, manage expenses, and grow your savings — all in one beautiful dashboard.
+                        <p className="mt-4 text-white/80 text-base leading-relaxed max-w-sm">
+                            Track income, manage expenses, and grow your savings in a clean, distraction-free dashboard.
                         </p>
                     </div>
 
-                    {/* Feature pills */}
-                    <div className="space-y-3">
+                    {/* Feature bullet pills */}
+                    <div className="space-y-3 pt-2">
                         {[
-                            { icon: TrendingUp, label: 'Track every rupee' },
-                            { icon: PieChart, label: 'Visual analytics & reports' },
-                            { icon: ShieldCheck, label: 'Secure & private — your data stays yours' },
+                            { icon: TrendingUp, label: 'Track every rupee with instant insights' },
+                            { icon: PieChart, label: 'Visual monthly trends and category breakdown' },
+                            { icon: ShieldCheck, label: 'Secure & encrypted — your data stays private' },
                         ].map(({ icon: Icon, label }) => (
-                            <div key={label} className="flex items-center gap-3 text-white/70">
-                                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10">
-                                    <Icon size={16} className="text-expense" />
+                            <div key={label} className="flex items-center gap-3 text-white/90">
+                                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/15 backdrop-blur-sm">
+                                    <Icon size={16} className="text-[#a7f3d0]" />
                                 </div>
-                                <span className="text-sm">{label}</span>
+                                <span className="text-sm font-medium">{label}</span>
                             </div>
                         ))}
                     </div>
                 </div>
 
-                <p className="relative z-10 text-white/30 text-xs">© 2026 Expense Tracker by Ketul Mehta</p>
+                <p className="relative z-10 text-white/50 text-xs">© 2026 Expense Tracker by Ketul Mehta</p>
             </div>
 
-            {/* ── RIGHT PANEL — form ── */}
-            <div className="flex flex-1 flex-col items-center justify-center px-6 py-12">
+            {/* ── RIGHT PANEL — Login Form ── */}
+            <div className="flex flex-1 flex-col items-center justify-center px-6 py-12 bg-background">
                 {/* Mobile logo */}
                 <div className="mb-8 flex flex-col items-center lg:hidden">
-                    <img src={logoIcon} alt="Expense Tracker" className="h-12 w-12 rounded-xl object-contain mb-3" />
+                    <img src={logoIcon} alt="Expense Tracker" className="h-12 w-12 rounded-2xl object-contain mb-3 shadow-md shadow-primary/20" />
                     <h1 className="font-display text-2xl font-bold text-foreground">Expense Tracker</h1>
                 </div>
 
@@ -106,7 +106,7 @@ const Login = () => {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 placeholder="you@example.com"
-                                className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring/40 focus:border-ring transition"
+                                className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring/30 focus:border-ring transition shadow-sm"
                             />
                         </div>
 
@@ -118,7 +118,7 @@ const Login = () => {
                                 </label>
                                 <Link
                                     to="/forgot-password"
-                                    className="text-xs text-primary hover:text-primary/80 font-medium transition-colors"
+                                    className="text-xs text-primary hover:text-primary/80 font-semibold transition-colors"
                                 >
                                     Forgot password?
                                 </Link>
@@ -132,7 +132,7 @@ const Login = () => {
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="Enter your password"
-                                    className="w-full rounded-xl border border-border bg-card px-4 py-3 pr-12 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring/40 focus:border-ring transition"
+                                    className="w-full rounded-xl border border-border bg-card px-4 py-3 pr-12 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring/30 focus:border-ring transition shadow-sm"
                                 />
                                 <button
                                     type="button"
@@ -145,11 +145,11 @@ const Login = () => {
                             </div>
                         </div>
 
-                        {/* Submit */}
+                        {/* Submit button */}
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="mt-2 w-full flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground shadow-sm transition hover:opacity-90 disabled:opacity-60 active:scale-[.98]"
+                            className="mt-2 w-full flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/25 transition hover:opacity-95 active:scale-[.98] disabled:opacity-60"
                         >
                             {isLoading && <Loader2 size={16} className="animate-spin" />}
                             {isLoading ? 'Signing in…' : 'Sign in'}
@@ -158,7 +158,7 @@ const Login = () => {
 
                     <p className="mt-6 text-center text-sm text-muted-foreground">
                         Don't have an account?{' '}
-                        <Link to="/register" className="font-semibold text-primary hover:text-primary/80 transition-colors">
+                        <Link to="/register" className="font-semibold text-primary hover:underline transition-colors">
                             Create one
                         </Link>
                     </p>

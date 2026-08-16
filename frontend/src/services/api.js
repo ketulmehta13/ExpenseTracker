@@ -110,6 +110,82 @@ export const getTransactions = async (filterType = '') => {
 };
 
 /**
+ * Server-side paginated & filtered transactions query using Supabase .range().
+ * Enables high performance for large datasets (>10,000 transactions).
+ */
+export const getTransactionsPaginated = async ({
+    page = 1,
+    pageSize = 25,
+    type = '',
+    categoryId = '',
+    startDate = '',
+    endDate = '',
+    minAmount = null,
+    maxAmount = null,
+    search = '',
+    sortBy = 'date',
+    sortAsc = false,
+} = {}) => {
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+
+    let query = supabase
+        .from('transactions')
+        .select('*, categories(name)', { count: 'exact' });
+
+    if (type) query = query.eq('type', type);
+    if (categoryId) query = query.eq('category_id', categoryId);
+    if (startDate) query = query.gte('date', startDate);
+    if (endDate) query = query.lte('date', endDate);
+    if (minAmount !== null && minAmount !== '') query = query.gte('amount', parseFloat(minAmount));
+    if (maxAmount !== null && maxAmount !== '') query = query.lte('amount', parseFloat(maxAmount));
+    if (search) query = query.ilike('title', `%${search}%`);
+
+    query = query
+        .order(sortBy, { ascending: sortAsc })
+        .range(from, to);
+
+    const { data, count, error } = await query;
+    if (error) throw error;
+
+    const formattedData = (data || []).map(t => ({
+        ...t,
+        category_name: t.categories?.name || null,
+    }));
+
+    return {
+        data: formattedData,
+        count: count || 0,
+        page,
+        pageSize,
+        totalPages: count ? Math.ceil(count / pageSize) : 1,
+    };
+};
+
+/**
+ * Fetch filtered transactions directly from Supabase for date-range CSV exports.
+ */
+export const getTransactionsFiltered = async ({ startDate = '', endDate = '', type = '', categoryId = '' } = {}) => {
+    let query = supabase
+        .from('transactions')
+        .select('*, categories(name)')
+        .order('date', { ascending: false });
+
+    if (type) query = query.eq('type', type);
+    if (categoryId) query = query.eq('category_id', categoryId);
+    if (startDate) query = query.gte('date', startDate);
+    if (endDate) query = query.lte('date', endDate);
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    return (data || []).map(t => ({
+        ...t,
+        category_name: t.categories?.name || null,
+    }));
+};
+
+/**
  * Create a new transaction.
  */
 export const createTransaction = async (userId, transactionData) => {

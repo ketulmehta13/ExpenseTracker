@@ -1,41 +1,25 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect } from "react";
 
-const ThemeProviderContext = createContext();
+const ThemeContext = createContext({ theme: "light" });
 
-export function ThemeProvider({ children, defaultTheme = "system", storageKey = "et-theme" }) {
-    const [theme, setThemeState] = useState(() => {
-        return localStorage.getItem(storageKey) || defaultTheme;
-    });
-
+/**
+ * ThemeProvider — Enforces clean White & Green light theme across the application.
+ */
+export function ThemeProvider({ children }) {
     useEffect(() => {
         const root = window.document.documentElement;
-        root.classList.remove("light", "dark");
-
-        if (theme === "system") {
-            const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-            root.classList.add(systemDark ? "dark" : "light");
-        } else {
-            root.classList.add(theme);
-        }
-    }, [theme]);
-
-    const setTheme = (newTheme) => {
-        localStorage.setItem(storageKey, newTheme);
-        setThemeState(newTheme);
-    };
-
-    const value = { theme, setTheme };
+        root.classList.remove("dark");
+        root.classList.add("light");
+        // Clear any obsolete dark mode storage
+        localStorage.removeItem("et-theme");
+        localStorage.removeItem("expensify-ui-theme");
+    }, []);
 
     return (
-        <ThemeProviderContext.Provider value={value}>
+        <ThemeContext.Provider value={{ theme: "light" }}>
             {children}
-        </ThemeProviderContext.Provider>
+        </ThemeContext.Provider>
     );
 }
 
-export const useTheme = () => {
-    const context = useContext(ThemeProviderContext);
-    if (context === undefined)
-        throw new Error("useTheme must be used within a ThemeProvider");
-    return context;
-};
+export const useTheme = () => useContext(ThemeContext);

@@ -10,8 +10,8 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { BarChart3 } from 'lucide-react';
 
 const COLORS = [
-    '#f59e0b', '#4ade80', '#60a5fa', '#f472b6',
-    '#a78bfa', '#34d399', '#fb923c', '#38bdf8',
+    '#107555', '#059669', '#16a34a', '#0d9488',
+    '#0284c7', '#f59e0b', '#e11d48', '#8b5cf6',
 ];
 
 const CustomTooltip = ({ active, payload, label }) => {

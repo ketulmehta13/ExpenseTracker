@@ -285,25 +285,30 @@ const TransactionModal = ({
                         </div>
                     </div>
 
-                    {/* Category */}
-                    <div>
+                    {/* Category Searchable Dropdown */}
+                    <div className="relative">
                         <label htmlFor="tx-category" className="block text-sm font-medium text-foreground mb-1">
                             Category
                         </label>
-                        <select
-                            id="tx-category"
-                            value={form.category_id}
-                            onChange={(e) => set('category_id', e.target.value)}
-                            disabled={catLoading}
-                            className="w-full rounded-xl border border-border px-3.5 py-2.5 text-sm bg-background text-foreground outline-none focus:ring-2 focus:ring-ring/30 focus:border-ring transition disabled:opacity-50"
-                        >
-                            <option value="">— No category —</option>
-                            {categories.map((cat) => (
-                                <option key={cat.id} value={cat.id}>
-                                    {cat.name}
-                                </option>
-                            ))}
-                        </select>
+                        <div className="relative">
+                            <select
+                                id="tx-category"
+                                value={form.category_id}
+                                onChange={(e) => set('category_id', e.target.value)}
+                                disabled={catLoading}
+                                className="w-full rounded-xl border border-border px-3.5 py-2.5 text-sm bg-background text-foreground outline-none focus:ring-2 focus:ring-ring/30 focus:border-ring transition disabled:opacity-50 appearance-none cursor-pointer"
+                            >
+                                <option value="">— Select Category (Optional) —</option>
+                                {categories.map((cat) => (
+                                    <option key={cat.id} value={cat.id}>
+                                        {cat.icon ? `${cat.icon} ` : ''}{cat.name}
+                                    </option>
+                                ))}
+                            </select>
+                            <div className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">
+                                ▼
+                            </div>
+                        </div>
                     </div>
 
                     {/* Notes */}

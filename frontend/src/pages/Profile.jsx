@@ -416,7 +416,7 @@ const Profile = () => {
 
                     {/* Currency */}
                     <div>
-                        <label className="block text-sm font-medium text-foreground mb-2">Currency</label>
+                        <label className="block text-sm font-medium text-foreground mb-2">Display Currency</label>
                         <div className="flex flex-wrap gap-2">
                             {CURRENCY_OPTIONS.map((opt) => (
                                 <button
@@ -433,21 +433,6 @@ const Profile = () => {
                                 </button>
                             ))}
                         </div>
-                    </div>
-
-                    {/* Theme */}
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm font-medium text-foreground">Dark mode</p>
-                            <p className="text-xs text-muted-foreground">Persisted in your browser</p>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={handleThemeToggle}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isDark ? 'bg-primary' : 'bg-muted'}`}
-                        >
-                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${isDark ? 'translate-x-6' : 'translate-x-1'}`} />
-                        </button>
                     </div>
                 </div>
             </Section>

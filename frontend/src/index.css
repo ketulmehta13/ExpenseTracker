@@ -1,17 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=Inter:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @plugin "tailwindcss-animate";
 
 @custom-variant dark (&:is(.dark *));
 
+/* ============================================================
+   DESIGN TOKENS — Tailwind v4 @theme
+   ============================================================ */
 @theme {
+  /* Fonts */
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fraunces", Georgia, serif;
 
+  /* Semantic color tokens — resolved from CSS vars below */
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
 
   --color-card: hsl(var(--card));
   --color-card-foreground: hsl(var(--card-foreground));
+
+  --color-surface: hsl(var(--surface));
+  --color-surface-muted: hsl(var(--surface-muted));
 
   --color-popover: hsl(var(--popover));
   --color-popover-foreground: hsl(var(--popover-foreground));
@@ -35,42 +45,219 @@
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
 
+  /* Custom semantic tokens: income / expense */
+  --color-income: hsl(var(--income));
+  --color-income-foreground: hsl(var(--income-foreground));
+  --color-income-muted: hsl(var(--income-muted));
+
+  --color-expense: hsl(var(--expense));
+  --color-expense-foreground: hsl(var(--expense-foreground));
+  --color-expense-muted: hsl(var(--expense-muted));
+
+  /* Sidebar */
+  --color-sidebar: hsl(var(--sidebar));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-active: hsl(var(--sidebar-active));
+
+  /* Text */
+  --color-text-primary: hsl(var(--text-primary));
+  --color-text-secondary: hsl(var(--text-secondary));
+
+  /* Radius scale */
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
 }
 
+/* ============================================================
+   CSS VARIABLES — Light mode (default)
+   ============================================================ */
 @layer base {
   :root {
-    --background: 160 20% 96%; /* #F1F5F4 very light teal-grey background */
-    --foreground: 240 10% 10%;
-    --card: 0 0% 100%; /* Pure white interior cards */
-    --card-foreground: 240 10% 10%;
+    /* Page background — warm off-white from reference */
+    --background: 40 20% 96%;
+    --foreground: 222 20% 12%;
+
+    /* Card / popover surfaces */
+    --card: 0 0% 100%;
+    --card-foreground: 222 20% 12%;
+    --surface: 0 0% 100%;
+    --surface-muted: 40 15% 96%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 10%;
-    --primary: 172 63% 14%; /* Dark Teal #0d3a35 */
+    --popover-foreground: 222 20% 12%;
+
+    /* Primary brand — deep dark navy (matches ref sidebar) */
+    --primary: 222 30% 14%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 160 84% 39%; /* Light Mint Green #10b981 */
-    --secondary-foreground: 0 0% 100%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 160 84% 39%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 172 63% 14%;
-    --radius: 1.5rem; /* Highly rounded corners like the design */
+
+    /* Secondary */
+    --secondary: 40 15% 92%;
+    --secondary-foreground: 222 20% 12%;
+
+    --muted: 40 15% 92%;
+    --muted-foreground: 215 16% 47%;
+
+    --accent: 38 92% 50%;
+    --accent-foreground: 222 20% 12%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 40 15% 88%;
+    --input: 40 15% 88%;
+    --ring: 38 92% 50%;
+
+    /* Income — green */
+    --income: 142 71% 45%;
+    --income-foreground: 0 0% 100%;
+    --income-muted: 142 71% 95%;
+
+    /* Expense — amber (matches reference image) */
+    --expense: 38 92% 50%;
+    --expense-foreground: 222 20% 12%;
+    --expense-muted: 38 92% 95%;
+
+    /* Sidebar — same as background in light mode */
+    --sidebar: 222 30% 14%;
+    --sidebar-border: 222 30% 20%;
+    --sidebar-active: 38 92% 50%;
+
+    /* Text */
+    --text-primary: 222 20% 12%;
+    --text-secondary: 215 16% 47%;
+
+    --radius: 0.75rem;
   }
 
+  /* ============================================================
+     CSS VARIABLES — Dark mode
+     ============================================================ */
+  .dark {
+    /* Page background — near-black dark navy */
+    --background: 222 28% 9%;
+    --foreground: 210 20% 92%;
 
+    /* Card surfaces */
+    --card: 222 26% 13%;
+    --card-foreground: 210 20% 92%;
+    --surface: 222 26% 13%;
+    --surface-muted: 222 24% 16%;
+    --popover: 222 26% 13%;
+    --popover-foreground: 210 20% 92%;
 
+    /* Primary — amber accent becomes the primary in dark */
+    --primary: 38 92% 55%;
+    --primary-foreground: 222 28% 9%;
+
+    --secondary: 222 24% 18%;
+    --secondary-foreground: 210 20% 92%;
+
+    --muted: 222 24% 18%;
+    --muted-foreground: 215 16% 55%;
+
+    --accent: 38 92% 55%;
+    --accent-foreground: 222 28% 9%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 222 24% 20%;
+    --input: 222 24% 20%;
+    --ring: 38 92% 55%;
+
+    /* Income — bright green on dark */
+    --income: 142 71% 52%;
+    --income-foreground: 222 28% 9%;
+    --income-muted: 142 30% 15%;
+
+    /* Expense — amber on dark */
+    --expense: 38 92% 55%;
+    --expense-foreground: 222 28% 9%;
+    --expense-muted: 38 40% 15%;
+
+    /* Sidebar */
+    --sidebar: 222 28% 10%;
+    --sidebar-border: 222 24% 16%;
+    --sidebar-active: 38 92% 55%;
+
+    /* Text */
+    --text-primary: 210 20% 92%;
+    --text-secondary: 215 16% 55%;
+  }
+
+  /* ============================================================
+     BASE STYLES
+     ============================================================ */
   * {
     @apply border-border;
   }
+
+  html {
+    @apply antialiased;
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-background text-foreground font-sans;
     font-feature-settings: "rlig" 1, "calt" 1;
+    min-height: 100dvh;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-border rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/40;
+  }
+}
+
+/* ============================================================
+   GLOBAL UTILITY CLASSES
+   ============================================================ */
+@layer utilities {
+  /* Font family helpers */
+  .font-display {
+    font-family: var(--font-display);
+  }
+
+  /* Income / Expense colored text */
+  .text-income {
+    color: hsl(var(--income));
+  }
+  .text-expense {
+    color: hsl(var(--expense));
+  }
+
+  /* Glassmorphism card effect */
+  .card-glass {
+    @apply bg-card/80 backdrop-blur-md border border-border/50 shadow-sm;
+  }
+
+  /* Subtle glow effect on income/expense accents */
+  .glow-income {
+    box-shadow: 0 0 20px hsl(var(--income) / 0.2);
+  }
+  .glow-expense {
+    box-shadow: 0 0 20px hsl(var(--expense) / 0.2);
+  }
+
+  /* Sidebar nav item active */
+  .nav-active {
+    @apply bg-white/10 text-white border-l-2 border-sidebar-active;
+  }
+
+  /* Smooth page transitions */
+  .page-enter {
+    @apply animate-in fade-in slide-in-from-bottom-2 duration-300;
   }
 }

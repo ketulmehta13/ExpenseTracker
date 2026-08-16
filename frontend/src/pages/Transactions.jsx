@@ -207,12 +207,6 @@ const Transactions = () => {
                     >
                         <FileText size={13} /> PDF
                     </button>
-                    <button
-                        onClick={() => setTxModal({ open: true, transaction: null, type: 'EXPENSE' })}
-                        className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground shadow-sm hover:opacity-90 transition"
-                    >
-                        <Plus size={13} /> Add new
-                    </button>
                 </div>
             </div>
 
@@ -337,14 +331,10 @@ const Transactions = () => {
                     description={
                         hasActiveFilters
                             ? 'Try adjusting your filters or clearing them to see all transactions.'
-                            : 'Add your first transaction to start tracking your finances.'
+                            : 'Add your first transaction from the top-right profile menu to start tracking your finances.'
                     }
-                    ctaLabel={hasActiveFilters ? 'Clear filters' : '+ Add transaction'}
-                    onCta={
-                        hasActiveFilters
-                            ? clearFilters
-                            : () => setTxModal({ open: true, transaction: null, type: 'EXPENSE' })
-                    }
+                    ctaLabel={hasActiveFilters ? 'Clear filters' : undefined}
+                    onCta={hasActiveFilters ? clearFilters : undefined}
                 />
             ) : (
                 <>

@@ -102,9 +102,9 @@ const Home = () => {
                     >
                         {[
                             { icon: PieChart, color: 'text-primary', bg: 'bg-primary/10', title: 'Analytics', desc: 'Visual charts & insights' },
-                            { icon: TrendingUp, color: 'text-emerald-500', bg: 'bg-emerald-500/10', title: 'Track Spend', desc: 'Income & expense logs' },
-                            { icon: IndianRupee, color: 'text-blue-500', bg: 'bg-blue-500/10', title: 'Budgets', desc: 'Set monthly limits' },
-                            { icon: ShieldCheck, color: 'text-secondary', bg: 'bg-secondary/10', title: 'Secure', desc: 'Your data stays private' },
+                            { icon: TrendingUp, color: 'text-primary', bg: 'bg-primary/10', title: 'Track Spend', desc: 'Income & expense logs' },
+                            { icon: IndianRupee, color: 'text-primary', bg: 'bg-primary/10', title: 'Budgets', desc: 'Set monthly limits' },
+                            { icon: ShieldCheck, color: 'text-primary', bg: 'bg-primary/10', title: 'Secure', desc: 'Your data stays private' },
                         ].map((f, i) => (
                             <motion.div
                                 key={i}

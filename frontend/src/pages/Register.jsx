@@ -13,7 +13,7 @@ const passwordStrength = (pwd) => {
     const hasSpecial = /[^A-Za-z0-9]/.test(pwd);
     const score = 1 + (hasUpper ? 1 : 0) + (hasNumber ? 1 : 0) + (hasSpecial ? 1 : 0);
     if (score >= 4) return { score: 3, label: 'Strong', color: 'bg-primary' };
-    if (score >= 3) return { score: 2, label: 'Fair', color: 'bg-emerald-500' };
+    if (score >= 3) return { score: 2, label: 'Fair', color: 'bg-primary/70' };
     return { score: 1, label: 'Weak', color: 'bg-amber-500' };
 };
 

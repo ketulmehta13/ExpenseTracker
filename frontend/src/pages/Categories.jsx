@@ -9,10 +9,10 @@ import { Skeleton } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/ui/EmptyState';
 import ConfirmModal from '../components/ConfirmModal';
 
-/* ── 12 preset color swatches ── */
+/* ── 12 preset color swatches (with Brand #0d3a35) ── */
 const PRESET_COLORS = [
-    '#f59e0b', '#4ade80', '#60a5fa', '#f472b6',
-    '#a78bfa', '#34d399', '#fb923c', '#38bdf8',
+    '#0d3a35', '#16574f', '#247a70', '#3b9e92',
+    '#0284c7', '#f59e0b', '#dc2626', '#7c3aed',
     '#ef4444', '#84cc16', '#e879f9', '#2dd4bf',
 ];
 

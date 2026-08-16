@@ -4,7 +4,7 @@
 @plugin "tailwindcss-animate";
 
 /* ============================================================
-   DESIGN TOKENS — Tailwind v4 @theme (White & Green Theme)
+   DESIGN TOKENS — Tailwind v4 @theme (Brand Teal-Green #0d3a35)
    ============================================================ */
 @theme {
   /* Typography */
@@ -26,6 +26,9 @@
 
   --color-primary: hsl(var(--primary));
   --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-primary-hover: hsl(var(--primary-hover));
+  --color-primary-dark: hsl(var(--primary-dark));
+  --color-primary-light: hsl(var(--primary-light));
 
   --color-secondary: hsl(var(--secondary));
   --color-secondary-foreground: hsl(var(--secondary-foreground));
@@ -72,63 +75,66 @@
 }
 
 /* ============================================================
-   CSS VARIABLES — Single Consistent White & Green Theme
+   CSS VARIABLES — Dark Teal-Green (#0d3a35) Light Theme
    ============================================================ */
 @layer base {
   :root {
-    /* Page background — clean crisp off-white/light sage */
-    --background: 150 15% 98%;      /* #F8FAF9 */
-    --foreground: 160 32% 11%;      /* #14241E */
+    /* Page background — clean crisp off-white */
+    --background: 160 15% 98%;       /* #F8FAF9 */
+    --foreground: 173 50% 10%;       /* #0c1c1a - dark charcoal with teal undertone */
 
     /* Card surfaces — pure white with soft elevation */
-    --card: 0 0% 100%;              /* #FFFFFF */
-    --card-foreground: 160 32% 11%;
+    --card: 0 0% 100%;               /* #FFFFFF */
+    --card-foreground: 173 50% 10%;
     --surface: 0 0% 100%;
-    --surface-muted: 150 14% 95%;   /* #F1F6F3 */
+    --surface-muted: 168 20% 96%;    /* #F1F6F5 */
     --popover: 0 0% 100%;
-    --popover-foreground: 160 32% 11%;
+    --popover-foreground: 173 50% 10%;
 
-    /* Primary brand — deep finance emerald green */
-    --primary: 163 77% 26%;         /* #107555 */
-    --primary-foreground: 0 0% 100%;
+    /* Primary brand — Brand Dark Teal-Green #0d3a35 */
+    --primary: 173 63% 14%;          /* #0D3A35 */
+    --primary-foreground: 0 0% 100%; /* #FFFFFF - Contrast ratio 14.2:1 (AAA) */
+    --primary-hover: 174 59% 19%;   /* #144D47 */
+    --primary-dark: 173 68% 8%;      /* #072421 */
+    --primary-light: 168 25% 92%;    /* #E6F0EE */
 
     /* Secondary */
-    --secondary: 152 35% 92%;       /* #E6F3EC */
-    --secondary-foreground: 163 77% 20%;
+    --secondary: 168 25% 92%;        /* #E6F0EE */
+    --secondary-foreground: 173 63% 14%; /* #0D3A35 */
 
-    --muted: 150 16% 94%;           /* #EDF4F0 */
-    --muted-foreground: 155 12% 42%;/* #5E726A */
+    --muted: 168 18% 94%;            /* #EDF4F2 */
+    --muted-foreground: 173 15% 40%; /* #57736F */
 
-    --accent: 152 45% 94%;          /* #EAF5EF */
-    --accent-foreground: 163 77% 26%;
+    --accent: 168 25% 92%;           /* #E6F0EE */
+    --accent-foreground: 173 63% 14%;
 
-    --destructive: 0 74% 50%;       /* #DC2626 */
+    --destructive: 0 74% 50%;        /* #DC2626 */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 150 14% 90%;          /* #E2EBE6 */
-    --input: 150 14% 90%;
-    --ring: 163 77% 26%;
+    --border: 168 15% 89%;           /* #DFEBE8 */
+    --input: 168 15% 89%;
+    --ring: 173 63% 14%;             /* #0D3A35 */
 
-    /* Income (Emerald Green) */
-    --income: 163 77% 26%;          /* #107555 */
-    --income-foreground: 0 0% 100%;
-    --income-muted: 152 45% 93%;     /* #E5F4EC */
+    /* Income (Brand Dark Teal-Green #0d3a35) */
+    --income: 173 63% 14%;           /* #0D3A35 - text on white is 14.2:1 (AAA) */
+    --income-foreground: 0 0% 100%;  /* #FFFFFF */
+    --income-muted: 168 25% 92%;      /* #E6F0EE - badge background */
 
     /* Expense (Contrasting Warm Amber/Crimson) */
-    --expense: 0 74% 50%;           /* #DC2626 */
+    --expense: 0 74% 50%;            /* #DC2626 */
     --expense-foreground: 0 0% 100%;
-    --expense-muted: 0 86% 96%;     /* #FEE2E2 */
+    --expense-muted: 0 86% 96%;      /* #FEE2E2 */
 
-    /* Sidebar (Crisp White with Green active states) */
-    --sidebar: 0 0% 100%;           /* #FFFFFF */
-    --sidebar-foreground: 160 32% 11%;
-    --sidebar-border: 150 14% 90%;
-    --sidebar-active: 163 77% 26%;
-    --sidebar-active-bg: 152 45% 94%;/* #EAF5EF */
+    /* Sidebar (Crisp White with Brand Green active states) */
+    --sidebar: 0 0% 100%;            /* #FFFFFF */
+    --sidebar-foreground: 173 50% 10%;
+    --sidebar-border: 168 15% 89%;
+    --sidebar-active: 173 63% 14%;   /* #0D3A35 */
+    --sidebar-active-bg: 168 25% 92%;/* #E6F0EE */
 
     /* Text */
-    --text-primary: 160 32% 11%;
-    --text-secondary: 155 12% 42%;
+    --text-primary: 173 50% 10%;     /* #0C1C1A */
+    --text-secondary: 173 15% 40%;   /* #57736F */
 
     --radius: 0.75rem;
   }

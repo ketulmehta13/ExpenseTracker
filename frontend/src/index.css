@@ -1,15 +1,15 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @plugin "tailwindcss-animate";
 
 /* ============================================================
-   DESIGN TOKENS — Tailwind v4 @theme (Brand Teal-Green #0d3a35)
+   ORIGINAL DESIGN TOKENS (Restored from commit bc67203)
    ============================================================ */
 @theme {
   /* Typography */
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-display: "Fraunces", Georgia, serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
 
   /* Semantic color tokens */
   --color-background: hsl(var(--background));
@@ -66,77 +66,65 @@
   --color-text-primary: hsl(var(--text-primary));
   --color-text-secondary: hsl(var(--text-secondary));
 
-  /* Radius scale */
+  /* Radius scale - Original highly rounded 1.5rem radius */
   --radius-lg: var(--radius);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 4px);
+  --radius-sm: calc(var(--radius) - 8px);
   --radius-xl: calc(var(--radius) + 4px);
   --radius-2xl: calc(var(--radius) + 8px);
 }
 
 /* ============================================================
-   CSS VARIABLES — Dark Teal-Green (#0d3a35) Light Theme
+   ORIGINAL CSS VARIABLES — Commit bc67203
    ============================================================ */
 @layer base {
   :root {
-    /* Page background — clean crisp off-white */
-    --background: 160 15% 98%;       /* #F8FAF9 */
-    --foreground: 173 50% 10%;       /* #0c1c1a - dark charcoal with teal undertone */
-
-    /* Card surfaces — pure white with soft elevation */
-    --card: 0 0% 100%;               /* #FFFFFF */
-    --card-foreground: 173 50% 10%;
+    --background: 160 20% 96%;        /* #F1F5F4 very light teal-grey background */
+    --foreground: 240 10% 10%;        /* Dark charcoal */
+    --card: 0 0% 100%;                /* Pure white interior cards */
+    --card-foreground: 240 10% 10%;
     --surface: 0 0% 100%;
-    --surface-muted: 168 20% 96%;    /* #F1F6F5 */
+    --surface-muted: 160 20% 96%;
     --popover: 0 0% 100%;
-    --popover-foreground: 173 50% 10%;
+    --popover-foreground: 240 10% 10%;
+    --primary: 172 63% 14%;           /* Dark Teal #0d3a35 */
+    --primary-foreground: 0 0% 100%;  /* Pure white */
+    --primary-hover: 174 59% 19%;     /* #144d47 */
+    --primary-dark: 172 68% 8%;       /* #072421 */
+    --primary-light: 160 30% 93%;     /* Soft teal tint */
+    --secondary: 160 84% 39%;         /* Light Mint Green #10b981 */
+    --secondary-foreground: 0 0% 100%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 160 84% 39%;            /* Light Mint Green #10b981 */
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 172 63% 14%;
 
-    /* Primary brand — Brand Dark Teal-Green #0d3a35 */
-    --primary: 173 63% 14%;          /* #0D3A35 */
-    --primary-foreground: 0 0% 100%; /* #FFFFFF - Contrast ratio 14.2:1 (AAA) */
-    --primary-hover: 174 59% 19%;   /* #144D47 */
-    --primary-dark: 173 68% 8%;      /* #072421 */
-    --primary-light: 168 25% 92%;    /* #E6F0EE */
+    /* Income & Expense */
+    --income: 172 63% 14%;            /* #0d3a35 */
+    --income-foreground: 0 0% 100%;
+    --income-muted: 160 30% 93%;
 
-    /* Secondary */
-    --secondary: 168 25% 92%;        /* #E6F0EE */
-    --secondary-foreground: 173 63% 14%; /* #0D3A35 */
-
-    --muted: 168 18% 94%;            /* #EDF4F2 */
-    --muted-foreground: 173 15% 40%; /* #57736F */
-
-    --accent: 168 25% 92%;           /* #E6F0EE */
-    --accent-foreground: 173 63% 14%;
-
-    --destructive: 0 74% 50%;        /* #DC2626 */
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 168 15% 89%;           /* #DFEBE8 */
-    --input: 168 15% 89%;
-    --ring: 173 63% 14%;             /* #0D3A35 */
-
-    /* Income (Brand Dark Teal-Green #0d3a35) */
-    --income: 173 63% 14%;           /* #0D3A35 - text on white is 14.2:1 (AAA) */
-    --income-foreground: 0 0% 100%;  /* #FFFFFF */
-    --income-muted: 168 25% 92%;      /* #E6F0EE - badge background */
-
-    /* Expense (Contrasting Warm Amber/Crimson) */
-    --expense: 0 74% 50%;            /* #DC2626 */
+    --expense: 0 84.2% 60.2%;
     --expense-foreground: 0 0% 100%;
-    --expense-muted: 0 86% 96%;      /* #FEE2E2 */
+    --expense-muted: 0 86% 96%;
 
-    /* Sidebar (Crisp White with Brand Green active states) */
-    --sidebar: 0 0% 100%;            /* #FFFFFF */
-    --sidebar-foreground: 173 50% 10%;
-    --sidebar-border: 168 15% 89%;
-    --sidebar-active: 173 63% 14%;   /* #0D3A35 */
-    --sidebar-active-bg: 168 25% 92%;/* #E6F0EE */
+    /* Sidebar */
+    --sidebar: 0 0% 100%;
+    --sidebar-foreground: 240 10% 10%;
+    --sidebar-border: 214.3 31.8% 91.4%;
+    --sidebar-active: 172 63% 14%;
+    --sidebar-active-bg: 160 30% 93%;
 
     /* Text */
-    --text-primary: 173 50% 10%;     /* #0C1C1A */
-    --text-secondary: 173 15% 40%;   /* #57736F */
+    --text-primary: 240 10% 10%;
+    --text-secondary: 215.4 16.3% 46.9%;
 
-    --radius: 0.75rem;
+    --radius: 1.5rem;                 /* Original 1.5rem rounded pill styling */
   }
 }
 
@@ -158,10 +146,7 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-  }
-
-  h1, h2, h3, .font-display {
-    font-family: var(--font-display);
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 

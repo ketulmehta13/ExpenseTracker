@@ -16,8 +16,9 @@ import {
 } from 'lucide-react';
 import logoIcon from '../assets/logo-icon.png';
 import { cn } from '../lib/utils';
-import { Toaster } from 'sonner';
+import { Toaster, toast } from 'sonner';
 import TransactionModal from '../components/TransactionModal';
+import { useAutoLogout } from '../hooks/useAutoLogout';
 
 const navItems = [
     { path: '/dashboard', name: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -40,6 +41,24 @@ const MainLayout = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
     const [txModal, setTxModal] = useState({ open: false, type: 'EXPENSE', transaction: null });
+
+    // Auto logout on 15 minutes of inactivity with 60-second warning toast
+    useAutoLogout({
+        timeoutMinutes: 15,
+        warnBeforeMs: 60000,
+        onWarn: () => {
+            toast.warning("You'll be logged out soon due to inactivity", {
+                duration: 10000,
+            });
+        },
+        onLogout: async () => {
+            try {
+                await logout();
+            } catch {/* ignore */}
+            toast.info("You've been logged out due to inactivity.");
+            navigate('/login');
+        },
+    });
 
     const handleLogout = async () => {
         try {

@@ -12,7 +12,15 @@ export default {
           hover: "#144d47",
           dark: "#072421",
           light: "#e6f0ee",
-          subtle: "#f0f6f5",
+          subtle: "#f1f5f4",
+        },
+        secondary: {
+          DEFAULT: "#10b981",
+          foreground: "#ffffff",
+        },
+        accent: {
+          DEFAULT: "#10b981",
+          foreground: "#ffffff",
         },
         income: {
           DEFAULT: "#0d3a35",
@@ -26,15 +34,17 @@ export default {
         },
         surface: {
           DEFAULT: "#ffffff",
-          muted: "#f1f6f3",
+          muted: "#f1f5f4",
         },
-        background: "#f8faf9",
-        "text-primary": "#11211e",
-        "text-secondary": "#4b635d",
+        background: "#f1f5f4",
+        "text-primary": "#1a1a1a",
+        "text-secondary": "#6b7280",
       },
       fontFamily: {
         sans: ["Inter", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
-        display: ["Fraunces", "Georgia", "serif"],
+      },
+      borderRadius: {
+        DEFAULT: "1.5rem",
       },
     },
   },

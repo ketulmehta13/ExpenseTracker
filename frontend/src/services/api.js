@@ -164,6 +164,69 @@ export const getCategories = async () => {
     return data;
 };
 
+/**
+ * Create a new category.
+ */
+export const createCategory = async ({ name, color, icon }) => {
+    const { data, error } = await supabase
+        .from('categories')
+        .insert({ name, color: color || null, icon: icon || null })
+        .select()
+        .single();
+    if (error) throw error;
+    return data;
+};
+
+/**
+ * Update an existing category.
+ */
+export const updateCategory = async (id, updates) => {
+    const { data, error } = await supabase
+        .from('categories')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+    if (error) throw error;
+    return data;
+};
+
+/**
+ * Delete a category.
+ * Call getTransactionCountByCategory first to check for linked transactions.
+ */
+export const deleteCategory = async (id) => {
+    const { error } = await supabase
+        .from('categories')
+        .delete()
+        .eq('id', id);
+    if (error) throw error;
+};
+
+/**
+ * Get the count of transactions linked to a category.
+ */
+export const getTransactionCountByCategory = async (categoryId) => {
+    const { count, error } = await supabase
+        .from('transactions')
+        .select('id', { count: 'exact', head: true })
+        .eq('category_id', categoryId);
+    if (error) throw error;
+    return count ?? 0;
+};
+
+/**
+ * Reassign all transactions from one category to another.
+ * Used before deleting a category that has linked transactions.
+ */
+export const reassignTransactionsCategory = async (oldCategoryId, newCategoryId) => {
+    const { error } = await supabase
+        .from('transactions')
+        .update({ category_id: newCategoryId })
+        .eq('category_id', oldCategoryId);
+    if (error) throw error;
+};
+
 // ============================================================
 // SUMMARY / ANALYTICS (Client-side computation)
 // ============================================================

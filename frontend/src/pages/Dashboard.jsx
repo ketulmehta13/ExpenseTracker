@@ -14,10 +14,10 @@ import { SkeletonDashboard } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/ui/EmptyState';
 import TransactionModal from '../components/TransactionModal';
 
-/* ── Color palette for category donut chart ── */
+/* ── Color palette for category donut chart (White & Green finance palette) ── */
 const CAT_COLORS = [
-    '#f59e0b', '#4ade80', '#60a5fa', '#f472b6',
-    '#a78bfa', '#34d399', '#fb923c', '#38bdf8',
+    '#107555', '#059669', '#16a34a', '#0d9488',
+    '#0284c7', '#f59e0b', '#e11d48', '#8b5cf6',
 ];
 
 /* ── Date range options ── */

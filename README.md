@@ -1,64 +1,107 @@
-# Full-Stack Expense Tracker
+# 💸 Expense Tracker — Full-Stack Application
 
-A modern, full-stack expense tracker application featuring a Django REST Framework backend and a React (Vite) frontend styled with Tailwind CSS v4.
+A modern, production-grade expense tracker and personal finance management system. Built with **React 18, Vite, and Tailwind CSS v4** on the frontend (deployed on **Vercel**), powered by **Supabase** (PostgreSQL, Row Level Security, and JWT Auth) as the active backend.
 
-## Features
-- JWT Authentication (djangorestframework-simplejwt)
-- Dashboard with Monthly Trends (Bar Chart) and Expense Breakdown (Pie Chart) using Chart.js
-- CRUD Operations for Transactions (Income / Expense)
-- Dark Mode support & Modern Aesthetic styling via Tailwind.
+🌐 **Live Production App:** [https://ketul-expense-tracker.vercel.app](https://ketul-expense-tracker.vercel.app)
 
 ---
 
-## Local Development Setup
+## 🏛️ System Architecture
 
-### Backend (Django)
-1. **Navigate to the backend directory**: `cd backend`
-2. **Setup virtual environment**: `python -m venv venv` and activate it (e.g. `venv\Scripts\activate` on Windows)
-3. **Install dependencies**: `pip install -r requirements.txt` (or install manually: `pip install django djangorestframework djangorestframework-simplejwt django-cors-headers python-dotenv`)
-4. **Apply Migrations**: `python manage.py migrate`
-5. **Run Server**: `python manage.py runserver`
-Backend will run at `http://127.0.0.1:8000/`.
-
-### Frontend (React/Vite)
-1. **Navigate to the frontend directory**: `cd frontend`
-2. **Install dependencies**: `npm install`
-3. **Run Dev Server**: `npm run dev`
-Frontend will run locally (typically `http://localhost:5173/`).
+- **Frontend:** React + Vite, Tailwind CSS v4 `@theme` design tokens, Sonner toast notifications, Recharts analytics, jsPDF reports.
+- **Backend / Database:** Supabase (Managed PostgreSQL 15+).
+- **Authentication:** Supabase Auth (JWT tokens, session auto-refresh, email password reset).
+- **Security:** Strict PostgreSQL **Row Level Security (RLS)** on all tables (`transactions`, `categories`, `profiles`), ensuring 100% data isolation per user.
+- **Hosting:**
+  - Frontend: Vercel with automated CI/CD branch previews and production deployments.
+  - Backend: Supabase cloud managed database & auth.
 
 ---
 
-## Deployment Steps
+## 🚀 Quickstart & Local Setup
 
-### Backend Hosting (Render / Railway)
-1. Convert your database to PostgreSQL if moving to production (`python-dotenv` and `dj-database-url` are recommended). Add your `DATABASE_URL`.
-2. Push your `backend` code repository to GitHub.
-3. On Render/Railway, link the GitHub repository.
-4. Set Build Command: `pip install -r requirements.txt && python manage.py migrate`
-5. Set Start Command: `gunicorn backend_config.wsgi:application`
-6. Important Environment Variables:
-   - `SECRET_KEY`: Django secret key
-   - `DEBUG`: `False`
-   - `CORS_ALLOWED_ORIGINS`: Add your Vercel frontend URL.
+### 1. Prerequisites
+- Node.js 18+ & npm
+- A [Supabase](https://supabase.com) project
 
-### Frontend Hosting (Vercel)
-1. Ensure your `frontend` code is in a repository.
-2. Link the repository to your Vercel account.
-3. Vercel automatically detects the Vite framework setting Build Command: `npm run build` & Output Dir: `dist`.
-4. Add the Environment Variable `VITE_API_URL` and point it to your deployed Render/Railway backend URL (e.g., `https://your-backend.onrender.com/api`).
-5. Deploy.
+### 2. Configure Environment Variables
+Copy `.env.example` to `frontend/.env.local`:
+```bash
+cp .env.example frontend/.env.local
+```
+Fill in your Supabase credentials:
+```env
+VITE_SUPABASE_URL=https://your-project-id.supabase.co
+VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+```
+> ⚠️ **Security Warning:** Only use the `anon/public` key in the frontend. Never expose the `service_role` key in client code or Git.
+
+### 3. Apply Supabase Database Migrations
+Run the SQL migration located at `supabase/migrations/20260816000000_production_hardening.sql` in your Supabase SQL Editor to establish:
+1. `profiles`, `categories`, and `transactions` tables with strict constraints (`CHECK amount > 0`).
+2. High-performance composite indexes (`idx_transactions_user_date`, etc.).
+3. Row Level Security policies (`auth.uid() = user_id`).
+4. Automatic profile provisioning trigger on user registration.
+5. Default global categories seed.
+
+### 4. Install & Run Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
+Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ---
 
-## API Documentation
+## 🛡️ Security & Row Level Security (RLS)
 
-| Endpoint | Method | Description | Auth Required |
-|----------|--------|-------------|---------------|
-| `/api/auth/register/` | POST | Register new user (`username`, `email`, `password`) | No |
-| `/api/auth/login/` | POST | Obtain JWT tokens (`username`, `password`) | No |
-| `/api/auth/token/refresh/` | POST | Automatically refreshes simplejwt token | No |
-| `/api/auth/me/` | GET | Validates / Retrieves user info | Yes |
-| `/api/categories/` | GET, POST | Retrieve or create categories | Yes |
-| `/api/transactions/` | GET, POST, PUT, DELETE | CRUD operations and filters on transactions | Yes |
+Every table has RLS enabled with explicit tenant isolation policies:
 
-*Note: The frontend Axios interceptor automatically manages `Bearer <token>` attachments to authorized routes.*
+| Table | Operation | Policy Enforcement |
+|---|---|---|
+| `transactions` | `SELECT`, `INSERT`, `UPDATE`, `DELETE` | `auth.uid() = user_id` |
+| `categories` | `SELECT` | `auth.uid() = user_id OR user_id IS NULL` (includes defaults) |
+| `categories` | `INSERT`, `UPDATE`, `DELETE` | `auth.uid() = user_id` |
+| `profiles` | `SELECT`, `INSERT`, `UPDATE`, `DELETE` | `auth.uid() = id` |
+
+### Verifying RLS
+Execute `supabase/tests/rls_security_test.sql` in the Supabase SQL editor to run the automated policy isolation test suite.
+
+---
+
+## 🧪 CI/CD & Production Readiness
+
+- **Continuous Integration:** `.github/workflows/ci.yml` validates builds, verifies dependency trees, and checks migration security on every push and PR.
+- **Backups:**
+  - On Supabase Pro/Team tiers: Daily automated point-in-time recovery (PITR).
+  - Manual backup via CLI:
+    ```bash
+    supabase db dump -f backup_$(date +%Y%m%d).sql
+    ```
+- **Staging Environment:** Create a separate Supabase project for staging and configure a Vercel preview branch deployment.
+
+---
+
+## 📁 Repository Structure
+
+```
+├── .github/workflows/ci.yml       # Automated CI build & migration check
+├── .env.example                   # Environment variable template
+├── frontend/                      # React + Vite application
+│   ├── src/
+│   │   ├── components/            # UI components (TransactionModal, etc.)
+│   │   ├── context/               # AuthContext (Supabase auth listener)
+│   │   ├── layouts/               # MainLayout (Sidebar + Mobile navigation)
+│   │   ├── pages/                 # Dashboard, Transactions, Reports, Categories, Settings
+│   │   └── services/              # api.js (Supabase queries & pagination)
+├── supabase/
+│   ├── migrations/                # Versioned SQL migrations & RLS policies
+│   └── tests/                     # RLS security verification suite
+└── backend/                       # Legacy Django project (kept for reference)
+```
+
+---
+
+## 📄 License
+MIT © Ketul Mehta

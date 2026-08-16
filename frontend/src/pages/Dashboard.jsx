@@ -1,227 +1,434 @@
-import React, { useState, useEffect } from 'react';
-import { 
-    ArrowUpCircle, 
-    ArrowDownCircle, 
-    Wallet,
-    TrendingUp,
-    Loader2,
-    Lightbulb,
-    AlertTriangle,
-    Target
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+    TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight,
+    Plus, Calendar, RefreshCw
 } from 'lucide-react';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip as RTooltip, Cell, PieChart, Pie, Legend } from 'recharts';
+import {
+    ResponsiveContainer, BarChart, Bar, XAxis, YAxis,
+    Tooltip as RTooltip, PieChart, Pie, Cell, Legend
+} from 'recharts';
 import { getTransactions, getProfile, computeSummary } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
+import { formatCurrency, formatDate, getGreeting } from '../lib/formatters';
+import { SkeletonDashboard } from '../components/ui/Skeleton';
+import { EmptyState } from '../components/ui/EmptyState';
+import TransactionModal from '../components/TransactionModal';
 
-const COLORS = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#14b8a6'];
+/* ── Color palette for category donut chart ── */
+const CAT_COLORS = [
+    '#f59e0b', '#4ade80', '#60a5fa', '#f472b6',
+    '#a78bfa', '#34d399', '#fb923c', '#38bdf8',
+];
 
+/* ── Date range options ── */
+const DATE_RANGES = [
+    { id: 'this_month', label: 'This month' },
+    { id: 'last_30', label: 'Last 30 days' },
+    { id: 'last_3m', label: 'Last 3 months' },
+    { id: 'all', label: 'All time' },
+];
+
+/* ── Summary card component ── */
+const SummaryCard = ({ label, value, subtext, icon: Icon, accentClass, trend, trendValue }) => (
+    <div className="relative rounded-2xl border border-border bg-card p-5 overflow-hidden group hover:shadow-md transition-shadow">
+        <div className="absolute top-0 right-0 w-24 h-24 rounded-full bg-current opacity-[0.04] -translate-y-6 translate-x-6 group-hover:opacity-[0.07] transition-opacity" />
+        <div className="flex items-start justify-between mb-3">
+            <p className="text-sm font-medium text-muted-foreground">{label}</p>
+            <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${accentClass}`}>
+                <Icon size={18} />
+            </div>
+        </div>
+        <p className="text-2xl font-bold text-foreground font-display">{value}</p>
+        {subtext && <p className="mt-1 text-xs text-muted-foreground">{subtext}</p>}
+        {trendValue !== undefined && (
+            <div className={`mt-2 flex items-center gap-1 text-xs font-semibold ${trend === 'up' ? 'text-income' : trend === 'down' ? 'text-expense' : 'text-muted-foreground'}`}>
+                {trend === 'up' ? <TrendingUp size={12} /> : trend === 'down' ? <TrendingDown size={12} /> : null}
+                {trendValue}
+            </div>
+        )}
+    </div>
+);
+
+/* ── Custom Recharts tooltip ── */
+const CustomTooltip = ({ active, payload, label }) => {
+    if (!active || !payload?.length) return null;
+    return (
+        <div className="rounded-xl bg-card border border-border shadow-xl px-3 py-2.5 text-xs">
+            <p className="font-semibold text-foreground mb-1">{label}</p>
+            {payload.map((p) => (
+                <div key={p.dataKey} className="flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full" style={{ background: p.fill || p.color }} />
+                    <span className="text-muted-foreground capitalize">{p.dataKey}:</span>
+                    <span className="font-semibold text-foreground">{formatCurrency(p.value)}</span>
+                </div>
+            ))}
+        </div>
+    );
+};
+
+/* ─────────────────────────────────────
+   Main Dashboard component
+───────────────────────────────────── */
 const Dashboard = () => {
     const { user } = useAuth();
-    const [summary, setSummary] = useState(null);
-    const [categoryStats, setCategoryStats] = useState([]);
+    const [allTransactions, setAllTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [profile, setProfile] = useState(null);
+    const [dateRange, setDateRange] = useState('this_month');
+    const [txModal, setTxModal] = useState({ open: false, type: 'EXPENSE' });
 
-    useEffect(() => {
-        fetchSummary();
-    }, [user]);
-
-    const fetchSummary = async () => {
+    const fetchData = useCallback(async () => {
+        setLoading(true);
         try {
-            // Fetch transactions and profile in parallel
-            const [transactions, profile] = await Promise.all([
+            const [txs, prof] = await Promise.all([
                 getTransactions(),
                 getProfile(user.id),
             ]);
-            // Compute summary client-side (replaces Django /transactions/summary/ endpoint)
-            const summaryData = computeSummary(transactions, profile.monthly_budget);
-            setSummary(summaryData);
-            
-            try {
-                // Fetch smart insights from Django backend
-                const response = await fetch('http://localhost:8000/api/transactions/insights/category-stats/');
-                if (response.ok) {
-                    const stats = await response.json();
-                    setCategoryStats(stats);
-                }
-            } catch (err) {
-                console.warn('Could not fetch category stats from backend', err);
-            }
-        } catch (error) {
-            console.error('Failed to fetch summary', error);
+            setAllTransactions(txs);
+            setProfile(prof);
+        } catch (err) {
+            console.error('Dashboard fetch error', err);
         } finally {
             setLoading(false);
         }
-    };
+    }, [user]);
 
-    if (loading) {
-        return (
-            <div className="flex justify-center items-center h-[calc(100vh-100px)]">
-                <Loader2 className="animate-spin text-primary h-12 w-12" />
-            </div>
-        );
-    }
+    useEffect(() => { fetchData(); }, [fetchData]);
 
-    if (!summary) return null;
+    // Re-fetch when a transaction is added/edited from the sidebar modal
+    useEffect(() => {
+        const handler = () => fetchData();
+        window.addEventListener('transaction-updated', handler);
+        return () => window.removeEventListener('transaction-updated', handler);
+    }, [fetchData]);
 
-    const { current_month, budget, insights, category_breakdown } = summary;
-
-    const pieData = category_breakdown.map((item, index) => ({
-        name: item.category__name || 'Uncategorized',
-        value: parseFloat(item.total)
-    }));
-    
-    // For Bar Chart we can just show Income vs Expense for this month and last month
-    const barData = [
-        { name: 'Last Month', Income: parseFloat(summary.previous_month.income), Expense: parseFloat(summary.previous_month.expense) },
-        { name: 'This Month', Income: parseFloat(current_month.income), Expense: parseFloat(current_month.expense) },
-    ];
-
-    const budgetPct = budget.limit > 0 ? (current_month.expense / budget.limit) * 100 : 0;
-    
-    // Find top category insight
-    let topCategoryInsight = null;
-    if (categoryStats.length > 0 && summary.category_breakdown.length > 0) {
-        const topCatThisMonth = [...summary.category_breakdown].sort((a, b) => parseFloat(b.total) - parseFloat(a.total))[0];
-        if (topCatThisMonth) {
-            const stats = categoryStats.find(s => s.category === topCatThisMonth.category__name);
-            if (stats) {
-                const currentSpend = parseFloat(topCatThisMonth.total);
-                const avgSpend = stats.mean;
-                const pctDiff = avgSpend > 0 ? ((currentSpend - avgSpend) / avgSpend) * 100 : 0;
-                topCategoryInsight = {
-                    category: stats.category,
-                    currentSpend,
-                    avgSpend,
-                    pctDiff,
-                    isAbove: pctDiff > 0
-                };
+    /* ── Filter transactions by date range ── */
+    const filteredTransactions = React.useMemo(() => {
+        const now = new Date();
+        return allTransactions.filter((t) => {
+            const d = new Date(t.date);
+            if (dateRange === 'this_month') {
+                return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
             }
+            if (dateRange === 'last_30') {
+                return (now - d) / 86400000 <= 30;
+            }
+            if (dateRange === 'last_3m') {
+                return (now - d) / 86400000 <= 90;
+            }
+            return true; // all
+        });
+    }, [allTransactions, dateRange]);
+
+    const summary = React.useMemo(
+        () => computeSummary(allTransactions, profile?.monthly_budget),
+        [allTransactions, profile]
+    );
+
+    /* ── 6-month bar chart data ── */
+    const barData = React.useMemo(() => {
+        const months = [];
+        const now = new Date();
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const label = d.toLocaleDateString('en-IN', { month: 'short' });
+            let income = 0, expense = 0;
+            allTransactions.forEach((t) => {
+                const td = new Date(t.date);
+                if (td.getMonth() === d.getMonth() && td.getFullYear() === d.getFullYear()) {
+                    if (t.type === 'INCOME') income += parseFloat(t.amount);
+                    else expense += parseFloat(t.amount);
+                }
+            });
+            months.push({ name: label, Income: income, Expense: expense });
         }
-    }
-    
+        return months;
+    }, [allTransactions]);
+
+    /* ── Category donut data ── */
+    const pieData = React.useMemo(() => {
+        const map = {};
+        filteredTransactions
+            .filter((t) => t.type === 'EXPENSE')
+            .forEach((t) => {
+                const cat = t.category_name || 'Uncategorized';
+                map[cat] = (map[cat] || 0) + parseFloat(t.amount);
+            });
+        return Object.entries(map)
+            .map(([name, value]) => ({ name, value }))
+            .sort((a, b) => b.value - a.value);
+    }, [filteredTransactions]);
+
+    /* ── Recent activity (last 8) ── */
+    const recentActivity = React.useMemo(
+        () => allTransactions.slice(0, 8),
+        [allTransactions]
+    );
+
+    /* ── Summary values ── */
+    const curIncome = filteredTransactions
+        .filter((t) => t.type === 'INCOME')
+        .reduce((s, t) => s + parseFloat(t.amount), 0);
+    const curExpense = filteredTransactions
+        .filter((t) => t.type === 'EXPENSE')
+        .reduce((s, t) => s + parseFloat(t.amount), 0);
+    const netBalance = curIncome - curExpense;
+
+    const prevIncome = summary?.previous_month?.income ?? 0;
+    const prevExpense = summary?.previous_month?.expense ?? 0;
+    const prevNet = prevIncome - prevExpense;
+    const netPctChange = prevNet !== 0 ? ((netBalance - prevNet) / Math.abs(prevNet)) * 100 : null;
+
+    const displayName =
+        profile?.first_name ||
+        user?.user_metadata?.username ||
+        user?.email?.split('@')[0] ||
+        'there';
+
+    const today = new Date().toLocaleDateString('en-IN', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+    });
+
+    if (loading) return <SkeletonDashboard />;
+
     return (
-        <div className="space-y-6 animate-in fade-in duration-500">
-            <div className="flex flex-col gap-1">
-                <h1 className="text-3xl font-bold tracking-tight">Dashboard Overview</h1>
-                <p className="text-muted-foreground">Welcome back, here's your financial summary.</p>
+        <div className="space-y-6 page-enter">
+            {/* ── Greeting header ── */}
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                <div>
+                    <h1 className="font-display text-3xl font-bold text-foreground">
+                        {getGreeting()}, {displayName}.
+                    </h1>
+                    <p className="mt-0.5 text-sm text-muted-foreground">{today}</p>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                    <button
+                        onClick={() => setTxModal({ open: true, type: 'INCOME' })}
+                        className="flex items-center gap-1.5 rounded-xl bg-income px-4 py-2.5 text-sm font-semibold text-income-foreground shadow-sm hover:opacity-90 transition active:scale-95"
+                    >
+                        <Plus size={15} />
+                        Add income
+                    </button>
+                    <button
+                        onClick={() => setTxModal({ open: true, type: 'EXPENSE' })}
+                        className="flex items-center gap-1.5 rounded-xl bg-expense px-4 py-2.5 text-sm font-semibold text-expense-foreground shadow-sm hover:opacity-90 transition active:scale-95"
+                    >
+                        <Plus size={15} />
+                        Add expense
+                    </button>
+                </div>
             </div>
 
-            {/* AI Insights & Budget Warnings */}
-            {insights && (
-                <div className="bg-primary/10 border border-primary/20 p-4 rounded-xl flex items-start space-x-3 text-primary">
-                    <Lightbulb className="h-5 w-5 mt-0.5 flex-shrink-0" />
-                    <div>
-                        <p className="font-semibold text-sm">Spending Insights</p>
-                        <p className="text-sm">{insights}</p>
+            {/* ── Date range selector ── */}
+            <div className="flex items-center gap-2 flex-wrap">
+                <Calendar size={15} className="text-muted-foreground" />
+                {DATE_RANGES.map((r) => (
+                    <button
+                        key={r.id}
+                        onClick={() => setDateRange(r.id)}
+                        className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+                            dateRange === r.id
+                                ? 'bg-primary text-primary-foreground shadow-sm'
+                                : 'bg-muted text-muted-foreground hover:text-foreground'
+                        }`}
+                    >
+                        {r.label}
+                    </button>
+                ))}
+                <button
+                    onClick={fetchData}
+                    className="ml-auto text-muted-foreground hover:text-foreground transition-colors"
+                    title="Refresh"
+                >
+                    <RefreshCw size={15} />
+                </button>
+            </div>
+
+            {/* ── 4 summary cards ── */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <SummaryCard
+                    label="Income this month"
+                    value={formatCurrency(curIncome)}
+                    subtext={`${filteredTransactions.filter((t) => t.type === 'INCOME').length} entries`}
+                    icon={TrendingUp}
+                    accentClass="bg-income/15 text-income"
+                    trend={curIncome >= prevIncome ? 'up' : 'down'}
+                    trendValue={prevIncome > 0 ? `${curIncome >= prevIncome ? '+' : ''}${(((curIncome - prevIncome) / prevIncome) * 100).toFixed(1)}% vs last month` : null}
+                />
+                <SummaryCard
+                    label="Expenses this month"
+                    value={formatCurrency(curExpense)}
+                    subtext={`${filteredTransactions.filter((t) => t.type === 'EXPENSE').length} entries`}
+                    icon={TrendingDown}
+                    accentClass="bg-expense/15 text-expense"
+                    trend={curExpense > prevExpense ? 'down' : 'up'}
+                    trendValue={prevExpense > 0 ? `${curExpense > prevExpense ? '+' : ''}${(((curExpense - prevExpense) / prevExpense) * 100).toFixed(1)}% vs last month` : null}
+                />
+                <SummaryCard
+                    label="Net balance"
+                    value={formatCurrency(Math.abs(netBalance))}
+                    subtext={netBalance >= 0 ? 'Positive balance ✓' : 'Spending exceeds income'}
+                    icon={Wallet}
+                    accentClass={netBalance >= 0 ? 'bg-income/15 text-income' : 'bg-expense/15 text-expense'}
+                />
+                <SummaryCard
+                    label="% change vs last month"
+                    value={netPctChange !== null ? `${netPctChange > 0 ? '+' : ''}${netPctChange.toFixed(1)}%` : '—'}
+                    subtext={netPctChange === null ? 'No prior data yet' : netPctChange > 0 ? 'Net improved' : 'Net declined'}
+                    icon={netPctChange >= 0 ? ArrowUpRight : ArrowDownRight}
+                    accentClass={netPctChange === null || netPctChange >= 0 ? 'bg-income/15 text-income' : 'bg-expense/15 text-expense'}
+                />
+            </div>
+
+            {/* ── Charts row ── */}
+            {allTransactions.length === 0 ? (
+                <EmptyState
+                    icon={<Wallet size={32} />}
+                    title="No transactions yet"
+                    description="Add your first income or expense to see your financial overview here."
+                    ctaLabel="+ Add transaction"
+                    onCta={() => setTxModal({ open: true, type: 'EXPENSE' })}
+                />
+            ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {/* Income vs Expense bar chart */}
+                    <div className="rounded-2xl border border-border bg-card p-5">
+                        <h3 className="font-semibold text-foreground mb-0.5">Income vs Expenses</h3>
+                        <p className="text-xs text-muted-foreground mb-4">Last 6 months</p>
+                        <div style={{ height: 260 }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={barData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                                    <XAxis
+                                        dataKey="name"
+                                        fontSize={11}
+                                        tickLine={false}
+                                        axisLine={false}
+                                        tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                                    />
+                                    <YAxis
+                                        fontSize={11}
+                                        tickLine={false}
+                                        axisLine={false}
+                                        tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                                        tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}
+                                    />
+                                    <RTooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--muted)/0.4)' }} />
+                                    <Legend
+                                        formatter={(v) => (
+                                            <span style={{ color: 'hsl(var(--muted-foreground))', fontSize: 11 }}>{v}</span>
+                                        )}
+                                    />
+                                    <Bar dataKey="Income" fill="hsl(var(--income))" radius={[4, 4, 0, 0]} maxBarSize={28} />
+                                    <Bar dataKey="Expense" fill="hsl(var(--expense))" radius={[4, 4, 0, 0]} maxBarSize={28} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
                     </div>
-                </div>
-            )}
-            
-            {budget.exceeded && (
-                <div className="bg-destructive/10 border border-destructive/20 p-4 rounded-xl flex items-start space-x-3 text-destructive">
-                    <AlertTriangle className="h-5 w-5 mt-0.5 flex-shrink-0" />
-                    <div>
-                        <p className="font-semibold text-sm">Budget Exceeded</p>
-                        <p className="text-sm">You have exceeded your monthly budget of ₹{parseFloat(budget.limit).toFixed(2)}!</p>
-                    </div>
-                </div>
-            )}
 
-            {topCategoryInsight && (
-                <Card className="border-indigo-200 bg-indigo-50/50 dark:bg-indigo-900/10 dark:border-indigo-800">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium flex items-center text-indigo-700 dark:text-indigo-400">
-                            <Lightbulb className="w-4 h-4 mr-2" />
-                            Smart Spending Insights: {topCategoryInsight.category}
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-2xl font-bold text-indigo-900 dark:text-indigo-100">
-                            ₹{topCategoryInsight.currentSpend.toFixed(2)} spent this month
-                        </p>
-                        <p className="text-sm text-indigo-700/80 dark:text-indigo-300/80 mt-1">
-                            Your average spend here is ₹{topCategoryInsight.avgSpend.toFixed(2)} — this is {Math.abs(topCategoryInsight.pctDiff).toFixed(1)}% {topCategoryInsight.isAbove ? 'above' : 'below'} normal.
-                        </p>
-                    </CardContent>
-                </Card>
-            )}
-
-            {/* Top Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium">Total Balance</CardTitle>
-                        <Wallet className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">₹{parseFloat(current_month.balance).toFixed(2)}</div>
-                    </CardContent>
-                </Card>
-                
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium">Monthly Income</CardTitle>
-                        <ArrowUpCircle className="h-4 w-4 text-emerald-500" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold text-emerald-500">₹{parseFloat(current_month.income).toFixed(2)}</div>
-                    </CardContent>
-                </Card>
-                
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium">Monthly Expenses</CardTitle>
-                        <ArrowDownCircle className="h-4 w-4 text-destructive" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold text-destructive">₹{parseFloat(current_month.expense).toFixed(2)}</div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium">Monthly Budget</CardTitle>
-                        <Target className="h-4 w-4 text-blue-500" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">₹{parseFloat(budget.limit).toFixed(2)}</div>
-                        {parseFloat(budget.limit) > 0 && (
-                            <div className="w-full bg-secondary h-2 mt-3 rounded-full overflow-hidden">
-                                <div 
-                                    className={`h-full ${budget.exceeded ? 'bg-destructive' : 'bg-primary'}`} 
-                                    style={{ width: `${Math.min(budgetPct, 100)}%` }}
-                                ></div>
+                    {/* Recent Activity */}
+                    <div className="rounded-2xl border border-border bg-card p-5">
+                        <h3 className="font-semibold text-foreground mb-0.5">Recent Activity</h3>
+                        <p className="text-xs text-muted-foreground mb-4">Your latest transactions</p>
+                        {recentActivity.length === 0 ? (
+                            <EmptyState
+                                title="No activity yet"
+                                description="Your recent transactions will appear here."
+                            />
+                        ) : (
+                            <div className="space-y-1">
+                                {recentActivity.map((t) => (
+                                    <div
+                                        key={t.id}
+                                        className="flex items-center justify-between rounded-xl px-3 py-2.5 hover:bg-muted/50 transition-colors"
+                                    >
+                                        <div className="flex items-center gap-3 min-w-0">
+                                            <div className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold ${
+                                                t.type === 'INCOME' ? 'bg-income/15 text-income' : 'bg-expense/15 text-expense'
+                                            }`}>
+                                                {(t.category_name || t.title || '?')[0].toUpperCase()}
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-sm font-medium text-foreground truncate">{t.title}</p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {formatDate(t.date, 'short')}
+                                                    {t.category_name && ` · ${t.category_name}`}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <span className={`text-sm font-bold flex-shrink-0 ml-3 ${t.type === 'INCOME' ? 'text-income' : 'text-expense'}`}>
+                                            {t.type === 'INCOME' ? '+' : '−'}{formatCurrency(t.amount)}
+                                        </span>
+                                    </div>
+                                ))}
                             </div>
                         )}
-                    </CardContent>
-                </Card>
-            </div>
+                    </div>
+                </div>
+            )}
 
-            {/* Charts Section */}
-            <div className="grid grid-cols-1 gap-4">
-                <Card className="w-full">
-                    <CardHeader>
-                        <CardTitle className="flex items-center">
-                            <TrendingUp className="mr-2 h-5 w-5 text-primary" /> 
-                            Income vs Expense
-                        </CardTitle>
-                        <CardDescription>Comparison with previous month</CardDescription>
-                    </CardHeader>
-                    <CardContent className="h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={barData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-                                <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
-                                <YAxis fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `₹${value}`} />
-                                <RTooltip cursor={{fill: 'transparent'}} contentStyle={{borderRadius: '8px', backgroundColor: 'var(--card)', border: '1px solid var(--border)'}} />
-                                <Legend />
-                                <Bar dataKey="Income" fill="#10b981" radius={[4, 4, 0, 0]} />
-                                <Bar dataKey="Expense" fill="#ef4444" radius={[4, 4, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </CardContent>
-                </Card>
-            </div>
+            {/* ── Category donut chart ── */}
+            {pieData.length > 0 && (
+                <div className="rounded-2xl border border-border bg-card p-5">
+                    <h3 className="font-semibold text-foreground mb-0.5">Expense Breakdown</h3>
+                    <p className="text-xs text-muted-foreground mb-4">By category — {DATE_RANGES.find(r => r.id === dateRange)?.label}</p>
+                    <div className="flex flex-col sm:flex-row items-center gap-6">
+                        <div style={{ width: 220, height: 220 }} className="flex-shrink-0">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={pieData}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={60}
+                                        outerRadius={90}
+                                        paddingAngle={2}
+                                        dataKey="value"
+                                    >
+                                        {pieData.map((_, i) => (
+                                            <Cell key={i} fill={CAT_COLORS[i % CAT_COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                    <RTooltip
+                                        formatter={(v) => [formatCurrency(v), '']}
+                                        contentStyle={{
+                                            background: 'hsl(var(--card))',
+                                            border: '1px solid hsl(var(--border))',
+                                            borderRadius: 12,
+                                            fontSize: 12,
+                                        }}
+                                    />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </div>
+                        {/* Legend */}
+                        <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {pieData.map((item, i) => (
+                                <div key={item.name} className="flex items-center gap-2">
+                                    <span
+                                        className="h-3 w-3 rounded-full flex-shrink-0"
+                                        style={{ background: CAT_COLORS[i % CAT_COLORS.length] }}
+                                    />
+                                    <span className="text-sm text-muted-foreground truncate">{item.name}</span>
+                                    <span className="ml-auto text-sm font-semibold text-foreground flex-shrink-0">
+                                        {formatCurrency(item.value)}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Add/Edit modal driven from dashboard buttons */}
+            <TransactionModal
+                isOpen={txModal.open}
+                defaultType={txModal.type}
+                onClose={() => setTxModal({ open: false, type: 'EXPENSE' })}
+                onSuccess={fetchData}
+            />
         </div>
     );
 };

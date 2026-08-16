@@ -131,26 +131,8 @@ const MainLayout = () => {
                     </button>
                 </div>
 
-                {/* Quick-add buttons */}
-                <div className="p-3 border-b border-border flex gap-2 bg-surface-muted/50">
-                    <button
-                        onClick={() => openAddModal('INCOME')}
-                        className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-income/10 text-income py-2 text-xs font-semibold hover:bg-income/20 transition-all active:scale-95"
-                    >
-                        <Plus size={14} />
-                        Income
-                    </button>
-                    <button
-                        onClick={() => openAddModal('EXPENSE')}
-                        className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-expense/10 text-expense py-2 text-xs font-semibold hover:bg-expense/20 transition-all active:scale-95"
-                    >
-                        <Plus size={14} />
-                        Expense
-                    </button>
-                </div>
-
                 {/* Navigation Links */}
-                <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-1">
+                <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
                     {navItems.map((item) => (
                         <NavLink
                             key={item.path}
@@ -238,15 +220,30 @@ const MainLayout = () => {
                         {userMenuOpen && (
                             <>
                                 <div
-                                    className="fixed inset-0 z-10"
+                                    className="fixed inset-0 z-40"
                                     onClick={() => setUserMenuOpen(false)}
                                 />
-                                <div className="absolute right-0 top-full mt-1.5 z-20 w-52 rounded-2xl bg-card border border-border shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                                <div className="absolute right-0 top-full mt-2 z-50 w-56 rounded-2xl bg-card border border-border shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
                                     <div className="px-4 py-3 border-b border-border bg-surface-muted/50">
                                         <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Signed in as</p>
                                         <p className="text-sm font-semibold text-foreground truncate">{user?.email}</p>
                                     </div>
-                                    <div className="p-1.5">
+                                    <div className="p-1.5 space-y-0.5">
+                                        <button
+                                            onClick={() => { setUserMenuOpen(false); openAddModal('INCOME'); }}
+                                            className="flex w-full items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-semibold text-income hover:bg-income/10 transition-colors"
+                                        >
+                                            <Plus size={16} />
+                                            Add Income
+                                        </button>
+                                        <button
+                                            onClick={() => { setUserMenuOpen(false); openAddModal('EXPENSE'); }}
+                                            className="flex w-full items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-semibold text-expense hover:bg-expense/10 transition-colors"
+                                        >
+                                            <Plus size={16} />
+                                            Add Expense
+                                        </button>
+                                        <div className="my-1 border-t border-border" />
                                         <Link
                                             to="/dashboard/settings"
                                             onClick={() => setUserMenuOpen(false)}

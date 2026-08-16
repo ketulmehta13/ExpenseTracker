@@ -1,4 +1,4 @@
-# 💸 Expense Tracker — Full-Stack Application
+# Expense Tracker
 
 A modern, production-grade expense tracker and personal finance management system. Built with **React 18, Vite, and Tailwind CSS v4** on the frontend (deployed on **Vercel**), powered by **Supabase** (PostgreSQL, Row Level Security, and JWT Auth) as the active backend.
 

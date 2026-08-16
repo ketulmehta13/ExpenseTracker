@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './components/ThemeProvider';
@@ -16,19 +16,6 @@ import Profile from './pages/Profile';
 import Home from './pages/Home';
 import Categories from './pages/Categories';
 import NotFound from './pages/NotFound';
-
-/** Apply persisted theme on startup */
-function ThemeInit() {
-    useEffect(() => {
-        const saved = localStorage.getItem('et-theme');
-        if (saved === 'dark') {
-            document.documentElement.classList.add('dark');
-        } else if (saved === 'light') {
-            document.documentElement.classList.remove('dark');
-        }
-    }, []);
-    return null;
-}
 
 const ProtectedRoute = ({ children }) => {
     const { user, loading } = useAuth();
@@ -70,9 +57,7 @@ function AppRoutes() {
                 <Route path="transactions" element={<Transactions />} />
                 <Route path="analytics" element={<Analytics />} />
                 <Route path="categories" element={<Categories />} />
-                {/* Settings reuses Profile page — renders as /dashboard/settings */}
                 <Route path="settings" element={<Profile />} />
-                {/* Legacy profile path redirect */}
                 <Route path="profile" element={<Navigate to="/dashboard/settings" replace />} />
             </Route>
 
@@ -85,10 +70,9 @@ function AppRoutes() {
 function App() {
     return (
         <ErrorBoundary>
-            <ThemeProvider defaultTheme="system" storageKey="expensify-ui-theme">
+            <ThemeProvider>
                 <AuthProvider>
                     <Router>
-                        <ThemeInit />
                         <AppRoutes />
                     </Router>
                 </AuthProvider>

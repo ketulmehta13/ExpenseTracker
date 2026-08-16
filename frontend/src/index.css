@@ -3,17 +3,15 @@
 
 @plugin "tailwindcss-animate";
 
-@custom-variant dark (&:is(.dark *));
-
 /* ============================================================
-   DESIGN TOKENS — Tailwind v4 @theme
+   DESIGN TOKENS — Tailwind v4 @theme (White & Green Theme)
    ============================================================ */
 @theme {
-  /* Fonts */
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  /* Typography */
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-display: "Fraunces", Georgia, serif;
 
-  /* Semantic color tokens — resolved from CSS vars below */
+  /* Semantic color tokens */
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
 
@@ -45,7 +43,7 @@
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
 
-  /* Custom semantic tokens: income / expense */
+  /* Income & Expense Tokens */
   --color-income: hsl(var(--income));
   --color-income-foreground: hsl(var(--income-foreground));
   --color-income-muted: hsl(var(--income-muted));
@@ -54,12 +52,14 @@
   --color-expense-foreground: hsl(var(--expense-foreground));
   --color-expense-muted: hsl(var(--expense-muted));
 
-  /* Sidebar */
+  /* Sidebar Tokens */
   --color-sidebar: hsl(var(--sidebar));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
   --color-sidebar-border: hsl(var(--sidebar-border));
   --color-sidebar-active: hsl(var(--sidebar-active));
+  --color-sidebar-active-bg: hsl(var(--sidebar-active-bg));
 
-  /* Text */
+  /* Text helpers */
   --color-text-primary: hsl(var(--text-primary));
   --color-text-secondary: hsl(var(--text-secondary));
 
@@ -72,192 +72,119 @@
 }
 
 /* ============================================================
-   CSS VARIABLES — Light mode (default)
+   CSS VARIABLES — Single Consistent White & Green Theme
    ============================================================ */
 @layer base {
   :root {
-    /* Page background — warm off-white from reference */
-    --background: 40 20% 96%;
-    --foreground: 222 20% 12%;
+    /* Page background — clean crisp off-white/light sage */
+    --background: 150 15% 98%;      /* #F8FAF9 */
+    --foreground: 160 32% 11%;      /* #14241E */
 
-    /* Card / popover surfaces */
-    --card: 0 0% 100%;
-    --card-foreground: 222 20% 12%;
+    /* Card surfaces — pure white with soft elevation */
+    --card: 0 0% 100%;              /* #FFFFFF */
+    --card-foreground: 160 32% 11%;
     --surface: 0 0% 100%;
-    --surface-muted: 40 15% 96%;
+    --surface-muted: 150 14% 95%;   /* #F1F6F3 */
     --popover: 0 0% 100%;
-    --popover-foreground: 222 20% 12%;
+    --popover-foreground: 160 32% 11%;
 
-    /* Primary brand — deep dark navy (matches ref sidebar) */
-    --primary: 222 30% 14%;
+    /* Primary brand — deep finance emerald green */
+    --primary: 163 77% 26%;         /* #107555 */
     --primary-foreground: 0 0% 100%;
 
     /* Secondary */
-    --secondary: 40 15% 92%;
-    --secondary-foreground: 222 20% 12%;
+    --secondary: 152 35% 92%;       /* #E6F3EC */
+    --secondary-foreground: 163 77% 20%;
 
-    --muted: 40 15% 92%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 150 16% 94%;           /* #EDF4F0 */
+    --muted-foreground: 155 12% 42%;/* #5E726A */
 
-    --accent: 38 92% 50%;
-    --accent-foreground: 222 20% 12%;
+    --accent: 152 45% 94%;          /* #EAF5EF */
+    --accent-foreground: 163 77% 26%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 74% 50%;       /* #DC2626 */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 40 15% 88%;
-    --input: 40 15% 88%;
-    --ring: 38 92% 50%;
+    --border: 150 14% 90%;          /* #E2EBE6 */
+    --input: 150 14% 90%;
+    --ring: 163 77% 26%;
 
-    /* Income — green */
-    --income: 142 71% 45%;
+    /* Income (Emerald Green) */
+    --income: 163 77% 26%;          /* #107555 */
     --income-foreground: 0 0% 100%;
-    --income-muted: 142 71% 95%;
+    --income-muted: 152 45% 93%;     /* #E5F4EC */
 
-    /* Expense — amber (matches reference image) */
-    --expense: 38 92% 50%;
-    --expense-foreground: 222 20% 12%;
-    --expense-muted: 38 92% 95%;
+    /* Expense (Contrasting Warm Amber/Crimson) */
+    --expense: 0 74% 50%;           /* #DC2626 */
+    --expense-foreground: 0 0% 100%;
+    --expense-muted: 0 86% 96%;     /* #FEE2E2 */
 
-    /* Sidebar — same as background in light mode */
-    --sidebar: 222 30% 14%;
-    --sidebar-border: 222 30% 20%;
-    --sidebar-active: 38 92% 50%;
+    /* Sidebar (Crisp White with Green active states) */
+    --sidebar: 0 0% 100%;           /* #FFFFFF */
+    --sidebar-foreground: 160 32% 11%;
+    --sidebar-border: 150 14% 90%;
+    --sidebar-active: 163 77% 26%;
+    --sidebar-active-bg: 152 45% 94%;/* #EAF5EF */
 
     /* Text */
-    --text-primary: 222 20% 12%;
-    --text-secondary: 215 16% 47%;
+    --text-primary: 160 32% 11%;
+    --text-secondary: 155 12% 42%;
 
     --radius: 0.75rem;
-  }
-
-  /* ============================================================
-     CSS VARIABLES — Dark mode
-     ============================================================ */
-  .dark {
-    /* Page background — near-black dark navy */
-    --background: 222 28% 9%;
-    --foreground: 210 20% 92%;
-
-    /* Card surfaces */
-    --card: 222 26% 13%;
-    --card-foreground: 210 20% 92%;
-    --surface: 222 26% 13%;
-    --surface-muted: 222 24% 16%;
-    --popover: 222 26% 13%;
-    --popover-foreground: 210 20% 92%;
-
-    /* Primary — amber accent becomes the primary in dark */
-    --primary: 38 92% 55%;
-    --primary-foreground: 222 28% 9%;
-
-    --secondary: 222 24% 18%;
-    --secondary-foreground: 210 20% 92%;
-
-    --muted: 222 24% 18%;
-    --muted-foreground: 215 16% 55%;
-
-    --accent: 38 92% 55%;
-    --accent-foreground: 222 28% 9%;
-
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 222 24% 20%;
-    --input: 222 24% 20%;
-    --ring: 38 92% 55%;
-
-    /* Income — bright green on dark */
-    --income: 142 71% 52%;
-    --income-foreground: 222 28% 9%;
-    --income-muted: 142 30% 15%;
-
-    /* Expense — amber on dark */
-    --expense: 38 92% 55%;
-    --expense-foreground: 222 28% 9%;
-    --expense-muted: 38 40% 15%;
-
-    /* Sidebar */
-    --sidebar: 222 28% 10%;
-    --sidebar-border: 222 24% 16%;
-    --sidebar-active: 38 92% 55%;
-
-    /* Text */
-    --text-primary: 210 20% 92%;
-    --text-secondary: 215 16% 55%;
-  }
-
-  /* ============================================================
-     BASE STYLES
-     ============================================================ */
-  * {
-    @apply border-border;
-  }
-
-  html {
-    @apply antialiased;
-    scroll-behavior: smooth;
-  }
-
-  body {
-    @apply bg-background text-foreground font-sans;
-    font-feature-settings: "rlig" 1, "calt" 1;
-    min-height: 100dvh;
-  }
-
-  /* Scrollbar styling */
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  ::-webkit-scrollbar-thumb {
-    @apply bg-border rounded-full;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-muted-foreground/40;
   }
 }
 
 /* ============================================================
-   GLOBAL UTILITY CLASSES
+   GLOBAL BASE STYLES
    ============================================================ */
-@layer utilities {
-  /* Font family helpers */
-  .font-display {
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  html {
+    color-scheme: light;
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, .font-display {
     font-family: var(--font-display);
   }
+}
 
-  /* Income / Expense colored text */
-  .text-income {
-    color: hsl(var(--income));
-  }
-  .text-expense {
-    color: hsl(var(--expense));
-  }
+/* ============================================================
+   SCROLLBAR & UTILITY ANIMATIONS
+   ============================================================ */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
 
-  /* Glassmorphism card effect */
-  .card-glass {
-    @apply bg-card/80 backdrop-blur-md border border-border/50 shadow-sm;
-  }
+::-webkit-scrollbar-track {
+  background: transparent;
+}
 
-  /* Subtle glow effect on income/expense accents */
-  .glow-income {
-    box-shadow: 0 0 20px hsl(var(--income) / 0.2);
-  }
-  .glow-expense {
-    box-shadow: 0 0 20px hsl(var(--expense) / 0.2);
-  }
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 9999px;
+}
 
-  /* Sidebar nav item active */
-  .nav-active {
-    @apply bg-white/10 text-white border-l-2 border-sidebar-active;
-  }
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.4);
+}
 
-  /* Smooth page transitions */
-  .page-enter {
-    @apply animate-in fade-in slide-in-from-bottom-2 duration-300;
-  }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.page-enter {
+  animation: fadeIn 0.2s ease-out forwards;
 }

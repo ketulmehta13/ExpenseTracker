@@ -13,14 +13,14 @@ import ConfirmModal from '../components/ConfirmModal';
 
 /* ── Section wrapper ── */
 const Section = ({ title, icon: Icon, children }) => (
-    <div className="rounded-2xl border border-border bg-card overflow-hidden">
-        <div className="flex items-center gap-2.5 border-b border-border px-5 py-4">
+    <div className="rounded-2xl border border-border bg-card overflow-hidden w-full shadow-sm">
+        <div className="flex items-center gap-2.5 border-b border-border px-6 py-4 bg-surface">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
                 <Icon size={16} className="text-muted-foreground" />
             </div>
-            <h2 className="font-semibold text-foreground">{title}</h2>
+            <h2 className="font-semibold text-foreground text-base">{title}</h2>
         </div>
-        <div className="p-5">{children}</div>
+        <div className="p-6">{children}</div>
     </div>
 );
 
@@ -218,10 +218,10 @@ const Profile = () => {
 
     if (loading) {
         return (
-            <div className="space-y-5 max-w-2xl mx-auto page-enter">
+            <div className="space-y-6 w-full page-enter">
                 <Skeleton className="h-9 w-48" />
                 {[1, 2, 3].map((i) => (
-                    <div key={i} className="rounded-2xl border border-border bg-card p-5 space-y-3">
+                    <div key={i} className="rounded-2xl border border-border bg-card p-6 space-y-3 w-full">
                         <Skeleton className="h-5 w-32" />
                         <Skeleton className="h-10 w-full" />
                         <Skeleton className="h-10 w-full" />
@@ -232,7 +232,7 @@ const Profile = () => {
     }
 
     return (
-        <div className="space-y-5 max-w-2xl mx-auto page-enter">
+        <div className="space-y-6 w-full page-enter">
             <div>
                 <h1 className="font-display text-3xl font-bold text-foreground">Settings</h1>
                 <p className="mt-0.5 text-sm text-muted-foreground">Manage your profile, preferences, and account.</p>
@@ -240,15 +240,15 @@ const Profile = () => {
 
             {/* Stats ribbon */}
             {summary && (
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
                     {[
                         { label: 'Income this month', value: formatCurrency(summary.current_month.income), color: 'text-income' },
                         { label: 'Expenses this month', value: formatCurrency(summary.current_month.expense), color: 'text-expense' },
                         { label: 'Net balance', value: formatCurrency(Math.abs(summary.current_month.balance)), color: summary.current_month.balance >= 0 ? 'text-income' : 'text-expense' },
                     ].map((s) => (
-                        <div key={s.label} className="rounded-xl border border-border bg-card px-3 py-3 text-center">
-                            <p className="text-[10px] text-muted-foreground mb-0.5 leading-tight">{s.label}</p>
-                            <p className={`text-base font-bold ${s.color}`}>{s.value}</p>
+                        <div key={s.label} className="rounded-2xl border border-border bg-card p-5 text-center shadow-sm">
+                            <p className="text-xs text-muted-foreground mb-1 font-medium">{s.label}</p>
+                            <p className={`text-xl font-bold ${s.color}`}>{s.value}</p>
                         </div>
                     ))}
                 </div>

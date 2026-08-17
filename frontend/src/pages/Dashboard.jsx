@@ -214,8 +214,8 @@ const Dashboard = () => {
                         key={r.id}
                         onClick={() => setDateRange(r.id)}
                         className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${dateRange === r.id
-                                ? 'bg-primary text-primary-foreground shadow-sm'
-                                : 'bg-muted text-muted-foreground hover:text-foreground'
+                            ? 'bg-primary text-primary-foreground shadow-sm'
+                            : 'bg-muted text-muted-foreground hover:text-foreground'
                             }`}
                     >
                         {r.label}
@@ -272,7 +272,7 @@ const Dashboard = () => {
                     icon={<Wallet size={32} />}
                     title="No transactions yet"
                     description="Add your first transaction using the button above to see your financial overview here."
-                    ctaLabel="+ Add Transaction"
+
                     onCta={() => setTxModal({ open: true, type: 'EXPENSE' })}
                 />
             ) : (

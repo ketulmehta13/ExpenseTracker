@@ -269,16 +269,6 @@ const MainLayout = () => {
                                 </div>
 
                                 <div className="p-1.5 space-y-0.5">
-                                    {/* + Add Transaction */}
-                                    <button
-                                        onClick={() => openAddModal('EXPENSE')}
-                                        className="flex w-full items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-semibold text-primary hover:bg-primary/10 transition-colors"
-                                    >
-                                        <Plus size={16} />
-                                        Add Transaction
-                                    </button>
-
-                                    <div className="my-1 border-t border-border" />
 
                                     <Link
                                         to="/dashboard/settings"
@@ -288,16 +278,7 @@ const MainLayout = () => {
                                         <User size={16} className="text-primary flex-shrink-0" />
                                         Profile & Settings
                                     </Link>
-                                    <Link
-                                        to="/dashboard/categories"
-                                        onClick={() => setUserMenuOpen(false)}
-                                        className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium text-foreground hover:bg-muted transition-colors"
-                                    >
-                                        <Tag size={16} className="text-primary flex-shrink-0" />
-                                        Manage Categories
-                                    </Link>
 
-                                    <div className="my-1 border-t border-border" />
 
                                     <button
                                         onClick={handleLogout}

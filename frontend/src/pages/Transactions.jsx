@@ -196,6 +196,12 @@ const Transactions = () => {
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
                     <button
+                        onClick={() => setTxModal({ open: true, transaction: null, type: 'EXPENSE' })}
+                        className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground shadow-sm hover:opacity-90 transition active:scale-95"
+                    >
+                        <Plus size={14} /> Add Transaction
+                    </button>
+                    <button
                         onClick={handleExportCSV}
                         className="flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-semibold text-foreground hover:bg-muted transition-colors"
                     >
@@ -331,10 +337,10 @@ const Transactions = () => {
                     description={
                         hasActiveFilters
                             ? 'Try adjusting your filters or clearing them to see all transactions.'
-                            : 'Add your first transaction from the top-right profile menu to start tracking your finances.'
+                            : 'Use the "+ Add Transaction" button above to record your first income or expense.'
                     }
-                    ctaLabel={hasActiveFilters ? 'Clear filters' : undefined}
-                    onCta={hasActiveFilters ? clearFilters : undefined}
+                    ctaLabel={hasActiveFilters ? 'Clear filters' : '+ Add Transaction'}
+                    onCta={hasActiveFilters ? clearFilters : () => setTxModal({ open: true, transaction: null, type: 'EXPENSE' })}
                 />
             ) : (
                 <>

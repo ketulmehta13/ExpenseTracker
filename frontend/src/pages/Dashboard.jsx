@@ -204,13 +204,6 @@ const Dashboard = () => {
                     </h1>
                     <p className="mt-0.5 text-sm text-muted-foreground">{today}</p>
                 </div>
-                <button
-                    onClick={() => setTxModal({ open: true, type: 'EXPENSE' })}
-                    className="flex-shrink-0 flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-90 transition active:scale-95"
-                >
-                    <Plus size={15} />
-                    Add Transaction
-                </button>
             </div>
 
             {/* ── Date range selector ── */}
@@ -220,11 +213,10 @@ const Dashboard = () => {
                     <button
                         key={r.id}
                         onClick={() => setDateRange(r.id)}
-                        className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
-                            dateRange === r.id
+                        className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${dateRange === r.id
                                 ? 'bg-primary text-primary-foreground shadow-sm'
                                 : 'bg-muted text-muted-foreground hover:text-foreground'
-                        }`}
+                            }`}
                     >
                         {r.label}
                     </button>
@@ -336,9 +328,8 @@ const Dashboard = () => {
                                         className="flex items-center justify-between rounded-xl px-3 py-2.5 hover:bg-muted/50 transition-colors"
                                     >
                                         <div className="flex items-center gap-3 min-w-0">
-                                            <div className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold ${
-                                                t.type === 'INCOME' ? 'bg-income/15 text-income' : 'bg-expense/15 text-expense'
-                                            }`}>
+                                            <div className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold ${t.type === 'INCOME' ? 'bg-income/15 text-income' : 'bg-expense/15 text-expense'
+                                                }`}>
                                                 {(t.category_name || t.title || '?')[0].toUpperCase()}
                                             </div>
                                             <div className="min-w-0">

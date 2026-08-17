@@ -44,15 +44,15 @@ const Login = () => {
                 {/* Hero text */}
                 <div className="relative z-10 space-y-6">
                     <div>
-                        <p className="text-white/70 text-xs font-semibold tracking-widest uppercase mb-3 bg-white/10 px-3 py-1 rounded-full inline-block backdrop-blur-sm">
-                            ✦ Simple & Mindful Finance
+                        <p className="text-white/60 text-[11px] font-semibold tracking-[0.18em] uppercase mb-4 bg-white/10 px-3 py-1 rounded-full inline-block">
+                            Personal Finance
                         </p>
-                        <h1 className="font-display text-5xl font-bold text-white leading-tight">
-                            No spreadsheets.<br />
-                            <span className="text-[#a7f3d0] italic">Just clarity.</span>
+                        <h1 className="font-display text-5xl font-bold text-white leading-[1.1] tracking-tight">
+                            Your money,<br />
+                            <span className="text-[#a7f3d0] italic">clear as day.</span>
                         </h1>
-                        <p className="mt-4 text-white/80 text-base leading-relaxed max-w-sm">
-                            Track income, manage expenses, and grow your savings in a clean, distraction-free dashboard.
+                        <p className="mt-3 text-white/60 text-sm font-medium">
+                            Spend less time tracking. Know exactly where you stand.
                         </p>
                     </div>
 

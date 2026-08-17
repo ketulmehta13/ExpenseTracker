@@ -197,12 +197,20 @@ const Dashboard = () => {
     return (
         <div className="space-y-6 page-enter">
             {/* ── Greeting header ── */}
-            {/* ── Greeting header ── */}
-            <div>
-                <h1 className="font-display text-3xl font-bold text-foreground">
-                    {getGreeting()}, {displayName}.
-                </h1>
-                <p className="mt-0.5 text-sm text-muted-foreground">{today}</p>
+            <div className="flex items-start justify-between gap-4">
+                <div>
+                    <h1 className="font-display text-3xl font-bold text-foreground">
+                        {getGreeting()}, {displayName}.
+                    </h1>
+                    <p className="mt-0.5 text-sm text-muted-foreground">{today}</p>
+                </div>
+                <button
+                    onClick={() => setTxModal({ open: true, type: 'EXPENSE' })}
+                    className="flex-shrink-0 flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-90 transition active:scale-95"
+                >
+                    <Plus size={15} />
+                    Add Transaction
+                </button>
             </div>
 
             {/* ── Date range selector ── */}
@@ -271,7 +279,9 @@ const Dashboard = () => {
                 <EmptyState
                     icon={<Wallet size={32} />}
                     title="No transactions yet"
-                    description="Add your first income or expense from the top-right profile menu to see your financial overview here."
+                    description="Add your first transaction using the button above to see your financial overview here."
+                    ctaLabel="+ Add Transaction"
+                    onCta={() => setTxModal({ open: true, type: 'EXPENSE' })}
                 />
             ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

@@ -231,11 +231,10 @@ const Transactions = () => {
                     </div>
                     <button
                         onClick={() => setShowFilters((v) => !v)}
-                        className={`flex items-center gap-1.5 rounded-xl border px-3.5 py-2.5 text-sm font-medium transition-colors ${
-                            showFilters || hasActiveFilters
-                                ? 'border-primary bg-primary/10 text-primary'
-                                : 'border-border bg-card text-muted-foreground hover:text-foreground'
-                        }`}
+                        className={`flex items-center gap-1.5 rounded-xl border px-3.5 py-2.5 text-sm font-medium transition-colors ${showFilters || hasActiveFilters
+                            ? 'border-primary bg-primary/10 text-primary'
+                            : 'border-border bg-card text-muted-foreground hover:text-foreground'
+                            }`}
                     >
                         <Filter size={15} />
                         Filters
@@ -436,9 +435,8 @@ const Transactions = () => {
                                 className="flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3.5"
                             >
                                 <div className="flex items-center gap-3 min-w-0">
-                                    <div className={`h-10 w-10 flex-shrink-0 flex items-center justify-center rounded-xl text-sm font-bold ${
-                                        t.type === 'INCOME' ? 'bg-income/15 text-income' : 'bg-expense/15 text-expense'
-                                    }`}>
+                                    <div className={`h-10 w-10 flex-shrink-0 flex items-center justify-center rounded-xl text-sm font-bold ${t.type === 'INCOME' ? 'bg-income/15 text-income' : 'bg-expense/15 text-expense'
+                                        }`}>
                                         {(t.category_name || t.title || '?')[0].toUpperCase()}
                                     </div>
                                     <div className="min-w-0">
@@ -490,11 +488,10 @@ const Transactions = () => {
                                         <button
                                             key={p}
                                             onClick={() => setPage(p)}
-                                            className={`h-8 w-8 rounded-lg text-xs font-semibold transition-all ${
-                                                p === page
-                                                    ? 'bg-primary text-primary-foreground shadow-sm'
-                                                    : 'border border-border text-muted-foreground hover:bg-muted'
-                                            }`}
+                                            className={`h-8 w-8 rounded-lg text-xs font-semibold transition-all ${p === page
+                                                ? 'bg-primary text-primary-foreground shadow-sm'
+                                                : 'border border-border text-muted-foreground hover:bg-muted'
+                                                }`}
                                         >
                                             {p}
                                         </button>

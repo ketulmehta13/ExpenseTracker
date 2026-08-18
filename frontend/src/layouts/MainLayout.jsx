@@ -53,7 +53,7 @@ const MainLayout = () => {
             });
         },
         onLogout: async () => {
-            try { await logout(); } catch {/* ignore */}
+            try { await logout(); } catch {/* ignore */ }
             toast.info("You've been logged out due to inactivity.");
             navigate('/login');
         },
@@ -278,7 +278,6 @@ const MainLayout = () => {
                                         <User size={16} className="text-primary flex-shrink-0" />
                                         Profile & Settings
                                     </Link>
-
 
                                     <button
                                         onClick={handleLogout}

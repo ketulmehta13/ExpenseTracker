@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { X, TrendingUp, TrendingDown, Loader2, Plus } from 'lucide-react';
+import { X, TrendingUp, TrendingDown, Loader2, Plus, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
-import { createTransaction, updateTransaction, getCategories } from '../services/api';
+import { createTransaction, updateTransaction, getCategories, createCategory } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { formatCurrency } from '../lib/formatters';
+import { suggestCategory } from '../services/aiService';
 
 /**
  * TransactionModal — shared modal for Add and Edit transactions.
@@ -21,6 +22,7 @@ const TransactionModal = ({
     onSuccess,
     defaultType = 'EXPENSE',
     transaction = null,
+    prefill = null,   // { title, amount, date, notes, category_name_hint } from QuickAdd
 }) => {
     const { user } = useAuth();
     const isEdit = Boolean(transaction);
@@ -29,6 +31,11 @@ const TransactionModal = ({
     const [catLoading, setCatLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [errors, setErrors] = useState({});
+
+    // AI category suggestion state
+    const [aiSuggestion, setAiSuggestion] = useState(null);  // { category: string, confidence: string, isNew: bool, matchedId: string|null }
+    const [aiLoading, setAiLoading] = useState(false);
+    const aiDebounceRef = useRef(null);
 
     const [form, setForm] = useState({
         type: defaultType,
@@ -42,7 +49,7 @@ const TransactionModal = ({
 
     const firstInputRef = useRef(null);
 
-    // Populate form when editing
+    // Populate form when editing or when a QuickAdd prefill is provided
     useEffect(() => {
         if (isOpen) {
             if (transaction) {
@@ -54,6 +61,20 @@ const TransactionModal = ({
                     date: transaction.date || new Date().toISOString().split('T')[0],
                     notes: transaction.notes || '',
                     is_recurring: transaction.is_recurring || false,
+                });
+            } else if (prefill) {
+                // QuickAdd pre-fill: match category_name_hint to an existing category id
+                const matchedCat = prefill.category_name_hint
+                    ? categories.find((c) => c.name.toLowerCase() === prefill.category_name_hint.toLowerCase())
+                    : null;
+                setForm({
+                    type: defaultType,
+                    title: prefill.title || '',
+                    amount: prefill.amount || '',
+                    category_id: matchedCat?.id || '',
+                    date: prefill.date || new Date().toISOString().split('T')[0],
+                    notes: prefill.notes || '',
+                    is_recurring: false,
                 });
             } else {
                 setForm({
@@ -67,9 +88,10 @@ const TransactionModal = ({
                 });
             }
             setErrors({});
+            setAiSuggestion(null);
             loadCategories();
         }
-    }, [isOpen, transaction, defaultType]);
+    }, [isOpen, transaction, defaultType, prefill]);
 
     // Focus first field on open
     useEffect(() => {
@@ -103,6 +125,64 @@ const TransactionModal = ({
     const set = (key, value) => {
         setForm((prev) => ({ ...prev, [key]: value }));
         setErrors((prev) => ({ ...prev, [key]: undefined }));
+        // If user manually picks a category, dismiss AI suggestion
+        if (key === 'category_id') setAiSuggestion(null);
+    };
+
+    // Debounced AI category suggestion — fires 500ms after title stops changing
+    useEffect(() => {
+        // Only suggest in Add mode (not Edit) and when title has ≥3 chars
+        if (isEdit || !isOpen || form.title.trim().length < 3) {
+            setAiSuggestion(null);
+            return;
+        }
+        // Don't suggest if user already picked a category
+        if (form.category_id) return;
+
+        clearTimeout(aiDebounceRef.current);
+        aiDebounceRef.current = setTimeout(async () => {
+            setAiLoading(true);
+            try {
+                const catNames = categories.map((c) => c.name);
+                const result = await suggestCategory(form.title.trim(), catNames);
+                if (!result) { setAiSuggestion(null); return; }
+
+                const matched = categories.find(
+                    (c) => c.name.toLowerCase() === result.category.toLowerCase()
+                );
+                setAiSuggestion({
+                    category: result.category,
+                    confidence: result.confidence,
+                    matchedId: matched?.id ?? null,
+                    isNew: !matched,
+                });
+            } finally {
+                setAiLoading(false);
+            }
+        }, 500);
+
+        return () => clearTimeout(aiDebounceRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [form.title, isOpen]);
+
+    /** Apply the AI suggested category — create it first if it's new */
+    const applyAiSuggestion = async () => {
+        if (!aiSuggestion) return;
+        if (aiSuggestion.matchedId) {
+            set('category_id', aiSuggestion.matchedId);
+            setAiSuggestion(null);
+            return;
+        }
+        // Category doesn't exist yet — create it, then apply
+        try {
+            const newCat = await createCategory({ name: aiSuggestion.category });
+            setCategories((prev) => [...prev, newCat].sort((a, b) => a.name.localeCompare(b.name)));
+            set('category_id', newCat.id);
+            toast.success(`Category "${aiSuggestion.category}" created!`);
+        } catch {
+            toast.error('Could not create category.');
+        }
+        setAiSuggestion(null);
     };
 
     const validate = () => {
@@ -242,6 +322,39 @@ const TransactionModal = ({
                             }`}
                         />
                         {errors.title && <p className="mt-1 text-xs text-destructive">{errors.title}</p>}
+
+                        {/* AI category suggestion chip */}
+                        {(aiLoading || aiSuggestion) && (
+                            <div className="mt-1.5 flex items-center gap-1.5">
+                                <Sparkles size={11} className="text-primary flex-shrink-0" />
+                                {aiLoading ? (
+                                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                        <Loader2 size={10} className="animate-spin" /> Suggesting category…
+                                    </span>
+                                ) : aiSuggestion ? (
+                                    <span className="text-xs text-muted-foreground">
+                                        Suggested:{' '}
+                                        <button
+                                            type="button"
+                                            onClick={applyAiSuggestion}
+                                            className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-2 py-0.5 text-xs font-semibold hover:bg-primary/20 transition-colors"
+                                        >
+                                            {aiSuggestion.isNew && <Plus size={9} />}
+                                            {aiSuggestion.category}
+                                        </button>
+                                        {' '}— {aiSuggestion.isNew ? 'tap to create & use' : 'tap to apply'}
+                                        <button
+                                            type="button"
+                                            onClick={() => setAiSuggestion(null)}
+                                            className="ml-1.5 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                                            aria-label="Dismiss suggestion"
+                                        >
+                                            <X size={10} />
+                                        </button>
+                                    </span>
+                                ) : null}
+                            </div>
+                        )}
                     </div>
 
                     {/* Amount + Date row */}

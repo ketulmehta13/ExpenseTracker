@@ -41,6 +41,39 @@ export const authLogout = async () => {
 };
 
 /**
+ * Delete all data belonging to the current user:
+ * transactions → user-owned categories → profile row → sign out.
+ * Note: Supabase does not expose auth.admin.deleteUser() on the client;
+ * the auth user record remains but all personal data is erased and the
+ * session is terminated, effectively deactivating the account.
+ */
+export const deleteUserData = async (userId) => {
+    // 1. Delete all transactions
+    const { error: txErr } = await supabase
+        .from('transactions')
+        .delete()
+        .eq('user_id', userId);
+    if (txErr) throw txErr;
+
+    // 2. Delete user-owned categories (those with user_id set)
+    const { error: catErr } = await supabase
+        .from('categories')
+        .delete()
+        .eq('user_id', userId);
+    if (catErr) throw catErr;
+
+    // 3. Delete profile row
+    const { error: profErr } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userId);
+    if (profErr) throw profErr;
+
+    // 4. Sign out the session
+    await supabase.auth.signOut();
+};
+
+/**
  * Update the current user's password (Supabase handles old-password verification internally via session).
  */
 export const authChangePassword = async (newPassword) => {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
 import {
@@ -6,7 +7,7 @@ import {
     Shield, User, Palette, Database, AlertTriangle,
     Mail, Phone, BadgeCheck
 } from 'lucide-react';
-import { getProfile, updateProfile, getTransactions, computeSummary, authChangePassword, exportTransactionsCSV } from '../services/api';
+import { getProfile, updateProfile, getTransactions, computeSummary, authChangePassword, exportTransactionsCSV, deleteUserData } from '../services/api';
 import { formatCurrency } from '../lib/formatters';
 import { Skeleton } from '../components/ui/Skeleton';
 import ConfirmModal from '../components/ConfirmModal';
@@ -50,6 +51,7 @@ const CURRENCY_OPTIONS = [
 
 const Profile = () => {
     const { user, logout } = useAuth();
+    const navigate = useNavigate();
     const fileInputRef = useRef(null);
 
     const [loading, setLoading] = useState(true);
@@ -194,19 +196,22 @@ const Profile = () => {
 
     /* ── Delete account ── */
     const handleDeleteAccount = async () => {
-        if (deleteInput !== 'DELETE') {
-            toast.error('Please type DELETE to confirm.');
+        const expectedName = displayName.trim().toLowerCase();
+        if (deleteInput.trim().toLowerCase() !== expectedName) {
+            toast.error('Name does not match. Please type your name exactly.');
             return;
         }
         setDeleteLoading(true);
         try {
-            // TODO: Supabase does not expose a client-side deleteUser() for security reasons.
-            // Add a server-side Supabase Edge Function or service role call to delete the user.
-            toast.error('Account deletion requires a server-side function. Please contact support.');
-        } finally {
-            setDeleteLoading(false);
+            await deleteUserData(user.id);
+            toast.success('Your account data has been permanently deleted.');
             setDeleteModal(false);
             setDeleteInput('');
+            navigate('/login', { replace: true });
+        } catch (err) {
+            toast.error(err.message || 'Failed to delete account. Please try again.');
+        } finally {
+            setDeleteLoading(false);
         }
     };
 
@@ -479,14 +484,19 @@ const Profile = () => {
                             <h3 className="font-semibold text-foreground">Delete account?</h3>
                         </div>
                         <p className="text-sm text-muted-foreground">
-                            This will permanently erase your account and all data. Type{' '}
-                            <strong className="text-foreground font-mono">DELETE</strong> to confirm.
+                            This will permanently erase <strong className="text-foreground">all your transactions, categories, and profile data</strong>. This action cannot be undone.
                         </p>
+                        <div className="rounded-xl bg-destructive/5 border border-destructive/20 px-3.5 py-2.5">
+                            <p className="text-xs text-muted-foreground">
+                                Type your name <strong className="text-foreground font-semibold">{displayName}</strong> to confirm:
+                            </p>
+                        </div>
                         <input
                             type="text"
                             value={deleteInput}
                             onChange={(e) => setDeleteInput(e.target.value)}
-                            placeholder="Type DELETE here"
+                            placeholder={`Type "${displayName}" to confirm`}
+                            autoFocus
                             className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-destructive/30 focus:border-destructive"
                         />
                         <div className="flex gap-2">
@@ -495,10 +505,10 @@ const Profile = () => {
                             </button>
                             <button
                                 onClick={handleDeleteAccount}
-                                disabled={deleteInput !== 'DELETE' || deleteLoading}
+                                disabled={deleteInput.trim().toLowerCase() !== displayName.trim().toLowerCase() || deleteLoading}
                                 className="flex-1 rounded-xl bg-destructive py-2.5 text-sm font-semibold text-destructive-foreground hover:opacity-90 transition disabled:opacity-40"
                             >
-                                {deleteLoading ? 'Deleting…' : 'Delete forever'}
+                                {deleteLoading ? <span className="flex items-center justify-center gap-1.5"><Loader2 size={14} className="animate-spin" /> Deleting…</span> : 'Delete forever'}
                             </button>
                         </div>
                     </div>

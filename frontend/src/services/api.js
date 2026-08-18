@@ -427,7 +427,42 @@ export const computeSummary = (transactions, monthlyBudget = 0) => {
 /**
  * Generate and download a CSV file from transactions array.
  */
+// ============================================================
+// AI INSIGHTS CACHE
+// ============================================================
+
+/**
+ * Get cached AI insight for a given user + month ('YYYY-MM').
+ * Returns null if not found.
+ */
+export const getAIInsight = async (userId, month) => {
+    const { data, error } = await supabase
+        .from('ai_insights')
+        .select('insight, generated_at')
+        .eq('user_id', userId)
+        .eq('month', month)
+        .maybeSingle();
+    if (error) throw error;
+    return data;
+};
+
+/**
+ * Upsert a cached AI insight for a user + month.
+ */
+export const saveAIInsight = async (userId, month, insight) => {
+    const { error } = await supabase
+        .from('ai_insights')
+        .upsert({
+            user_id: userId,
+            month,
+            insight,
+            generated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id,month' });
+    if (error) throw error;
+};
+
 export const exportTransactionsCSV = (transactions) => {
+
     const headers = ['Date', 'Title', 'Category', 'Type', 'Amount', 'Notes', 'Is Recurring'];
     const rows = transactions.map(t => [
         t.date,

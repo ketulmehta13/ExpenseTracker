@@ -13,6 +13,8 @@ import { formatCurrency, formatDate, getGreeting } from '../lib/formatters';
 import { SkeletonDashboard } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/ui/EmptyState';
 import TransactionModal from '../components/TransactionModal';
+import QuickAdd from '../components/QuickAdd';
+import AIInsightsCard from '../components/AIInsightsCard';
 
 /* ── Color palette for category donut chart (Brand #0d3a35 Teal-Green) ── */
 const CAT_COLORS = [
@@ -75,7 +77,10 @@ const Dashboard = () => {
     const [loading, setLoading] = useState(true);
     const [profile, setProfile] = useState(null);
     const [dateRange, setDateRange] = useState('this_month');
-    const [txModal, setTxModal] = useState({ open: false, type: 'EXPENSE' });
+    const [txModal, setTxModal] = useState({ open: false, type: 'EXPENSE', prefill: null });
+
+    // Current month key for AI insight caching (e.g. '2026-08')
+    const currentMonth = new Date().toISOString().slice(0, 7);
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -192,6 +197,26 @@ const Dashboard = () => {
         day: 'numeric',
     });
 
+    /**
+     * Called when QuickAdd successfully parses a natural language string.
+     * Opens TransactionModal pre-filled with the parsed data.
+     */
+    const handleQuickAddParsed = (parsed) => {
+        // Find matching category ID from the parsed category name (best-effort)
+        setTxModal({
+            open: true,
+            type: parsed.type || 'EXPENSE',
+            prefill: {
+                title: parsed.description || '',
+                amount: parsed.amount?.toString() || '',
+                date: parsed.date || new Date().toISOString().split('T')[0],
+                notes: '',
+                // category matching is handled inside TransactionModal via prefill prop
+                category_name_hint: parsed.category || '',
+            },
+        });
+    };
+
     if (loading) return <SkeletonDashboard />;
 
     return (
@@ -205,6 +230,9 @@ const Dashboard = () => {
                     <p className="mt-0.5 text-sm text-muted-foreground">{today}</p>
                 </div>
             </div>
+
+            {/* ── Quick Add (AI natural language entry) ── */}
+            <QuickAdd onParsed={handleQuickAddParsed} />
 
             {/* ── Date range selector ── */}
             <div className="flex items-center gap-2 flex-wrap">
@@ -265,6 +293,9 @@ const Dashboard = () => {
                     accentClass={netPctChange === null || netPctChange >= 0 ? 'bg-income/15 text-income' : 'bg-expense/15 text-expense'}
                 />
             </div>
+
+            {/* ── AI Insights card ── */}
+            <AIInsightsCard summary={summary} month={currentMonth} />
 
             {/* ── Charts row ── */}
             {allTransactions.length === 0 ? (
@@ -408,7 +439,8 @@ const Dashboard = () => {
             <TransactionModal
                 isOpen={txModal.open}
                 defaultType={txModal.type}
-                onClose={() => setTxModal({ open: false, type: 'EXPENSE' })}
+                prefill={txModal.prefill ?? null}
+                onClose={() => setTxModal({ open: false, type: 'EXPENSE', prefill: null })}
                 onSuccess={fetchData}
             />
         </div>

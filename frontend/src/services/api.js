@@ -121,7 +121,11 @@ export const updateProfile = async (userId, updates) => {
  * Get all transactions for the current user, with optional type filter.
  * Joins category name from categories table.
  */
-export const getTransactions = async (filterType = '') => {
+/**
+ * Get all transactions for the current user, with optional type and historyMonths filter.
+ * Joins category name from categories table.
+ */
+export const getTransactions = async (filterType = '', historyMonths = null) => {
     let query = supabase
         .from('transactions')
         .select('*, categories(name)')
@@ -130,6 +134,13 @@ export const getTransactions = async (filterType = '') => {
 
     if (filterType) {
         query = query.eq('type', filterType);
+    }
+
+    if (historyMonths) {
+        const cutoff = new Date();
+        cutoff.setMonth(cutoff.getMonth() - historyMonths);
+        const cutoffStr = cutoff.toISOString().split('T')[0];
+        query = query.gte('date', cutoffStr);
     }
 
     const { data, error } = await query;
@@ -158,6 +169,7 @@ export const getTransactionsPaginated = async ({
     search = '',
     sortBy = 'date',
     sortAsc = false,
+    historyMonths = null,
 } = {}) => {
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
@@ -168,7 +180,19 @@ export const getTransactionsPaginated = async ({
 
     if (type) query = query.eq('type', type);
     if (categoryId) query = query.eq('category_id', categoryId);
-    if (startDate) query = query.gte('date', startDate);
+
+    // Apply cutoff limit if user is on restricted plan
+    let effectiveStartDate = startDate;
+    if (historyMonths) {
+        const cutoff = new Date();
+        cutoff.setMonth(cutoff.getMonth() - historyMonths);
+        const cutoffStr = cutoff.toISOString().split('T')[0];
+        if (!effectiveStartDate || effectiveStartDate < cutoffStr) {
+            effectiveStartDate = cutoffStr;
+        }
+    }
+
+    if (effectiveStartDate) query = query.gte('date', effectiveStartDate);
     if (endDate) query = query.lte('date', endDate);
     if (minAmount !== null && minAmount !== '') query = query.gte('amount', parseFloat(minAmount));
     if (maxAmount !== null && maxAmount !== '') query = query.lte('amount', parseFloat(maxAmount));
@@ -450,3 +474,56 @@ export const exportTransactionsCSV = (transactions) => {
     link.remove();
     URL.revokeObjectURL(url);
 };
+
+// ============================================================
+// SUBSCRIPTION SERVICES
+// ============================================================
+
+/**
+ * Fetch subscription record for the given user.
+ */
+export const getSubscription = async (userId) => {
+    const { data, error } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+    if (error) throw error;
+    return data;
+};
+
+/**
+ * Call razorpay-checkout Edge Function to create a subscription and get subscriptionId + keyId.
+ */
+export const createCheckoutSubscription = async (plan = 'monthly') => {
+    const { data, error } = await supabase.functions.invoke('razorpay-checkout', {
+        body: { plan },
+    });
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+    return data;
+};
+
+/**
+ * Call razorpay-cancel Edge Function to cancel subscription at cycle end.
+ */
+export const cancelSubscription = async () => {
+    const { data, error } = await supabase.functions.invoke('razorpay-cancel', {
+        body: {},
+    });
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+    return data;
+};
+
+/**
+ * Call check-plan Edge Function for server-side verification of features and limits.
+ */
+export const checkUserPlan = async () => {
+    const { data, error } = await supabase.functions.invoke('check-plan', {
+        body: {},
+    });
+    if (error) throw error;
+    return data;
+};

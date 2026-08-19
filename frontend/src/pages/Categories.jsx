@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Pencil, Trash2, Tag, ArrowRightLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Pencil, Trash2, Tag, ArrowRightLeft, Crown, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import {
     getCategories, createCategory, updateCategory, deleteCategory,
@@ -8,6 +9,7 @@ import {
 import { Skeleton } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/ui/EmptyState';
 import ConfirmModal from '../components/ConfirmModal';
+import { usePlan } from '../context/PlanContext';
 
 /* ── 12 preset color swatches (with Brand #0d3a35) ── */
 const PRESET_COLORS = [
@@ -225,6 +227,8 @@ const ReassignModal = ({ isOpen, onClose, onConfirm, categories, deletingCategor
    Categories page
 ───────────────────────────────────── */
 const Categories = () => {
+    const { isPro } = usePlan();
+    const navigate = useNavigate();
     const [categories, setCategories] = useState([]);
     const [txCounts, setTxCounts] = useState({});
     const [loading, setLoading] = useState(true);
@@ -233,6 +237,10 @@ const Categories = () => {
     const [deleteModal, setDeleteModal] = useState({ open: false, category: null });
     const [reassignModal, setReassignModal] = useState({ open: false, category: null });
     const [deleting, setDeleting] = useState(false);
+
+    const customCategories = categories.filter((c) => c.user_id !== null && c.user_id !== undefined);
+    const customCount = customCategories.length;
+    const isLimitReached = !isPro && customCount >= 5;
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -252,6 +260,15 @@ const Categories = () => {
     }, []);
 
     useEffect(() => { fetchData(); }, [fetchData]);
+
+    const handleNewCategoryClick = () => {
+        if (isLimitReached) {
+            toast.error('Free plan limit: You can have up to 5 custom categories. Upgrade to Pro for unlimited categories!');
+            navigate('/dashboard/upgrade');
+            return;
+        }
+        setFormModal({ open: true, category: null });
+    };
 
     const handleDeleteClick = async (cat) => {
         const count = txCounts[cat.id] ?? 0;
@@ -293,19 +310,44 @@ const Categories = () => {
 
     return (
         <div className="space-y-5 page-enter">
+            {/* Free Tier Category Limit Banner */}
+            {!isPro && (
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 rounded-2xl bg-primary/5 border border-primary/15 gap-3">
+                    <div className="flex items-center gap-2.5 text-xs text-foreground">
+                        <Tag size={15} className="text-primary flex-shrink-0" />
+                        <span>
+                            Custom Categories: <strong className="font-semibold">{customCount}/5 used</strong>
+                            {isLimitReached ? ' (Limit reached)' : ''}
+                        </span>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => navigate('/dashboard/upgrade')}
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                    >
+                        <Crown size={12} />
+                        Upgrade for unlimited categories →
+                    </button>
+                </div>
+            )}
+
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="font-display text-3xl font-bold text-foreground">Categories</h1>
                     <p className="mt-0.5 text-sm text-muted-foreground">
-                        {categories.length} categories
+                        {categories.length} categories total ({customCount} custom)
                     </p>
                 </div>
                 <button
-                    onClick={() => setFormModal({ open: true, category: null })}
-                    className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-90 transition"
+                    onClick={handleNewCategoryClick}
+                    className={`flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold shadow-sm transition ${
+                        isLimitReached
+                            ? 'bg-muted text-muted-foreground border border-border hover:bg-muted/80'
+                            : 'bg-primary text-primary-foreground hover:opacity-90'
+                    }`}
                 >
-                    <Plus size={15} />
-                    New category
+                    {isLimitReached ? <Lock size={14} /> : <Plus size={15} />}
+                    {isLimitReached ? 'Unlock Unlimited' : 'New category'}
                 </button>
             </div>
 

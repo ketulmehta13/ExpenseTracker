@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Plus, Pencil, Trash2, Filter, Download, FileText,
     Search, ChevronUp, ChevronDown, ChevronLeft, ChevronRight,
-    ReceiptText, X
+    ReceiptText, X, Crown, Lock
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -10,11 +11,13 @@ import {
     exportTransactionsCSV
 } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { usePlan } from '../context/PlanContext';
 import { formatCurrency, formatDate } from '../lib/formatters';
 import { SkeletonTable } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/ui/EmptyState';
 import TransactionModal from '../components/TransactionModal';
 import ConfirmModal from '../components/ConfirmModal';
+import ProGate from '../components/ProGate';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 
@@ -29,6 +32,8 @@ const SortIcon = ({ column, sortBy, sortDir }) => {
 
 const Transactions = () => {
     const { user } = useAuth();
+    const { isPro, historyMonths } = usePlan();
+    const navigate = useNavigate();
     const [transactions, setTransactions] = useState([]);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -58,7 +63,10 @@ const Transactions = () => {
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
-            const [txs, cats] = await Promise.all([getTransactions(), getCategories()]);
+            const [txs, cats] = await Promise.all([
+                getTransactions('', historyMonths),
+                getCategories()
+            ]);
             setTransactions(txs);
             setCategories(cats);
         } catch (err) {
@@ -67,7 +75,7 @@ const Transactions = () => {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [historyMonths]);
 
     useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -153,11 +161,21 @@ const Transactions = () => {
 
     /* ── Export ── */
     const handleExportCSV = () => {
+        if (!isPro) {
+            toast.error('CSV export is a Pro feature. Upgrade to Pro to export your data!');
+            navigate('/dashboard/upgrade');
+            return;
+        }
         exportTransactionsCSV(filtered);
         toast.success('CSV exported!');
     };
 
     const handleExportPDF = () => {
+        if (!isPro) {
+            toast.error('PDF export is a Pro feature. Upgrade to Pro to export reports!');
+            navigate('/dashboard/upgrade');
+            return;
+        }
         const doc = new jsPDF();
         doc.setFontSize(16);
         doc.text('Expense Tracker — Transactions Report', 14, 20);
@@ -186,6 +204,26 @@ const Transactions = () => {
 
     return (
         <div className="space-y-5 page-enter">
+            {/* Free Tier History Limit Banner */}
+            {!isPro && (
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 rounded-2xl bg-primary/5 border border-primary/15 gap-3">
+                    <div className="flex items-center gap-2.5 text-xs text-foreground">
+                        <ReceiptText size={15} className="text-primary flex-shrink-0" />
+                        <span>
+                            Free Plan: Showing transactions from the <strong>last 3 months</strong>.
+                        </span>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => navigate('/dashboard/upgrade')}
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                    >
+                        <Crown size={12} />
+                        Unlock all-time history with Pro →
+                    </button>
+                </div>
+            )}
+
             {/* ── Page header ── */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
@@ -204,14 +242,18 @@ const Transactions = () => {
                     <button
                         onClick={handleExportCSV}
                         className="flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-semibold text-foreground hover:bg-muted transition-colors"
+                        title={!isPro ? 'Pro Feature: Export as CSV' : 'Export CSV'}
                     >
-                        <Download size={13} /> CSV
+                        {!isPro ? <Lock size={12} className="text-muted-foreground" /> : <Download size={13} />}
+                        CSV
                     </button>
                     <button
                         onClick={handleExportPDF}
                         className="flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-semibold text-foreground hover:bg-muted transition-colors"
+                        title={!isPro ? 'Pro Feature: Export as PDF' : 'Export PDF'}
                     >
-                        <FileText size={13} /> PDF
+                        {!isPro ? <Lock size={12} className="text-muted-foreground" /> : <FileText size={13} />}
+                        PDF
                     </button>
                 </div>
             </div>

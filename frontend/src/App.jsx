@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { PlanProvider } from './context/PlanContext';
 import { ThemeProvider } from './components/ThemeProvider';
 import ErrorBoundary from './components/ErrorBoundary';
 import MainLayout from './layouts/MainLayout';
@@ -15,6 +16,7 @@ import Analytics from './pages/Analytics';
 import Profile from './pages/Profile';
 import Home from './pages/Home';
 import Categories from './pages/Categories';
+import Upgrade from './pages/Upgrade';
 import NotFound from './pages/NotFound';
 
 const ProtectedRoute = ({ children }) => {
@@ -58,6 +60,7 @@ function AppRoutes() {
                 <Route path="analytics" element={<Analytics />} />
                 <Route path="categories" element={<Categories />} />
                 <Route path="settings" element={<Profile />} />
+                <Route path="upgrade" element={<Upgrade />} />
                 <Route path="profile" element={<Navigate to="/dashboard/settings" replace />} />
             </Route>
 
@@ -72,9 +75,11 @@ function App() {
         <ErrorBoundary>
             <ThemeProvider>
                 <AuthProvider>
-                    <Router>
-                        <AppRoutes />
-                    </Router>
+                    <PlanProvider>
+                        <Router>
+                            <AppRoutes />
+                        </Router>
+                    </PlanProvider>
                 </AuthProvider>
             </ThemeProvider>
         </ErrorBoundary>
@@ -82,3 +87,4 @@ function App() {
 }
 
 export default App;
+

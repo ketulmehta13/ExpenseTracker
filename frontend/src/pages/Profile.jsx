@@ -5,12 +5,15 @@ import { toast } from 'sonner';
 import {
     Loader2, Save, Camera, Eye, EyeOff, Download,
     Shield, User, Palette, Database, AlertTriangle,
-    Mail, Phone, BadgeCheck
+    Mail, Phone, BadgeCheck, Crown, CreditCard
 } from 'lucide-react';
-import { getProfile, updateProfile, getTransactions, computeSummary, authChangePassword, exportTransactionsCSV, deleteUserData } from '../services/api';
+import { getProfile, updateProfile, getTransactions, computeSummary, authChangePassword, exportTransactionsCSV, deleteUserData, cancelSubscription } from '../services/api';
 import { formatCurrency } from '../lib/formatters';
 import { Skeleton } from '../components/ui/Skeleton';
 import ConfirmModal from '../components/ConfirmModal';
+import { usePlan } from '../context/PlanContext';
+import ProGate from '../components/ProGate';
+import PlanBadge from '../components/PlanBadge';
 
 /* ── Section wrapper ── */
 const Section = ({ title, icon: Icon, children }) => (
@@ -81,6 +84,11 @@ const Profile = () => {
     const [deleteModal, setDeleteModal] = useState(false);
     const [deleteInput, setDeleteInput] = useState('');
     const [deleteLoading, setDeleteLoading] = useState(false);
+
+    /* Subscription & Billing */
+    const { isPro, isTrialing, isPastDue, isCanceled, plan, trialEnd, periodEnd, gracePeriodEnd, refreshPlan } = usePlan();
+    const [cancelModal, setCancelModal] = useState(false);
+    const [cancelLoading, setCancelLoading] = useState(false);
 
     /* ── Fetch data ── */
     useEffect(() => {
@@ -212,6 +220,21 @@ const Profile = () => {
             toast.error(err.message || 'Failed to delete account. Please try again.');
         } finally {
             setDeleteLoading(false);
+        }
+    };
+
+    /* ── Cancel subscription ── */
+    const handleCancelSubscription = async () => {
+        setCancelLoading(true);
+        try {
+            await cancelSubscription();
+            toast.success('Subscription cancelled. You will retain Pro access until the end of your current billing period.');
+            setCancelModal(false);
+            refreshPlan();
+        } catch (err) {
+            toast.error(err.message || 'Failed to cancel subscription.');
+        } finally {
+            setCancelLoading(false);
         }
     };
 
@@ -442,21 +465,91 @@ const Profile = () => {
                 </div>
             </Section>
 
-            {/* 4. Data */}
-            <Section title="Data" icon={Database}>
-                <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">Export all your transactions as a CSV file.</p>
-                    <button
-                        onClick={handleExportCSV}
-                        className="flex items-center gap-2 rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-muted transition-colors"
-                    >
-                        <Download size={15} />
-                        Export as CSV
-                    </button>
+            {/* 4. Billing & Subscription */}
+            <Section title="Billing & Subscription" icon={CreditCard}>
+                <div className="space-y-4">
+                    {/* Past Due Warning Banner */}
+                    {isPastDue && (
+                        <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive flex items-start gap-3">
+                            <AlertTriangle size={18} className="flex-shrink-0 mt-0.5" />
+                            <div className="text-xs space-y-1">
+                                <p className="font-bold text-sm">Payment Failed — Account in Grace Period</p>
+                                <p>
+                                    Your latest recurring subscription payment could not be processed. Please update your payment method on Razorpay within 3 days
+                                    {gracePeriodEnd ? ` (before ${new Date(gracePeriodEnd).toLocaleDateString('en-IN')})` : ''} to avoid losing Pro features.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-muted/40 border border-border gap-4">
+                        <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm font-bold text-foreground">
+                                    {isPro ? (plan === 'pro_yearly' ? 'Pro Plan (Annual)' : 'Pro Plan (Monthly)') : 'Free Plan'}
+                                </span>
+                                <PlanBadge />
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                {isTrialing && trialEnd ? (
+                                    <>Free trial ends on <strong className="text-foreground">{new Date(trialEnd).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}</strong></>
+                                ) : isPro && periodEnd ? (
+                                    <>Current billing period ends on <strong className="text-foreground">{new Date(periodEnd).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}</strong></>
+                                ) : isCanceled ? (
+                                    <>Access active until end of billing cycle</>
+                                ) : (
+                                    'Basic personal finance tracking with 3-month history and up to 5 categories.'
+                                )}
+                            </p>
+                        </div>
+
+                        <div>
+                            {!isPro ? (
+                                <button
+                                    type="button"
+                                    onClick={() => navigate('/dashboard/upgrade')}
+                                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90 transition active:scale-95 shadow-sm whitespace-nowrap"
+                                >
+                                    <Crown size={14} />
+                                    Upgrade to Pro
+                                </button>
+                            ) : !isCanceled ? (
+                                <button
+                                    type="button"
+                                    onClick={() => setCancelModal(true)}
+                                    className="px-3.5 py-2 rounded-xl border border-border text-xs font-semibold text-muted-foreground hover:text-destructive hover:bg-destructive/10 hover:border-destructive/30 transition whitespace-nowrap"
+                                >
+                                    Cancel Subscription
+                                </button>
+                            ) : (
+                                <span className="text-xs font-semibold text-muted-foreground">
+                                    Cancellation scheduled
+                                </span>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </Section>
 
-            {/* 5. Danger zone */}
+            {/* 5. Data */}
+            <Section title="Data & Exports" icon={Database}>
+                <div className="space-y-3">
+                    <p className="text-sm text-muted-foreground">Export your complete financial transaction history as a CSV spreadsheet.</p>
+                    {isPro ? (
+                        <button
+                            onClick={handleExportCSV}
+                            className="flex items-center gap-2 rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-muted transition-colors"
+                        >
+                            <Download size={15} />
+                            Export as CSV
+                        </button>
+                    ) : (
+                        <ProGate featureName="CSV Data Export" compact={true} />
+                    )}
+                </div>
+            </Section>
+
+            {/* 6. Danger zone */}
             <Section title="Danger Zone" icon={AlertTriangle}>
                 <div className="space-y-3">
                     <p className="text-sm text-muted-foreground">
@@ -509,6 +602,44 @@ const Profile = () => {
                                 className="flex-1 rounded-xl bg-destructive py-2.5 text-sm font-semibold text-destructive-foreground hover:opacity-90 transition disabled:opacity-40"
                             >
                                 {deleteLoading ? <span className="flex items-center justify-center gap-1.5"><Loader2 size={14} className="animate-spin" /> Deleting…</span> : 'Delete forever'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Cancel subscription confirmation modal */}
+            {cancelModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4" aria-modal="true">
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setCancelModal(false)} />
+                    <div className="relative z-10 w-full max-w-sm rounded-2xl bg-card border border-border shadow-2xl p-5 space-y-4 animate-in fade-in zoom-in-95 duration-200">
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-destructive/10 text-destructive">
+                                <Crown size={20} />
+                            </div>
+                            <h3 className="font-semibold text-foreground">Cancel Pro Subscription?</h3>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                            You will keep all Pro features (unlimited history, CSV export, AI tools) until the end of your current billing cycle. No further recurring charges will be made.
+                        </p>
+                        <div className="flex gap-2 pt-2">
+                            <button
+                                onClick={() => setCancelModal(false)}
+                                className="flex-1 rounded-xl border border-border py-2.5 text-sm font-semibold text-foreground hover:bg-muted transition"
+                            >
+                                Keep Pro
+                            </button>
+                            <button
+                                onClick={handleCancelSubscription}
+                                disabled={cancelLoading}
+                                className="flex-1 rounded-xl bg-destructive py-2.5 text-sm font-semibold text-destructive-foreground hover:opacity-90 transition disabled:opacity-40"
+                            >
+                                {cancelLoading ? (
+                                    <span className="flex items-center justify-center gap-1.5">
+                                        <Loader2 size={14} className="animate-spin" /> Cancelling…
+                                    </span>
+                                ) : (
+                                    'Confirm Cancel'
+                                )}
                             </button>
                         </div>
                     </div>

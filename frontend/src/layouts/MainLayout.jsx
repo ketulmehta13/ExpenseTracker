@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { usePlan } from '../context/PlanContext';
 import {
     LayoutDashboard,
     ReceiptText,
@@ -12,11 +13,14 @@ import {
     Plus,
     ChevronDown,
     User,
+    Crown,
+    Sparkles,
 } from 'lucide-react';
 import logoIcon from '../assets/logo-icon.png';
 import { cn } from '../lib/utils';
 import { Toaster, toast } from 'sonner';
 import TransactionModal from '../components/TransactionModal';
+import PlanBadge from '../components/PlanBadge';
 import { useAutoLogout } from '../hooks/useAutoLogout';
 
 const navItems = [
@@ -36,6 +40,7 @@ const bottomTabs = [
 
 const MainLayout = () => {
     const { logout, user } = useAuth();
+    const { isPro, isTrialing, plan } = usePlan();
     const navigate = useNavigate();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -187,6 +192,27 @@ const MainLayout = () => {
                             )}
                         </NavLink>
                     ))}
+
+                    {/* Pro Upgrade Sidebar CTA (for free users) */}
+                    {!isPro && (
+                        <div className="pt-4 px-1">
+                            <div className="rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-3.5 space-y-2.5">
+                                <div className="flex items-center gap-1.5 text-primary text-xs font-bold">
+                                    <Crown size={14} />
+                                    <span>Upgrade to Pro</span>
+                                </div>
+                                <p className="text-[11px] text-muted-foreground leading-tight">
+                                    Unlock unlimited history, CSV exports, & AI insights with 7-day trial.
+                                </p>
+                                <button
+                                    onClick={() => { setSidebarOpen(false); navigate('/dashboard/upgrade'); }}
+                                    className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold shadow-xs hover:opacity-90 transition active:scale-95"
+                                >
+                                    <span>Start Free Trial</span>
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </nav>
 
                 {/* Footer Logout */}
@@ -224,12 +250,12 @@ const MainLayout = () => {
 
                     <div className="flex-1" />
 
+                    {/* Header Plan Badge */}
+                    <div className="hidden sm:block mr-2">
+                        <PlanBadge showUpgradeButton={!isPro} onUpgradeClick={() => navigate('/dashboard/upgrade')} />
+                    </div>
+
                     {/* ── Profile Dropdown Trigger ── */}
-                    {/*
-                        IMPORTANT: The dropdown is rendered as a sibling to the header (via portal-like
-                        absolute positioning on the outer wrapper), NOT inside the header element itself.
-                        This prevents backdrop-filter / overflow clipping from trapping the dropdown panel.
-                    */}
                     <div className="relative" ref={triggerRef}>
                         <button
                             id="user-menu-btn"
@@ -246,7 +272,7 @@ const MainLayout = () => {
                                     {displayName}
                                 </span>
                                 <span className="text-[10px] text-muted-foreground leading-none">
-                                    Member
+                                    {isPro ? (isTrialing ? 'Pro Trial' : 'Pro Member') : 'Free Plan'}
                                 </span>
                             </div>
                             <ChevronDown
@@ -269,7 +295,6 @@ const MainLayout = () => {
                                 </div>
 
                                 <div className="p-1.5 space-y-0.5">
-
                                     <Link
                                         to="/dashboard/settings"
                                         onClick={() => setUserMenuOpen(false)}
@@ -278,6 +303,26 @@ const MainLayout = () => {
                                         <User size={16} className="text-primary flex-shrink-0" />
                                         Profile & Settings
                                     </Link>
+
+                                    {!isPro ? (
+                                        <Link
+                                            to="/dashboard/upgrade"
+                                            onClick={() => setUserMenuOpen(false)}
+                                            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
+                                        >
+                                            <Crown size={16} className="text-primary flex-shrink-0" />
+                                            Upgrade to Pro
+                                        </Link>
+                                    ) : (
+                                        <Link
+                                            to="/dashboard/settings#billing"
+                                            onClick={() => setUserMenuOpen(false)}
+                                            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
+                                        >
+                                            <Crown size={16} className="text-amber-500 flex-shrink-0" />
+                                            Manage Subscription
+                                        </Link>
+                                    )}
 
                                     <button
                                         onClick={handleLogout}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Pencil, Trash2, Tag, ArrowRightLeft, Crown, Lock } from 'lucide-react';
 import { toast } from 'sonner';
@@ -69,10 +70,11 @@ const CategoryFormModal = ({ isOpen, onClose, onSave, category }) => {
 
     if (!isOpen) return null;
 
-    return (
+    // Modals are portaled to <body> so the overlay always covers the whole viewport
+    return createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" aria-modal="true">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-            <div className="relative z-10 w-full max-w-sm rounded-2xl bg-card border border-border shadow-2xl animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
+            <div className="relative z-10 w-full max-w-sm max-h-[90dvh] overflow-y-auto rounded-2xl bg-card border border-border shadow-2xl animate-in fade-in zoom-in-95 duration-200">
                 <div className="p-5">
                     <h2 className="font-semibold text-foreground text-lg mb-4">
                         {isEdit ? 'Edit Category' : 'New Category'}
@@ -167,7 +169,8 @@ const CategoryFormModal = ({ isOpen, onClose, onSave, category }) => {
                     </form>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 
@@ -182,10 +185,10 @@ const ReassignModal = ({ isOpen, onClose, onConfirm, categories, deletingCategor
 
     if (!isOpen) return null;
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" aria-modal="true">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-            <div className="relative z-10 w-full max-w-sm rounded-2xl bg-card border border-border shadow-2xl animate-in fade-in zoom-in-95 duration-200 p-5">
+            <div className="relative z-10 w-full max-w-sm max-h-[90dvh] overflow-y-auto rounded-2xl bg-card border border-border shadow-2xl animate-in fade-in zoom-in-95 duration-200 p-5">
                 <div className="flex items-center gap-3 mb-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-expense/10 text-expense">
                         <ArrowRightLeft size={18} />
@@ -219,7 +222,8 @@ const ReassignModal = ({ isOpen, onClose, onConfirm, categories, deletingCategor
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

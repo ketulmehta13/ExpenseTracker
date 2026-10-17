@@ -176,6 +176,9 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* No "forwards" fill on purpose: it keeps the final transform applied, and any
+   transform makes the page the containing block for position:fixed descendants,
+   which trapped modals inside the page box (clipped under the header). */
 .page-enter {
-  animation: fadeIn 0.2s ease-out forwards;
+  animation: fadeIn 0.2s ease-out;
 }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X, TrendingUp, TrendingDown, Loader2, Plus, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { createTransaction, updateTransaction, getCategories, createCategory } from '../services/api';
@@ -240,7 +241,8 @@ const TransactionModal = ({
 
     const isIncome = form.type === 'INCOME';
 
-    return (
+    // Portaled to <body> so the overlay always covers the whole viewport, whatever page renders it
+    return createPortal(
         <div
             className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
             aria-modal="true"
@@ -254,7 +256,7 @@ const TransactionModal = ({
             />
 
             {/* Modal panel */}
-            <div className="relative z-10 w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl bg-card border-t sm:border border-border shadow-2xl animate-in fade-in slide-in-from-bottom-4 sm:zoom-in-95 duration-300 overflow-hidden">
+            <div className="relative z-10 w-full sm:max-w-md max-h-[90dvh] overflow-y-auto rounded-t-3xl sm:rounded-2xl bg-card border-t sm:border border-border shadow-2xl animate-in fade-in slide-in-from-bottom-4 sm:zoom-in-95 duration-300">
 
                 {/* Type toggle header */}
                 <div className={`px-5 pt-5 pb-3 ${isIncome ? 'bg-income/10' : 'bg-expense/10'}`}>
@@ -480,7 +482,8 @@ const TransactionModal = ({
                     </div>
                 </form>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

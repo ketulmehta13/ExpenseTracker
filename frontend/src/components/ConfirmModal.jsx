@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X, AlertTriangle } from 'lucide-react';
 
 /**
@@ -41,7 +42,8 @@ const ConfirmModal = ({
 
     if (!isOpen) return null;
 
-    return (
+    // Portaled to <body> so the overlay always covers the whole viewport, whatever page renders it
+    return createPortal(
         <div
             className="fixed inset-0 z-[60] flex items-center justify-center p-4"
             aria-modal="true"
@@ -55,7 +57,7 @@ const ConfirmModal = ({
             />
 
             {/* Dialog */}
-            <div className="relative z-10 w-full max-w-sm rounded-2xl bg-card border border-border shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="relative z-10 w-full max-w-sm max-h-[90dvh] overflow-y-auto rounded-2xl bg-card border border-border shadow-2xl animate-in fade-in zoom-in-95 duration-200">
                 {/* Header */}
                 <div className="flex items-start gap-3 p-5 pb-3">
                     <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl ${isDestructive ? 'bg-destructive/10 text-destructive' : 'bg-income/10 text-income'}`}>
@@ -113,7 +115,8 @@ const ConfirmModal = ({
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

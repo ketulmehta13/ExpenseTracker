@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient';
+import { todayISODate } from '../lib/dates';
 
 /**
  * Thin, safe wrapper around the ai-proxy Supabase Edge Function.
@@ -44,7 +45,8 @@ export async function suggestCategory(title, categories = []) {
  */
 export async function parseTransaction(text) {
     if (!text || text.trim().length < 3) return null;
-    const result = await invokeAI('parse_transaction', { text });
+    // Send the local date so "today"/"yesterday" resolve in the user's timezone
+    const result = await invokeAI('parse_transaction', { text, today: todayISODate() });
     return result ?? null;
 }
 

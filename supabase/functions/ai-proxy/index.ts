@@ -133,14 +133,18 @@ async function handleCategorize(payload: { title: string; categories: string[] }
 }
 
 /** parse_transaction: parse natural language into structured transaction fields */
-async function handleParseTransaction(payload: { text: string }) {
+async function handleParseTransaction(payload: { text: string; today?: string }) {
   const { text } = payload;
 
   if (!text || text.trim().length < 3) {
     return { error: 'Input too short' };
   }
 
-  const today = new Date().toISOString().split('T')[0];
+  // Prefer the client's local date: the server clock is UTC, which is still
+  // "yesterday" for Indian users between midnight and 05:30
+  const today = /^\d{4}-\d{2}-\d{2}$/.test(payload.today ?? '')
+    ? payload.today!
+    : new Date().toISOString().split('T')[0];
 
   const content = await callOpenAI([
     {
@@ -263,7 +267,7 @@ serve(async (req) => {
         result = await handleCategorize(payload as { title: string; categories: string[] });
         break;
       case 'parse_transaction':
-        result = await handleParseTransaction(payload as { text: string });
+        result = await handleParseTransaction(payload as { text: string; today?: string });
         break;
       case 'monthly_insight':
         result = await handleMonthlyInsight(payload as Parameters<typeof handleMonthlyInsight>[0]);

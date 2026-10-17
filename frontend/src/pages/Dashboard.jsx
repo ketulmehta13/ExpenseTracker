@@ -10,7 +10,7 @@ import {
 import { getTransactions, getProfile, computeSummary } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { formatCurrency, formatDate, getGreeting } from '../lib/formatters';
-import { parseDate } from '../lib/dates';
+import { parseDate, todayISODate } from '../lib/dates';
 import { SkeletonDashboard } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/ui/EmptyState';
 import TransactionModal from '../components/TransactionModal';
@@ -82,7 +82,7 @@ const Dashboard = () => {
     const [txModal, setTxModal] = useState({ open: false, type: 'EXPENSE', prefill: null });
 
     // Current month key for AI insight caching (e.g. '2026-08')
-    const currentMonth = new Date().toISOString().slice(0, 7);
+    const currentMonth = todayISODate().slice(0, 7);
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -211,7 +211,7 @@ const Dashboard = () => {
             prefill: {
                 title: parsed.description || '',
                 amount: parsed.amount?.toString() || '',
-                date: parsed.date || new Date().toISOString().split('T')[0],
+                date: parsed.date || todayISODate(),
                 notes: '',
                 // category matching is handled inside TransactionModal via prefill prop
                 category_name_hint: parsed.category || '',

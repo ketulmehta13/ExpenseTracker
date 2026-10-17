@@ -72,7 +72,7 @@ const TransactionModal = ({
                     title: prefill.title || '',
                     amount: prefill.amount || '',
                     category_id: matchedCat?.id || '',
-                    date: prefill.date || new Date().toISOString().split('T')[0],
+                    date: prefill.date || todayISODate(),
                     notes: prefill.notes || '',
                     is_recurring: false,
                 });

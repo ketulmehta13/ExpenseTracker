@@ -3,6 +3,41 @@
 -- Migration Version: 20261017000000
 -- ==============================================================================
 
+-- 0. LEGACY SCHEMA ALIGNMENT
+
+-- Databases created before 20260816000000 keep their original tables (that migration
+-- uses CREATE TABLE IF NOT EXISTS), so they lack columns the app reads and writes.
+ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS color TEXT;
+ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS icon TEXT;
+ALTER TABLE public.categories
+    ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT TIMEZONE('utc'::text, NOW());
+ALTER TABLE public.profiles
+    ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT TIMEZONE('utc'::text, NOW());
+
+-- The composite indexes and checks from 20260816000000, for those same databases.
+-- NOT VALID enforces the checks on new rows without failing on legacy data.
+CREATE INDEX IF NOT EXISTS idx_transactions_user_date ON public.transactions(user_id, date DESC);
+CREATE INDEX IF NOT EXISTS idx_transactions_user_category ON public.transactions(user_id, category_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_user_type ON public.transactions(user_id, type);
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conrelid = 'public.transactions'::regclass AND conname = 'transactions_amount_positive'
+    ) THEN
+        ALTER TABLE public.transactions
+            ADD CONSTRAINT transactions_amount_positive CHECK (amount > 0) NOT VALID;
+    END IF;
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conrelid = 'public.transactions'::regclass AND conname = 'transactions_title_not_empty'
+    ) THEN
+        ALTER TABLE public.transactions
+            ADD CONSTRAINT transactions_title_not_empty CHECK (length(trim(title)) > 0) NOT VALID;
+    END IF;
+END $$;
+
 -- 1. CATEGORIES
 
 -- The app inserts categories without user_id; default it to the caller so the
@@ -31,7 +66,9 @@ WHERE c.id = d.id;
 
 DROP TABLE category_dupes;
 
+-- categories_name_user_id_key is the auto-generated name on legacy databases
 ALTER TABLE public.categories DROP CONSTRAINT IF EXISTS categories_name_user_unique;
+ALTER TABLE public.categories DROP CONSTRAINT IF EXISTS categories_name_user_id_key;
 ALTER TABLE public.categories
     ADD CONSTRAINT categories_name_user_unique UNIQUE NULLS NOT DISTINCT (name, user_id);
 

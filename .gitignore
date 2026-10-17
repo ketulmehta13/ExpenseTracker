@@ -15,6 +15,10 @@ __pycache__/
 backend/token.txt
 backend/check_output.txt
 
+# Supabase CLI local state
+supabase/.temp/
+supabase/.branches/
+
 # Build output
 dist/
 .vercel/

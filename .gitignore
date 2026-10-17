@@ -1,0 +1,33 @@
+# Dependencies & virtual environments
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Environment files (never commit secrets; templates are fine)
+.env
+.env.*
+!.env.example
+
+# Local databases & scratch output
+*.sqlite3
+backend/token.txt
+backend/check_output.txt
+
+# Build output
+dist/
+.vercel/
+
+# ML artifacts: datasets are generated and trained models are versioned in Supabase Storage
+ml-service/data/
+ml-service/models/*
+!ml-service/models/.gitkeep
+!ml-service/models/model_card.md
+
+# Editors / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db

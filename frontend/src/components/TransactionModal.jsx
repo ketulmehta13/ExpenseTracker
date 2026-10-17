@@ -6,6 +6,7 @@ import { createTransaction, updateTransaction, getCategories, createCategory } f
 import { useAuth } from '../context/AuthContext';
 import { todayISODate } from '../lib/dates';
 import { suggestCategory } from '../services/aiService';
+import { AI_ENABLED } from '../lib/features';
 
 /**
  * TransactionModal — shared modal for Add and Edit transactions.
@@ -133,7 +134,7 @@ const TransactionModal = ({
     // Debounced AI category suggestion — fires 500ms after title stops changing
     useEffect(() => {
         // Only suggest in Add mode (not Edit) and when title has ≥3 chars
-        if (isEdit || !isOpen || form.title.trim().length < 3) {
+        if (!AI_ENABLED || isEdit || !isOpen || form.title.trim().length < 3) {
             setAiSuggestion(null);
             return;
         }

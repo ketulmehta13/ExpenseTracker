@@ -116,7 +116,7 @@ const Analytics = () => {
             </div>
 
             {/* Summary tiles */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {[
                     { label: 'Total Income', value: formatCurrency(totalIncome), color: 'text-income' },
                     { label: 'Total Expenses', value: formatCurrency(totalExpense), color: 'text-expense' },

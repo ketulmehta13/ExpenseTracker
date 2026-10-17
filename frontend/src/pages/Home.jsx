@@ -78,7 +78,6 @@ const Home = () => {
                                 onClick={() => navigate(user ? '/dashboard' : '/register')}
                                 className="group px-7 py-3.5 bg-gradient-to-r from-primary to-primary/90 text-primary-foreground text-base font-bold rounded-full shadow-xl shadow-primary/30 hover:-translate-y-0.5 hover:shadow-2xl transition-all duration-300 flex items-center justify-center gap-2"
                             >
-                                <IndianRupee size={18} />
                                 Get Started Free
                                 <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                             </button>

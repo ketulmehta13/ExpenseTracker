@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { usePlan } from '../context/PlanContext';
 import {
@@ -40,8 +40,9 @@ const bottomTabs = [
 
 const MainLayout = () => {
     const { logout, user } = useAuth();
-    const { isPro, isTrialing } = usePlan();
+    const { isPro, isTrialing, isPastDue } = usePlan();
     const navigate = useNavigate();
+    const isUpgradePage = useLocation().pathname === '/dashboard/upgrade';
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
     const [txModal, setTxModal] = useState({ open: false, type: 'EXPENSE', transaction: null });
@@ -183,8 +184,8 @@ const MainLayout = () => {
                         </NavLink>
                     ))}
 
-                    {/* Pro Upgrade Sidebar CTA (for free users) */}
-                    {!isPro && (
+                    {/* Pro Upgrade Sidebar CTA (for free users; redundant on the upgrade page itself) */}
+                    {!isPro && !isUpgradePage && (
                         <div className="pt-4 px-1">
                             <div className="rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-3.5 space-y-2.5">
                                 <div className="flex items-center gap-1.5 text-primary text-xs font-bold">
@@ -192,7 +193,7 @@ const MainLayout = () => {
                                     <span>Upgrade to Pro</span>
                                 </div>
                                 <p className="text-[11px] text-muted-foreground leading-tight">
-                                    Unlock unlimited history, CSV exports, & AI insights with 7-day trial.
+                                    Unlock unlimited history and CSV/PDF exports with a 7-day free trial.
                                 </p>
                                 <button
                                     onClick={() => { setSidebarOpen(false); navigate('/dashboard/upgrade'); }}
@@ -204,17 +205,6 @@ const MainLayout = () => {
                         </div>
                     )}
                 </nav>
-
-                {/* Footer Logout */}
-                <div className="border-t border-border p-3 bg-card">
-                    <button
-                        onClick={handleLogout}
-                        className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
-                    >
-                        <LogOut size={18} />
-                        Logout
-                    </button>
-                </div>
             </aside>
 
             {/* ───── MAIN CONTENT WRAPPER ───── */}
@@ -240,10 +230,12 @@ const MainLayout = () => {
 
                     <div className="flex-1" />
 
-                    {/* Header Plan Badge */}
-                    <div className="hidden sm:block mr-2">
-                        <PlanBadge showUpgradeButton={!isPro} onUpgradeClick={() => navigate('/dashboard/upgrade')} />
-                    </div>
+                    {/* The plan shows in the user menu; the header only flags a failed payment */}
+                    {isPastDue && (
+                        <Link to="/dashboard/settings#billing" className="hidden sm:block mr-2">
+                            <PlanBadge />
+                        </Link>
+                    )}
 
                     {/* ── Profile Dropdown Trigger ── */}
                     <div className="relative" ref={triggerRef}>

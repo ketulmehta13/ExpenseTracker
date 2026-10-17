@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    Check, Crown, Sparkles, Shield, Zap,
+    Check, Crown, Sparkles, Shield, Zap, Clock,
     ArrowRight, Loader2, AlertCircle, HelpCircle, FileText
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -31,9 +31,10 @@ const FEATURES = [
     { name: 'Transaction History', free: 'Last 3 months', pro: 'Unlimited history' },
     { name: 'Custom Categories', free: 'Up to 5 categories', pro: 'Unlimited categories' },
     { name: 'CSV & Data Export', free: 'Not included', pro: 'Unlimited CSV / PDF export' },
-    { name: 'AI Features (Auto-Categorization & Insights)', free: 'Not included', pro: 'Full access' },
-    { name: 'Budget Alerts & Analytics', free: 'Basic overview', pro: 'Advanced breakdowns & alerts' },
-    { name: 'Recurring Transactions', free: 'Basic', pro: 'Full automated tracking' },
+    // `soon`: not built yet; shown as coming soon until each feature ships
+    { name: 'AI Features (Auto-Categorization & Insights)', free: 'Not included', pro: 'Coming soon', soon: true },
+    { name: 'Budget Alerts & Analytics', free: 'Basic overview', pro: 'Alerts coming soon', soon: true },
+    { name: 'Recurring Transactions', free: 'Basic', pro: 'Automated tracking coming soon', soon: true },
     { name: 'Free Trial', free: '—', pro: '7 Days Free Trial' },
 ];
 
@@ -292,7 +293,7 @@ const Upgrade = () => {
                         <div>
                             <h2 className="text-2xl font-bold text-foreground">Pro Plan</h2>
                             <p className="text-xs text-muted-foreground mt-1">
-                                Complete freedom, advanced analytics & smart AI tools.
+                                Complete freedom: unlimited history, categories & exports.
                             </p>
                         </div>
                         <div className="flex items-baseline gap-1 py-2">
@@ -324,9 +325,9 @@ const Upgrade = () => {
                                     <Check size={14} className="text-primary flex-shrink-0" />
                                     <span>Full <strong>CSV & Financial Data Export</strong></span>
                                 </li>
-                                <li className="flex items-center gap-2">
-                                    <Check size={14} className="text-primary flex-shrink-0" />
-                                    <span><strong>AI Assistant</strong> (Smart Auto-Categorization & Insights)</span>
+                                <li className="flex items-center gap-2 text-muted-foreground">
+                                    <Clock size={14} className="flex-shrink-0" />
+                                    <span><strong>AI Assistant</strong> (Smart Auto-Categorization & Insights) — coming soon</span>
                                 </li>
                                 <li className="flex items-center gap-2">
                                     <Check size={14} className="text-primary flex-shrink-0" />
@@ -382,9 +383,13 @@ const Upgrade = () => {
                                 <tr key={idx} className="hover:bg-muted/30 transition-colors">
                                     <td className="py-3 px-4 font-medium text-foreground">{feat.name}</td>
                                     <td className="py-3 px-4 text-muted-foreground">{feat.free}</td>
-                                    <td className="py-3 px-4 font-semibold text-foreground flex items-center gap-1.5">
-                                        <Check size={13} className="text-primary" />
-                                        <span>{feat.pro}</span>
+                                    <td className={`py-3 px-4 font-semibold ${feat.soon ? 'text-muted-foreground' : 'text-foreground'}`}>
+                                        <span className="inline-flex items-center gap-1.5">
+                                            {feat.soon
+                                                ? <Clock size={13} className="text-muted-foreground" />
+                                                : <Check size={13} className="text-primary" />}
+                                            {feat.pro}
+                                        </span>
                                     </td>
                                 </tr>
                             ))}

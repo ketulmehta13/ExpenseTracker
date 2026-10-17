@@ -8,8 +8,7 @@ import {
     Shield, User, Palette, Database, AlertTriangle,
     Mail, Phone, BadgeCheck, Crown, CreditCard
 } from 'lucide-react';
-import { getProfile, updateProfile, getTransactions, computeSummary, authChangePassword, exportTransactionsCSV, deleteAccount, cancelSubscription } from '../services/api';
-import { formatCurrency } from '../lib/formatters';
+import { getProfile, updateProfile, getTransactions, authChangePassword, exportTransactionsCSV, deleteAccount, cancelSubscription } from '../services/api';
 import { Skeleton } from '../components/ui/Skeleton';
 import ConfirmModal from '../components/ConfirmModal';
 import { usePlan } from '../context/PlanContext';
@@ -61,7 +60,6 @@ const Profile = () => {
     const fileInputRef = useRef(null);
 
     const [loading, setLoading] = useState(true);
-    const [summary, setSummary] = useState(null);
 
     /* Profile form */
     const [form, setForm] = useState({ first_name: '', last_name: '', phone: '' });
@@ -95,11 +93,7 @@ const Profile = () => {
     useEffect(() => {
         (async () => {
             try {
-                const [profileData, transactions] = await Promise.all([
-                    getProfile(userId),
-                    getTransactions(),
-                ]);
-                setSummary(computeSummary(transactions, profileData.monthly_budget));
+                const profileData = await getProfile(userId);
                 setForm({
                     first_name: profileData.first_name || '',
                     last_name: profileData.last_name || '',
@@ -262,22 +256,6 @@ const Profile = () => {
                 <h1 className="font-display text-3xl font-bold text-foreground">Settings</h1>
                 <p className="mt-0.5 text-sm text-muted-foreground">Manage your profile, preferences, and account.</p>
             </div>
-
-            {/* Stats ribbon */}
-            {summary && (
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
-                    {[
-                        { label: 'Income this month', value: formatCurrency(summary.current_month.income), color: 'text-income' },
-                        { label: 'Expenses this month', value: formatCurrency(summary.current_month.expense), color: 'text-expense' },
-                        { label: 'Net balance', value: formatCurrency(Math.abs(summary.current_month.balance)), color: summary.current_month.balance >= 0 ? 'text-income' : 'text-expense' },
-                    ].map((s) => (
-                        <div key={s.label} className="rounded-2xl border border-border bg-card p-5 text-center shadow-sm">
-                            <p className="text-xs text-muted-foreground mb-1 font-medium">{s.label}</p>
-                            <p className={`text-xl font-bold ${s.color}`}>{s.value}</p>
-                        </div>
-                    ))}
-                </div>
-            )}
 
             {/* 1. Profile */}
             <Section title="Profile" icon={User}>
@@ -620,7 +598,7 @@ const Profile = () => {
                             <h3 className="font-semibold text-foreground">Cancel Pro Subscription?</h3>
                         </div>
                         <p className="text-sm text-muted-foreground">
-                            You will keep all Pro features (unlimited history, CSV export, AI tools) until the end of your current billing cycle. No further recurring charges will be made.
+                            You will keep all Pro features (unlimited history, unlimited categories, CSV/PDF export) until the end of your current billing cycle. No further recurring charges will be made.
                         </p>
                         <div className="flex gap-2 pt-2">
                             <button

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-    TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight,
-    Plus, Calendar, RefreshCw
+    TrendingUp, TrendingDown, Wallet, Calendar, RefreshCw
 } from 'lucide-react';
 import {
     ResponsiveContainer, BarChart, Bar, XAxis, YAxis,
@@ -16,6 +15,7 @@ import { EmptyState } from '../components/ui/EmptyState';
 import TransactionModal from '../components/TransactionModal';
 import QuickAdd from '../components/QuickAdd';
 import AIInsightsCard from '../components/AIInsightsCard';
+import { AI_ENABLED } from '../lib/features';
 
 /* ── Color palette for category donut chart (Brand #0d3a35 Teal-Green) ── */
 const CAT_COLORS = [
@@ -31,8 +31,30 @@ const DATE_RANGES = [
     { id: 'all', label: 'All time' },
 ];
 
+/* ── Month-over-month trend helpers ── */
+// Percent change, or null without a baseline. Tiny changes round to 0 so cards never show "-0.0%".
+const percentChange = (current, previous) => {
+    if (!previous) return null;
+    const pct = ((current - previous) / Math.abs(previous)) * 100;
+    return Math.abs(pct) < 0.05 ? 0 : pct;
+};
+
+// Arrow follows the direction of change; the colour says whether that change is good.
+const describeTrend = (pct, higherIsBetter) => {
+    if (pct === null) return {};
+    if (pct === 0) return { trend: 'flat', tone: 'neutral', trendValue: 'No change vs last month' };
+    const rising = pct > 0;
+    return {
+        trend: rising ? 'up' : 'down',
+        tone: rising === higherIsBetter ? 'good' : 'bad',
+        trendValue: `${rising ? '+' : ''}${pct.toFixed(1)}% vs last month`,
+    };
+};
+
+const TREND_TONE = { good: 'text-income', bad: 'text-expense', neutral: 'text-muted-foreground' };
+
 /* ── Summary card component ── */
-const SummaryCard = ({ label, value, subtext, icon: Icon, accentClass, trend, trendValue }) => (
+const SummaryCard = ({ label, value, subtext, icon: Icon, accentClass, trend, tone = 'neutral', trendValue }) => (
     <div className="relative rounded-2xl border border-border bg-card p-5 overflow-hidden group hover:shadow-md transition-shadow">
         <div className="absolute top-0 right-0 w-24 h-24 rounded-full bg-current opacity-[0.04] -translate-y-6 translate-x-6 group-hover:opacity-[0.07] transition-opacity" />
         <div className="flex items-start justify-between mb-3">
@@ -43,8 +65,8 @@ const SummaryCard = ({ label, value, subtext, icon: Icon, accentClass, trend, tr
         </div>
         <p className="text-2xl font-bold text-foreground font-display">{value}</p>
         {subtext && <p className="mt-1 text-xs text-muted-foreground">{subtext}</p>}
-        {trendValue !== undefined && (
-            <div className={`mt-2 flex items-center gap-1 text-xs font-semibold ${trend === 'up' ? 'text-income' : trend === 'down' ? 'text-expense' : 'text-muted-foreground'}`}>
+        {trendValue && (
+            <div className={`mt-2 flex items-center gap-1 text-xs font-semibold ${TREND_TONE[tone]}`}>
                 {trend === 'up' ? <TrendingUp size={12} /> : trend === 'down' ? <TrendingDown size={12} /> : null}
                 {trendValue}
             </div>
@@ -184,7 +206,18 @@ const Dashboard = () => {
     const prevIncome = summary?.previous_month?.income ?? 0;
     const prevExpense = summary?.previous_month?.expense ?? 0;
     const prevNet = prevIncome - prevExpense;
-    const netPctChange = prevNet !== 0 ? ((netBalance - prevNet) / Math.abs(prevNet)) * 100 : null;
+
+    // Comparing against last month only makes sense for the "This month" range
+    const showTrends = dateRange === 'this_month';
+    const incomeTrend = showTrends ? describeTrend(percentChange(curIncome, prevIncome), true) : {};
+    const expenseTrend = showTrends ? describeTrend(percentChange(curExpense, prevExpense), false) : {};
+    const netTrend = showTrends ? describeTrend(percentChange(netBalance, prevNet), true) : {};
+
+    const rangeLabel = DATE_RANGES.find((r) => r.id === dateRange)?.label;
+    const countEntries = (type) => {
+        const n = filteredTransactions.filter((t) => t.type === type).length;
+        return `${n} ${n === 1 ? 'entry' : 'entries'}`;
+    };
 
     const displayName =
         profile?.first_name ||
@@ -234,7 +267,7 @@ const Dashboard = () => {
             </div>
 
             {/* ── Quick Add (AI natural language entry) ── */}
-            <QuickAdd onParsed={handleQuickAddParsed} />
+            {AI_ENABLED && <QuickAdd onParsed={handleQuickAddParsed} />}
 
             {/* ── Date range selector ── */}
             <div className="flex items-center gap-2 flex-wrap">
@@ -260,44 +293,36 @@ const Dashboard = () => {
                 </button>
             </div>
 
-            {/* ── 4 summary cards ── */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* ── Summary cards ── */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <SummaryCard
-                    label="Income this month"
+                    label="Income"
                     value={formatCurrency(curIncome)}
-                    subtext={`${filteredTransactions.filter((t) => t.type === 'INCOME').length} entries`}
+                    subtext={`${rangeLabel} · ${countEntries('INCOME')}`}
                     icon={TrendingUp}
                     accentClass="bg-income/15 text-income"
-                    trend={curIncome >= prevIncome ? 'up' : 'down'}
-                    trendValue={prevIncome > 0 ? `${curIncome >= prevIncome ? '+' : ''}${(((curIncome - prevIncome) / prevIncome) * 100).toFixed(1)}% vs last month` : null}
+                    {...incomeTrend}
                 />
                 <SummaryCard
-                    label="Expenses this month"
+                    label="Expenses"
                     value={formatCurrency(curExpense)}
-                    subtext={`${filteredTransactions.filter((t) => t.type === 'EXPENSE').length} entries`}
+                    subtext={`${rangeLabel} · ${countEntries('EXPENSE')}`}
                     icon={TrendingDown}
                     accentClass="bg-expense/15 text-expense"
-                    trend={curExpense > prevExpense ? 'down' : 'up'}
-                    trendValue={prevExpense > 0 ? `${curExpense > prevExpense ? '+' : ''}${(((curExpense - prevExpense) / prevExpense) * 100).toFixed(1)}% vs last month` : null}
+                    {...expenseTrend}
                 />
                 <SummaryCard
                     label="Net balance"
-                    value={formatCurrency(Math.abs(netBalance))}
-                    subtext={netBalance >= 0 ? 'Positive balance ✓' : 'Spending exceeds income'}
+                    value={`${netBalance < 0 ? '−' : ''}${formatCurrency(Math.abs(netBalance))}`}
+                    subtext={`${rangeLabel} · ${netBalance >= 0 ? 'positive balance' : 'spending exceeds income'}`}
                     icon={Wallet}
                     accentClass={netBalance >= 0 ? 'bg-income/15 text-income' : 'bg-expense/15 text-expense'}
-                />
-                <SummaryCard
-                    label="% change vs last month"
-                    value={netPctChange !== null ? `${netPctChange > 0 ? '+' : ''}${netPctChange.toFixed(1)}%` : '—'}
-                    subtext={netPctChange === null ? 'No prior data yet' : netPctChange > 0 ? 'Net improved' : 'Net declined'}
-                    icon={netPctChange >= 0 ? ArrowUpRight : ArrowDownRight}
-                    accentClass={netPctChange === null || netPctChange >= 0 ? 'bg-income/15 text-income' : 'bg-expense/15 text-expense'}
+                    {...netTrend}
                 />
             </div>
 
             {/* ── AI Insights card ── */}
-            <AIInsightsCard summary={summary} month={currentMonth} />
+            {AI_ENABLED && <AIInsightsCard summary={summary} month={currentMonth} />}
 
             {/* ── Charts row ── */}
             {allTransactions.length === 0 ? (

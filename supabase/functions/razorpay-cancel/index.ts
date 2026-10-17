@@ -46,35 +46,47 @@ serve(async (req) => {
       return jsonResponse({ error: 'No active Razorpay subscription found' }, 404);
     }
 
-    // ── 2. Call Razorpay API to cancel at cycle end ────────────────────────
-    // cancel_at_cycle_end: 1 ensures user gets remaining paid time
-    if (RAZORPAY_KEY_ID && RAZORPAY_KEY_SECRET) {
-      const rzpRes = await fetch(
-        `https://api.razorpay.com/v1/subscriptions/${sub.razorpay_subscription_id}/cancel`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: razorpayAuth(),
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ cancel_at_cycle_end: 1 }),
-        }
-      );
-
-      if (!rzpRes.ok) {
-        const errText = await rzpRes.text();
-        console.error('Razorpay cancel error:', errText);
-      }
+    if (sub.status === 'canceled' || sub.cancel_at_period_end) {
+      return jsonResponse({ success: true, message: 'Your subscription is already set to end.' });
     }
 
-    // ── 3. Update subscription status in DB ────────────────────────────────
-    await supabase
+    if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
+      return jsonResponse({ error: 'Razorpay not configured. Set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET.' }, 503);
+    }
+
+    // ── 2. Cancel with Razorpay ────────────────────────────────────────────
+    // A paid cycle is cancelled at its end so the user keeps what they paid for.
+    // Anything else (trial, checkout never finished) has no paid cycle: cancel now,
+    // so no charge is ever made. Pro still lasts until current_period_end.
+    const cancelAtCycleEnd = ['active', 'past_due'].includes(sub.status) ? 1 : 0;
+    const rzpRes = await fetch(
+      `https://api.razorpay.com/v1/subscriptions/${sub.razorpay_subscription_id}/cancel`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: razorpayAuth(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ cancel_at_cycle_end: cancelAtCycleEnd }),
+      }
+    );
+
+    if (!rzpRes.ok) {
+      const errText = await rzpRes.text();
+      console.error('Razorpay cancel error:', errText);
+      return jsonResponse({ error: 'Could not cancel your subscription right now. Please try again in a moment.' }, 502);
+    }
+
+    // ── 3. Record the scheduled cancellation ───────────────────────────────
+    // The status stays as is: the subscription.cancelled webhook marks the row canceled.
+    const { error: updateErr } = await supabase
       .from('subscriptions')
       .update({
-        status: 'canceled',
+        cancel_at_period_end: true,
         updated_at: new Date().toISOString(),
       })
       .eq('user_id', user.id);
+    if (updateErr) console.error('Failed to record cancellation:', updateErr);
 
     return jsonResponse({ success: true, message: 'Subscription canceled successfully. Access continues until end of billing period.' });
   } catch (err) {

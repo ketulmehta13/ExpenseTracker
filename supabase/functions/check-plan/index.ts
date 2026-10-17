@@ -9,6 +9,16 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Row returned by the get_user_plan() SQL function
+interface PlanRow {
+  plan: string;
+  status: string;
+  is_pro: boolean;
+  trial_end: string | null;
+  period_end: string | null;
+  cancel_at_period_end: boolean;
+}
+
 function jsonResponse(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -30,9 +40,10 @@ serve(async (req) => {
     if (authErr || !user) return jsonResponse({ error: 'Unauthorized' }, 401);
 
     // Call stored procedure get_user_plan
-    const { data: planInfo, error: planErr } = await supabase
+    const { data, error: planErr } = await supabase
       .rpc('get_user_plan', { uid: user.id })
       .single();
+    const planInfo = data as PlanRow | null;
 
     if (planErr || !planInfo) {
       // Fallback default free
@@ -66,6 +77,7 @@ serve(async (req) => {
       isTrialing,
       trialEnd: planInfo.trial_end,
       periodEnd: planInfo.period_end,
+      cancelAtPeriodEnd: Boolean(planInfo.cancel_at_period_end),
       customCategoryCount: customCategoryCount ?? 0,
       canAddCategory,
       canExportCSV: isPro,

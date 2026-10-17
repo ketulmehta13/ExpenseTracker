@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Loader2, Mail, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '../services/supabaseClient';
+import { getAuthErrorMessage } from '../lib/authErrors';
 import logoIcon from '../assets/logo-icon.png';
 
 // TODO: Ensure Supabase email templates are configured in the Supabase dashboard
@@ -24,7 +25,7 @@ const ForgotPassword = () => {
             setSent(true);
             toast.success('Reset email sent! Check your inbox.');
         } catch (err) {
-            toast.error(err.message || 'Failed to send reset email. Please try again.');
+            toast.error(getAuthErrorMessage(err, 'Failed to send reset email. Please try again.'));
         } finally {
             setIsLoading(false);
         }

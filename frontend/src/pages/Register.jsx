@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Loader2, Eye, EyeOff, TrendingUp, PieChart, ShieldCheck, Check } from 'lucide-react';
+import { Loader2, Eye, EyeOff, Check, MailCheck, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
+import { checkUsernameAvailable } from '../services/api';
+import { getAuthErrorMessage } from '../lib/authErrors';
 import logoIcon from '../assets/logo-icon.png';
 
 const passwordStrength = (pwd) => {
@@ -24,6 +26,8 @@ const Register = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [fieldErrors, setFieldErrors] = useState({});
+    // Set when email confirmation is required: there is no session until the link is clicked
+    const [confirmationSentTo, setConfirmationSentTo] = useState('');
     const { register } = useAuth();
     const navigate = useNavigate();
 
@@ -49,11 +53,19 @@ const Register = () => {
         }
         setIsLoading(true);
         try {
-            await register(username, email, password);
+            if ((await checkUsernameAvailable(username)) === false) {
+                setFieldErrors({ username: 'This username is already taken. Please choose another.' });
+                return;
+            }
+            const data = await register(username, email, password);
+            if (!data.session) {
+                setConfirmationSentTo(email);
+                return;
+            }
             toast.success('Account created! Welcome aboard 🎉');
             navigate('/dashboard');
         } catch (err) {
-            toast.error(err.message || 'Registration failed. Please try again.');
+            toast.error(getAuthErrorMessage(err, 'Registration failed. Please try again.'));
         } finally {
             setIsLoading(false);
         }
@@ -125,114 +137,134 @@ const Register = () => {
                     <h1 className="font-display text-2xl font-bold text-foreground">Expense Tracker</h1>
                 </div>
 
-                <div className="w-full max-w-sm">
-                    <div className="mb-7">
-                        <h2 className="font-display text-3xl font-bold text-foreground">Create account</h2>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                            Start tracking your expenses today — it's free.
+                {confirmationSentTo ? (
+                    <div className="w-full max-w-sm text-center space-y-4">
+                        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-income/10 text-income">
+                            <MailCheck size={32} />
+                        </div>
+                        <h2 className="font-display text-2xl font-bold text-foreground">Check your inbox</h2>
+                        <p className="text-sm text-muted-foreground">
+                            We sent a confirmation link to <strong className="text-foreground">{confirmationSentTo}</strong>.
+                            Click it to activate your account, then sign in.
+                        </p>
+                        <Link
+                            to="/login"
+                            className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors mt-2"
+                        >
+                            <ArrowLeft size={15} />
+                            Back to login
+                        </Link>
+                    </div>
+                ) : (
+                    <div className="w-full max-w-sm">
+                        <div className="mb-7">
+                            <h2 className="font-display text-3xl font-bold text-foreground">Create account</h2>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                                Start tracking your expenses today — it's free.
+                            </p>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+                            {/* Username */}
+                            <div>
+                                <label htmlFor="username" className="block text-sm font-medium text-foreground mb-1.5">
+                                    Username
+                                </label>
+                                <input
+                                    id="username"
+                                    type="text"
+                                    required
+                                    autoComplete="username"
+                                    value={username}
+                                    placeholder="Choose a username"
+                                    {...field('username')}
+                                />
+                                {fieldErrors.username && (
+                                    <p className="mt-1 text-xs text-destructive">{fieldErrors.username}</p>
+                                )}
+                            </div>
+
+                            {/* Email */}
+                            <div>
+                                <label htmlFor="reg-email" className="block text-sm font-medium text-foreground mb-1.5">
+                                    Email address
+                                </label>
+                                <input
+                                    id="reg-email"
+                                    type="email"
+                                    required
+                                    autoComplete="email"
+                                    value={email}
+                                    placeholder="you@example.com"
+                                    {...field('email')}
+                                />
+                                {fieldErrors.email && (
+                                    <p className="mt-1 text-xs text-destructive">{fieldErrors.email}</p>
+                                )}
+                            </div>
+
+                            {/* Password */}
+                            <div>
+                                <label htmlFor="reg-password" className="block text-sm font-medium text-foreground mb-1.5">
+                                    Password
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        id="reg-password"
+                                        type={showPassword ? 'text' : 'password'}
+                                        required
+                                        autoComplete="new-password"
+                                        value={password}
+                                        placeholder="Create a password (min. 6 chars)"
+                                        {...field('password')}
+                                        className={field('password').className + ' pr-12'}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword((v) => !v)}
+                                        tabIndex={-1}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1"
+                                    >
+                                        {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                                    </button>
+                                </div>
+                                {/* Strength indicator */}
+                                {password.length > 0 && (
+                                    <div className="mt-2">
+                                        <div className="flex gap-1.5 h-1.5 mb-1">
+                                            {[1, 2, 3].map((i) => (
+                                                <div
+                                                    key={i}
+                                                    className={`flex-1 rounded-full transition-all ${i <= strength.score ? strength.color : 'bg-muted'}`}
+                                                />
+                                            ))}
+                                        </div>
+                                        <p className="text-xs text-muted-foreground">{strength.label}</p>
+                                    </div>
+                                )}
+                                {fieldErrors.password && (
+                                    <p className="mt-1 text-xs text-destructive">{fieldErrors.password}</p>
+                                )}
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={isLoading}
+                                className="mt-2 w-full flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/25 transition hover:opacity-95 active:scale-[.98] disabled:opacity-60"
+                            >
+                                {isLoading && <Loader2 size={16} className="animate-spin" />}
+                                {isLoading ? 'Creating account…' : 'Create account'}
+                            </button>
+                        </form>
+
+                        <p className="mt-6 text-center text-sm text-muted-foreground">
+                            Already have an account?{' '}
+                            <Link to="/login" className="font-semibold text-primary hover:underline transition-colors">
+                                Sign in
+                            </Link>
                         </p>
                     </div>
-
-                    <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-                        {/* Username */}
-                        <div>
-                            <label htmlFor="username" className="block text-sm font-medium text-foreground mb-1.5">
-                                Username
-                            </label>
-                            <input
-                                id="username"
-                                type="text"
-                                required
-                                autoComplete="username"
-                                value={username}
-                                placeholder="Choose a username"
-                                {...field('username')}
-                            />
-                            {fieldErrors.username && (
-                                <p className="mt-1 text-xs text-destructive">{fieldErrors.username}</p>
-                            )}
-                        </div>
-
-                        {/* Email */}
-                        <div>
-                            <label htmlFor="reg-email" className="block text-sm font-medium text-foreground mb-1.5">
-                                Email address
-                            </label>
-                            <input
-                                id="reg-email"
-                                type="email"
-                                required
-                                autoComplete="email"
-                                value={email}
-                                placeholder="you@example.com"
-                                {...field('email')}
-                            />
-                            {fieldErrors.email && (
-                                <p className="mt-1 text-xs text-destructive">{fieldErrors.email}</p>
-                            )}
-                        </div>
-
-                        {/* Password */}
-                        <div>
-                            <label htmlFor="reg-password" className="block text-sm font-medium text-foreground mb-1.5">
-                                Password
-                            </label>
-                            <div className="relative">
-                                <input
-                                    id="reg-password"
-                                    type={showPassword ? 'text' : 'password'}
-                                    required
-                                    autoComplete="new-password"
-                                    value={password}
-                                    placeholder="Create a password (min. 6 chars)"
-                                    {...field('password')}
-                                    className={field('password').className + ' pr-12'}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword((v) => !v)}
-                                    tabIndex={-1}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1"
-                                >
-                                    {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
-                                </button>
-                            </div>
-                            {/* Strength indicator */}
-                            {password.length > 0 && (
-                                <div className="mt-2">
-                                    <div className="flex gap-1.5 h-1.5 mb-1">
-                                        {[1, 2, 3].map((i) => (
-                                            <div
-                                                key={i}
-                                                className={`flex-1 rounded-full transition-all ${i <= strength.score ? strength.color : 'bg-muted'}`}
-                                            />
-                                        ))}
-                                    </div>
-                                    <p className="text-xs text-muted-foreground">{strength.label}</p>
-                                </div>
-                            )}
-                            {fieldErrors.password && (
-                                <p className="mt-1 text-xs text-destructive">{fieldErrors.password}</p>
-                            )}
-                        </div>
-
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            className="mt-2 w-full flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/25 transition hover:opacity-95 active:scale-[.98] disabled:opacity-60"
-                        >
-                            {isLoading && <Loader2 size={16} className="animate-spin" />}
-                            {isLoading ? 'Creating account…' : 'Create account'}
-                        </button>
-                    </form>
-
-                    <p className="mt-6 text-center text-sm text-muted-foreground">
-                        Already have an account?{' '}
-                        <Link to="/login" className="font-semibold text-primary hover:underline transition-colors">
-                            Sign in
-                        </Link>
-                    </p>
-                </div>
+                )}
             </div>
         </div>
     );

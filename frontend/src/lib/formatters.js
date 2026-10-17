@@ -2,6 +2,7 @@
  * Formatting utilities — used across the entire app.
  * All currency/date display should go through these functions.
  */
+import { parseDate } from './dates';
 
 /**
  * Format a number as currency using Intl.NumberFormat.
@@ -32,7 +33,7 @@ export const formatCurrency = (amount, currencyOverride) => {
  */
 export const formatDate = (dateStr, style = 'medium') => {
     if (!dateStr) return '—';
-    const date = new Date(dateStr);
+    const date = parseDate(dateStr);
     if (isNaN(date.getTime())) return '—';
 
     if (style === 'short') {

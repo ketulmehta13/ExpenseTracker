@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Loader2, Eye, EyeOff, TrendingUp, PieChart, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
+import { getAuthErrorMessage } from '../lib/authErrors';
 import logoIcon from '../assets/logo-icon.png';
 
 const Login = () => {
@@ -21,7 +22,7 @@ const Login = () => {
             toast.success('Welcome back! 👋');
             navigate('/dashboard');
         } catch (err) {
-            toast.error(err.message || 'Invalid email or password');
+            toast.error(getAuthErrorMessage(err, 'Invalid email or password'));
         } finally {
             setIsLoading(false);
         }

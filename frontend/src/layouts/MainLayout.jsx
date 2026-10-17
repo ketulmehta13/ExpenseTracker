@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import logoIcon from '../assets/logo-icon.png';
 import { cn } from '../lib/utils';
-import { Toaster, toast } from 'sonner';
+import { toast } from 'sonner';
 import TransactionModal from '../components/TransactionModal';
 import PlanBadge from '../components/PlanBadge';
 import { useAutoLogout } from '../hooks/useAutoLogout';
@@ -40,7 +40,7 @@ const bottomTabs = [
 
 const MainLayout = () => {
     const { logout, user } = useAuth();
-    const { isPro, isTrialing, plan } = usePlan();
+    const { isPro, isTrialing } = usePlan();
     const navigate = useNavigate();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -58,7 +58,8 @@ const MainLayout = () => {
             });
         },
         onLogout: async () => {
-            try { await logout(); } catch {/* ignore */ }
+            // Local scope: an idle browser must not sign the user out on their other devices
+            try { await logout({ scope: 'local' }); } catch {/* ignore */ }
             toast.info("You've been logged out due to inactivity.");
             navigate('/login');
         },
@@ -115,17 +116,6 @@ const MainLayout = () => {
 
     return (
         <div className="flex h-screen w-full bg-background text-foreground">
-            {/* ───── GLOBAL TOAST PROVIDER ───── */}
-            <Toaster
-                position="top-right"
-                richColors
-                toastOptions={{
-                    classNames: {
-                        toast: 'bg-card border border-border text-foreground shadow-lg rounded-xl',
-                    },
-                }}
-            />
-
             {/* ───── MOBILE OVERLAY ───── */}
             {sidebarOpen && (
                 <div

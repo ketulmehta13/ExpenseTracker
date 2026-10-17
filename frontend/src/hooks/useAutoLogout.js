@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 
 const ACTIVITY_EVENTS = [
   'mousedown',
@@ -9,9 +9,16 @@ const ACTIVITY_EVENTS = [
   'click',
 ];
 
+// Activity events (mousemove especially) fire constantly; reset timers at most this often
+const RESET_THROTTLE_MS = 1000;
+// How often a tab tells the other open tabs that the user is active
+const BROADCAST_THROTTLE_MS = 5000;
+const ACTIVITY_CHANNEL = 'et-user-activity';
+
 /**
- * useAutoLogout — Automatically logs the user out after a period of inactivity,
- * and when the tab has been hidden/minimized for longer than the timeout.
+ * useAutoLogout — Automatically logs the user out after a period of inactivity.
+ * Activity in any open tab keeps every tab alive (shared via BroadcastChannel),
+ * so an idle background tab never logs out a tab that is in use.
  *
  * @param {Object} options
  * @param {number} options.timeoutMinutes - Idle timeout in minutes (default: 15)
@@ -20,64 +27,79 @@ const ACTIVITY_EVENTS = [
  * @param {Function} [options.onWarn] - Callback to execute to warn user
  */
 export function useAutoLogout({ timeoutMinutes = 15, onLogout, warnBeforeMs = 60000, onWarn }) {
-  const timeoutRef = useRef(null);
-  const warnRef = useRef(null);
-  const lastActiveRef = useRef(Date.now());
-
-  const clearTimers = useCallback(() => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    if (warnRef.current) clearTimeout(warnRef.current);
-  }, []);
-
-  const resetTimer = useCallback(() => {
-    lastActiveRef.current = Date.now();
-    clearTimers();
-
-    const timeoutMs = timeoutMinutes * 60 * 1000;
-
-    // Optional: warn the user shortly before auto-logout (e.g. show a toast notification)
-    if (onWarn && warnBeforeMs > 0 && warnBeforeMs < timeoutMs) {
-      warnRef.current = setTimeout(() => {
-        onWarn();
-      }, timeoutMs - warnBeforeMs);
-    }
-
-    timeoutRef.current = setTimeout(() => {
-      onLogout();
-    }, timeoutMs);
-  }, [timeoutMinutes, onLogout, onWarn, warnBeforeMs, clearTimers]);
+  // Keep the latest callbacks without re-subscribing every listener on each render
+  const onLogoutRef = useRef(onLogout);
+  const onWarnRef = useRef(onWarn);
+  useEffect(() => {
+    onLogoutRef.current = onLogout;
+    onWarnRef.current = onWarn;
+  });
 
   useEffect(() => {
-    // Start the timer immediately on mount.
-    resetTimer();
+    const timeoutMs = timeoutMinutes * 60 * 1000;
+    const channel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel(ACTIVITY_CHANNEL) : null;
+    let logoutTimer = null;
+    let warnTimer = null;
+    let lastActive = Date.now();
+    let lastBroadcast = 0;
 
-    // Reset on any user activity.
-    ACTIVITY_EVENTS.forEach((event) =>
-      window.addEventListener(event, resetTimer, { passive: true })
-    );
+    const scheduleTimers = () => {
+      clearTimeout(logoutTimer);
+      clearTimeout(warnTimer);
+      const remaining = Math.max(0, lastActive + timeoutMs - Date.now());
+      // Optional: warn the user shortly before auto-logout (e.g. show a toast notification)
+      if (warnBeforeMs > 0 && remaining > warnBeforeMs) {
+        warnTimer = setTimeout(() => onWarnRef.current?.(), remaining - warnBeforeMs);
+      }
+      logoutTimer = setTimeout(() => onLogoutRef.current?.(), remaining);
+    };
 
-    // Handle visibility change (tab minimized or switched away)
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        const elapsed = Date.now() - lastActiveRef.current;
-        const timeoutMs = timeoutMinutes * 60 * 1000;
-        if (elapsed >= timeoutMs) {
-          onLogout();
-        } else {
-          resetTimer();
-        }
+    const handleActivity = () => {
+      const now = Date.now();
+      if (now - lastActive < RESET_THROTTLE_MS) return;
+      lastActive = now;
+      scheduleTimers();
+      if (channel && now - lastBroadcast >= BROADCAST_THROTTLE_MS) {
+        lastBroadcast = now;
+        channel.postMessage(now);
       }
     };
+
+    // Another tab saw activity
+    const handleRemoteActivity = (event) => {
+      if (typeof event.data === 'number' && event.data > lastActive) {
+        lastActive = event.data;
+        scheduleTimers();
+      }
+    };
+
+    // Background tabs throttle timers, so re-check the deadline when the tab comes back
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== 'visible') return;
+      if (Date.now() - lastActive >= timeoutMs) {
+        onLogoutRef.current?.();
+      } else {
+        scheduleTimers();
+      }
+    };
+
+    scheduleTimers();
+    ACTIVITY_EVENTS.forEach((event) =>
+      window.addEventListener(event, handleActivity, { passive: true })
+    );
+    channel?.addEventListener('message', handleRemoteActivity);
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
-      clearTimers();
+      clearTimeout(logoutTimer);
+      clearTimeout(warnTimer);
       ACTIVITY_EVENTS.forEach((event) =>
-        window.removeEventListener(event, resetTimer)
+        window.removeEventListener(event, handleActivity)
       );
+      channel?.close();
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [resetTimer, onLogout, timeoutMinutes, clearTimers]);
+  }, [timeoutMinutes, warnBeforeMs]);
 }
 
 export default useAutoLogout;

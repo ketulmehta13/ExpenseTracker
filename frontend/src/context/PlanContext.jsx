@@ -15,12 +15,13 @@ export const usePlan = () => {
 
 export const PlanProvider = ({ children }) => {
     const { user } = useAuth();
+    const userId = user?.id;
     const [subscription, setSubscription] = useState(null);
     const [planInfo, setPlanInfo] = useState(null);
     const [loading, setLoading] = useState(true);
 
     const fetchPlan = useCallback(async () => {
-        if (!user) {
+        if (!userId) {
             setSubscription(null);
             setPlanInfo(null);
             setLoading(false);
@@ -29,7 +30,7 @@ export const PlanProvider = ({ children }) => {
 
         try {
             // First fetch row directly for immediate response
-            const sub = await getSubscription(user.id);
+            const sub = await getSubscription(userId);
             setSubscription(sub);
 
             // Fetch server-verified plan details
@@ -47,7 +48,7 @@ export const PlanProvider = ({ children }) => {
         } finally {
             setLoading(false);
         }
-    }, [user]);
+    }, [userId]);
 
     useEffect(() => {
         fetchPlan();
@@ -55,17 +56,17 @@ export const PlanProvider = ({ children }) => {
 
     // Listen to real-time updates on user's subscription row (e.g. when webhook fires)
     useEffect(() => {
-        if (!user) return;
+        if (!userId) return;
 
         const channel = supabase
-            .channel(`subscription:${user.id}`)
+            .channel(`subscription:${userId}`)
             .on(
                 'postgres_changes',
                 {
                     event: '*',
                     schema: 'public',
                     table: 'subscriptions',
-                    filter: `user_id=eq.${user.id}`,
+                    filter: `user_id=eq.${userId}`,
                 },
                 () => {
                     fetchPlan();
@@ -76,11 +77,13 @@ export const PlanProvider = ({ children }) => {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [user, fetchPlan]);
+    }, [userId, fetchPlan]);
 
     const plan = subscription?.plan || 'free';
     const status = subscription?.status || 'active';
 
+    // check-plan (server) is the source of truth; the table values are a fallback
+    // for when the Edge Function can't be reached.
     const isPro = Boolean(
         planInfo?.isPro ?? (
             (plan === 'pro_monthly' || plan === 'pro_yearly') &&
@@ -90,7 +93,9 @@ export const PlanProvider = ({ children }) => {
 
     const isTrialing = status === 'trialing';
     const isPastDue = status === 'past_due';
-    const isCanceled = status === 'canceled';
+    // Includes a cancellation scheduled for the end of the current period
+    const cancelAtPeriodEnd = Boolean(planInfo?.cancelAtPeriodEnd ?? subscription?.cancel_at_period_end);
+    const isCanceled = status === 'canceled' || cancelAtPeriodEnd;
 
     const historyMonths = isPro ? null : 3;
     const canExportCSV = isPro;
@@ -105,6 +110,7 @@ export const PlanProvider = ({ children }) => {
         isTrialing,
         isPastDue,
         isCanceled,
+        cancelAtPeriodEnd,
         trialEnd: subscription?.trial_end,
         periodEnd: subscription?.current_period_end,
         gracePeriodEnd: subscription?.grace_period_end,

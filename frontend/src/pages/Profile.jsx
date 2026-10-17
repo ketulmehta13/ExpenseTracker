@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
 import {
@@ -7,7 +7,7 @@ import {
     Shield, User, Palette, Database, AlertTriangle,
     Mail, Phone, BadgeCheck, Crown, CreditCard
 } from 'lucide-react';
-import { getProfile, updateProfile, getTransactions, computeSummary, authChangePassword, exportTransactionsCSV, deleteUserData, cancelSubscription } from '../services/api';
+import { getProfile, updateProfile, getTransactions, computeSummary, authChangePassword, exportTransactionsCSV, deleteAccount, cancelSubscription } from '../services/api';
 import { formatCurrency } from '../lib/formatters';
 import { Skeleton } from '../components/ui/Skeleton';
 import ConfirmModal from '../components/ConfirmModal';
@@ -16,8 +16,8 @@ import ProGate from '../components/ProGate';
 import PlanBadge from '../components/PlanBadge';
 
 /* ── Section wrapper ── */
-const Section = ({ title, icon: Icon, children }) => (
-    <div className="rounded-2xl border border-border bg-card overflow-hidden w-full shadow-sm">
+const Section = ({ id, title, icon: Icon, children }) => (
+    <div id={id} className="rounded-2xl border border-border bg-card overflow-hidden w-full shadow-sm scroll-mt-6">
         <div className="flex items-center gap-2.5 border-b border-border px-6 py-4 bg-surface">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
                 <Icon size={16} className="text-muted-foreground" />
@@ -54,11 +54,12 @@ const CURRENCY_OPTIONS = [
 
 const Profile = () => {
     const { user, logout } = useAuth();
+    const userId = user?.id;
     const navigate = useNavigate();
+    const location = useLocation();
     const fileInputRef = useRef(null);
 
     const [loading, setLoading] = useState(true);
-    const [userData, setUserData] = useState(null);
     const [summary, setSummary] = useState(null);
 
     /* Profile form */
@@ -78,7 +79,6 @@ const Profile = () => {
 
     /* Preferences */
     const [currency, setCurrency] = useState(() => localStorage.getItem('et-currency') || 'INR');
-    const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
 
     /* Danger zone */
     const [deleteModal, setDeleteModal] = useState(false);
@@ -95,10 +95,9 @@ const Profile = () => {
         (async () => {
             try {
                 const [profileData, transactions] = await Promise.all([
-                    getProfile(user.id),
+                    getProfile(userId),
                     getTransactions(),
                 ]);
-                setUserData(profileData);
                 setSummary(computeSummary(transactions, profileData.monthly_budget));
                 setForm({
                     first_name: profileData.first_name || '',
@@ -113,7 +112,13 @@ const Profile = () => {
                 setLoading(false);
             }
         })();
-    }, [user]);
+    }, [userId]);
+
+    // Deep links such as /dashboard/settings#billing: scroll once the sections exist
+    useEffect(() => {
+        if (loading || !location.hash) return;
+        document.getElementById(location.hash.slice(1))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, [loading, location.hash]);
 
     const handlePhotoChange = (e) => {
         const file = e.target.files[0];
@@ -183,14 +188,6 @@ const Profile = () => {
         toast.success(`Currency set to ${code}`);
     };
 
-    const handleThemeToggle = () => {
-        document.documentElement.classList.toggle('dark');
-        const newDark = document.documentElement.classList.contains('dark');
-        setIsDark(newDark);
-        localStorage.setItem('et-theme', newDark ? 'dark' : 'light');
-        toast.success(`${newDark ? 'Dark' : 'Light'} mode enabled`);
-    };
-
     /* ── Export ── */
     const handleExportCSV = async () => {
         try {
@@ -211,14 +208,13 @@ const Profile = () => {
         }
         setDeleteLoading(true);
         try {
-            await deleteUserData(user.id);
-            toast.success('Your account data has been permanently deleted.');
-            setDeleteModal(false);
-            setDeleteInput('');
-            navigate('/login', { replace: true });
+            await deleteAccount();
+            // The account (and with it the session) is gone; just clear this browser's copy
+            try { await logout({ scope: 'local' }); } catch {/* ignore */ }
+            toast.success('Your account and all its data have been permanently deleted.');
+            navigate('/', { replace: true });
         } catch (err) {
             toast.error(err.message || 'Failed to delete account. Please try again.');
-        } finally {
             setDeleteLoading(false);
         }
     };
@@ -466,7 +462,7 @@ const Profile = () => {
             </Section>
 
             {/* 4. Billing & Subscription */}
-            <Section title="Billing & Subscription" icon={CreditCard}>
+            <Section id="billing" title="Billing & Subscription" icon={CreditCard}>
                 <div className="space-y-4">
                     {/* Past Due Warning Banner */}
                     {isPastDue && (
@@ -493,6 +489,8 @@ const Profile = () => {
                             <p className="text-xs text-muted-foreground">
                                 {isTrialing && trialEnd ? (
                                     <>Free trial ends on <strong className="text-foreground">{new Date(trialEnd).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}</strong></>
+                                ) : isPro && periodEnd && isCanceled ? (
+                                    <>Pro access until <strong className="text-foreground">{new Date(periodEnd).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}</strong>. Your subscription won't renew.</>
                                 ) : isPro && periodEnd ? (
                                     <>Current billing period ends on <strong className="text-foreground">{new Date(periodEnd).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}</strong></>
                                 ) : isCanceled ? (
@@ -577,7 +575,7 @@ const Profile = () => {
                             <h3 className="font-semibold text-foreground">Delete account?</h3>
                         </div>
                         <p className="text-sm text-muted-foreground">
-                            This will permanently erase <strong className="text-foreground">all your transactions, categories, and profile data</strong>. This action cannot be undone.
+                            This will permanently erase <strong className="text-foreground">all your transactions, categories, and profile data</strong> and cancel any active subscription. This action cannot be undone.
                         </p>
                         <div className="rounded-xl bg-destructive/5 border border-destructive/20 px-3.5 py-2.5">
                             <p className="text-xs text-muted-foreground">

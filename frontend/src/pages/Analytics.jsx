@@ -5,6 +5,7 @@ import {
 } from 'recharts';
 import { getTransactions } from '../services/api';
 import { formatCurrency, formatDate } from '../lib/formatters';
+import { parseDate } from '../lib/dates';
 import { SkeletonChart } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/ui/EmptyState';
 import { BarChart3 } from 'lucide-react';
@@ -60,7 +61,7 @@ const Analytics = () => {
     /* ── Daily data for area chart ── */
     const dailyDataMap = {};
     transactions.forEach((t) => {
-        const date = new Date(t.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
+        const date = parseDate(t.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
         if (!dailyDataMap[date]) dailyDataMap[date] = { date, Income: 0, Expense: 0 };
         if (t.type === 'INCOME') dailyDataMap[date].Income += parseFloat(t.amount);
         else dailyDataMap[date].Expense += parseFloat(t.amount);

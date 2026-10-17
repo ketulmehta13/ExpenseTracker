@@ -10,16 +10,13 @@ import {
     getTransactions, deleteTransaction, getCategories,
     exportTransactionsCSV
 } from '../services/api';
-import { useAuth } from '../context/AuthContext';
 import { usePlan } from '../context/PlanContext';
 import { formatCurrency, formatDate } from '../lib/formatters';
+import { exportTransactionsPDF } from '../lib/exportPdf';
 import { SkeletonTable } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/ui/EmptyState';
 import TransactionModal from '../components/TransactionModal';
 import ConfirmModal from '../components/ConfirmModal';
-import ProGate from '../components/ProGate';
-import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
 
 // TODO: Replace with server-side pagination if the Supabase transactions table
 // grows beyond ~1000 rows and client-side filtering becomes slow.
@@ -31,7 +28,6 @@ const SortIcon = ({ column, sortBy, sortDir }) => {
 };
 
 const Transactions = () => {
-    const { user } = useAuth();
     const { isPro, historyMonths } = usePlan();
     const navigate = useNavigate();
     const [transactions, setTransactions] = useState([]);
@@ -151,7 +147,7 @@ const Transactions = () => {
             await deleteTransaction(deleteModal.id);
             toast.success(`"${deleteModal.title}" deleted.`);
             fetchData();
-        } catch (err) {
+        } catch {
             toast.error('Failed to delete transaction.');
         } finally {
             setDeleting(false);
@@ -170,36 +166,19 @@ const Transactions = () => {
         toast.success('CSV exported!');
     };
 
-    const handleExportPDF = () => {
+    const handleExportPDF = async () => {
         if (!isPro) {
             toast.error('PDF export is a Pro feature. Upgrade to Pro to export reports!');
             navigate('/dashboard/upgrade');
             return;
         }
-        const doc = new jsPDF();
-        doc.setFontSize(16);
-        doc.text('Expense Tracker — Transactions Report', 14, 20);
-        doc.setFontSize(9);
-        doc.setTextColor(120);
-        doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 28);
-
-        doc.autoTable({
-            head: [['Date', 'Title', 'Category', 'Type', 'Amount']],
-            body: filtered.map((t) => [
-                formatDate(t.date),
-                t.title,
-                t.category_name || '—',
-                t.type,
-                `${t.type === 'INCOME' ? '+' : '-'}${formatCurrency(t.amount)}`,
-            ]),
-            startY: 34,
-            theme: 'striped',
-            headStyles: { fillColor: [34, 40, 58] },
-            styles: { fontSize: 8, cellPadding: 3 },
-        });
-
-        doc.save('transactions_report.pdf');
-        toast.success('PDF exported!');
+        try {
+            await exportTransactionsPDF(filtered);
+            toast.success('PDF exported!');
+        } catch (err) {
+            console.error('PDF export failed:', err);
+            toast.error('Could not generate the PDF. Please try again.');
+        }
     };
 
     return (
@@ -446,11 +425,13 @@ const Transactions = () => {
                                             {t.type === 'INCOME' ? '+' : '−'}{formatCurrency(t.amount)}
                                         </td>
                                         <td className="px-5 py-3.5">
-                                            <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            {/* Revealed on hover for mouse users; always visible on touch screens */}
+                                            <div className="flex items-center justify-end gap-1 transition-opacity pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 pointer-fine:focus-within:opacity-100">
                                                 <button
                                                     onClick={() => setTxModal({ open: true, transaction: t, type: t.type })}
                                                     className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                                                     title="Edit"
+                                                    aria-label={`Edit ${t.title}`}
                                                 >
                                                     <Pencil size={13} />
                                                 </button>
@@ -458,6 +439,7 @@ const Transactions = () => {
                                                     onClick={() => setDeleteModal({ open: true, id: t.id, title: t.title })}
                                                     className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                                                     title="Delete"
+                                                    aria-label={`Delete ${t.title}`}
                                                 >
                                                     <Trash2 size={13} />
                                                 </button>
@@ -496,12 +478,14 @@ const Transactions = () => {
                                     <button
                                         onClick={() => setTxModal({ open: true, transaction: t, type: t.type })}
                                         className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted"
+                                        aria-label={`Edit ${t.title}`}
                                     >
                                         <Pencil size={13} />
                                     </button>
                                     <button
                                         onClick={() => setDeleteModal({ open: true, id: t.id, title: t.title })}
                                         className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                                        aria-label={`Delete ${t.title}`}
                                     >
                                         <Trash2 size={13} />
                                     </button>

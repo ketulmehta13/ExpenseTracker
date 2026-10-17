@@ -1,4 +1,25 @@
 import { supabase } from './supabaseClient';
+import { historyCutoffISODate, parseDate } from '../lib/dates';
+
+// ============================================================
+// EDGE FUNCTIONS
+// ============================================================
+
+/**
+ * Invoke a Supabase Edge Function. Functions answer errors with JSON { error },
+ * so surface that message instead of the client's generic "non-2xx status" one.
+ */
+const invokeFunction = async (name, body = {}) => {
+    const { data, error } = await supabase.functions.invoke(name, { body });
+    if (error) {
+        const details = typeof error.context?.json === 'function'
+            ? await error.context.json().catch(() => null)
+            : null;
+        throw new Error(details?.error || error.message);
+    }
+    if (data?.error) throw new Error(data.error);
+    return data;
+};
 
 // ============================================================
 // AUTH SERVICES
@@ -41,36 +62,26 @@ export const authLogout = async () => {
 };
 
 /**
- * Delete all data belonging to the current user:
- * transactions → user-owned categories → profile row → sign out.
- * Note: Supabase does not expose auth.admin.deleteUser() on the client;
- * the auth user record remains but all personal data is erased and the
- * session is terminated, effectively deactivating the account.
+ * Permanently delete the current user's account via the delete-account Edge Function:
+ * it cancels any Razorpay subscription first, then deletes the auth user, which
+ * cascades to profile, categories, transactions and subscription rows.
+ * The caller should then clear the local session.
  */
-export const deleteUserData = async (userId) => {
-    // 1. Delete all transactions
-    const { error: txErr } = await supabase
-        .from('transactions')
-        .delete()
-        .eq('user_id', userId);
-    if (txErr) throw txErr;
+export const deleteAccount = () => invokeFunction('delete-account');
 
-    // 2. Delete user-owned categories (those with user_id set)
-    const { error: catErr } = await supabase
-        .from('categories')
-        .delete()
-        .eq('user_id', userId);
-    if (catErr) throw catErr;
-
-    // 3. Delete profile row
-    const { error: profErr } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', userId);
-    if (profErr) throw profErr;
-
-    // 4. Sign out the session
-    await supabase.auth.signOut();
+/**
+ * Check whether a username is free before signing up.
+ * Returns null if the check itself fails, so signup can still proceed.
+ */
+export const checkUsernameAvailable = async (username) => {
+    const { data, error } = await supabase.rpc('is_username_available', {
+        p_username: username.trim().toLowerCase(),
+    });
+    if (error) {
+        console.warn('Username availability check failed:', error.message);
+        return null;
+    }
+    return data;
 };
 
 /**
@@ -117,37 +128,46 @@ export const updateProfile = async (userId, updates) => {
 // TRANSACTION SERVICES
 // ============================================================
 
-/**
- * Get all transactions for the current user, with optional type filter.
- * Joins category name from categories table.
- */
+// PostgREST caps every response at the project's "max rows" setting (1000 by default)
+const FETCH_PAGE_SIZE = 1000;
+
 /**
  * Get all transactions for the current user, with optional type and historyMonths filter.
  * Joins category name from categories table.
+ * Fetches in pages: a single request is silently truncated at the max-rows limit.
  */
 export const getTransactions = async (filterType = '', historyMonths = null) => {
-    let query = supabase
-        .from('transactions')
-        .select('*, categories(name)')
-        .order('date', { ascending: false })
-        .order('created_at', { ascending: false });
+    const buildQuery = (withCount) => {
+        let query = supabase
+            .from('transactions')
+            .select('*, categories(name)', withCount ? { count: 'exact' } : undefined)
+            .order('date', { ascending: false })
+            .order('created_at', { ascending: false })
+            // Unique tiebreaker so rows sharing a timestamp aren't skipped between pages
+            .order('id', { ascending: false });
 
-    if (filterType) {
-        query = query.eq('type', filterType);
+        if (filterType) {
+            query = query.eq('type', filterType);
+        }
+        if (historyMonths) {
+            query = query.gte('date', historyCutoffISODate(historyMonths));
+        }
+        return query;
+    };
+
+    const rows = [];
+    let total = Infinity;
+    while (rows.length < total) {
+        const { data, count, error } = await buildQuery(rows.length === 0)
+            .range(rows.length, rows.length + FETCH_PAGE_SIZE - 1);
+        if (error) throw error;
+        if (typeof count === 'number') total = count;
+        if (!data.length) break;
+        rows.push(...data);
     }
-
-    if (historyMonths) {
-        const cutoff = new Date();
-        cutoff.setMonth(cutoff.getMonth() - historyMonths);
-        const cutoffStr = cutoff.toISOString().split('T')[0];
-        query = query.gte('date', cutoffStr);
-    }
-
-    const { data, error } = await query;
-    if (error) throw error;
 
     // Flatten category name for frontend compatibility
-    return data.map(t => ({
+    return rows.map(t => ({
         ...t,
         category_name: t.categories?.name || null,
     }));
@@ -184,9 +204,7 @@ export const getTransactionsPaginated = async ({
     // Apply cutoff limit if user is on restricted plan
     let effectiveStartDate = startDate;
     if (historyMonths) {
-        const cutoff = new Date();
-        cutoff.setMonth(cutoff.getMonth() - historyMonths);
-        const cutoffStr = cutoff.toISOString().split('T')[0];
+        const cutoffStr = historyCutoffISODate(historyMonths);
         if (!effectiveStartDate || effectiveStartDate < cutoffStr) {
             effectiveStartDate = cutoffStr;
         }
@@ -298,12 +316,14 @@ export const getCategories = async () => {
 };
 
 /**
- * Create a new category.
+ * Create a new category owned by the current user.
+ * RLS only accepts rows whose user_id is the caller, so it must be sent.
  */
 export const createCategory = async ({ name, color, icon }) => {
+    const { data: { session } } = await supabase.auth.getSession();
     const { data, error } = await supabase
         .from('categories')
-        .insert({ name, color: color || null, icon: icon || null })
+        .insert({ name, color: color || null, icon: icon || null, user_id: session?.user?.id })
         .select()
         .single();
     if (error) throw error;
@@ -381,7 +401,7 @@ export const computeSummary = (transactions, monthlyBudget = 0) => {
     const categoryTotals = {};
 
     transactions.forEach(t => {
-        const d = new Date(t.date);
+        const d = parseDate(t.date);
         const amount = parseFloat(t.amount);
         const tMonth = d.getMonth();
         const tYear = d.getFullYear();
@@ -449,21 +469,32 @@ export const computeSummary = (transactions, monthlyBudget = 0) => {
 // ============================================================
 
 /**
+ * Quote a CSV text cell. Values starting with = + - @ would run as formulas when
+ * the file is opened in Excel/Sheets, so they are prefixed with an apostrophe.
+ */
+const csvTextCell = (value) => {
+    let text = String(value ?? '');
+    if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`;
+    return `"${text.replace(/"/g, '""')}"`;
+};
+
+/**
  * Generate and download a CSV file from transactions array.
  */
 export const exportTransactionsCSV = (transactions) => {
     const headers = ['Date', 'Title', 'Category', 'Type', 'Amount', 'Notes', 'Is Recurring'];
     const rows = transactions.map(t => [
         t.date,
-        `"${(t.title || '').replace(/"/g, '""')}"`,
-        `"${(t.category_name || '').replace(/"/g, '""')}"`,
+        csvTextCell(t.title),
+        csvTextCell(t.category_name),
         t.type,
         t.amount,
-        `"${(t.notes || '').replace(/"/g, '""')}"`,
+        csvTextCell(t.notes),
         t.is_recurring ? 'Yes' : 'No',
     ]);
 
-    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    // The byte-order mark makes Excel read the file as UTF-8 (₹, Hindi text, emoji)
+    const csv = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -496,34 +527,14 @@ export const getSubscription = async (userId) => {
 /**
  * Call razorpay-checkout Edge Function to create a subscription and get subscriptionId + keyId.
  */
-export const createCheckoutSubscription = async (plan = 'monthly') => {
-    const { data, error } = await supabase.functions.invoke('razorpay-checkout', {
-        body: { plan },
-    });
-    if (error) throw error;
-    if (data?.error) throw new Error(data.error);
-    return data;
-};
+export const createCheckoutSubscription = (plan = 'monthly') => invokeFunction('razorpay-checkout', { plan });
 
 /**
  * Call razorpay-cancel Edge Function to cancel subscription at cycle end.
  */
-export const cancelSubscription = async () => {
-    const { data, error } = await supabase.functions.invoke('razorpay-cancel', {
-        body: {},
-    });
-    if (error) throw error;
-    if (data?.error) throw new Error(data.error);
-    return data;
-};
+export const cancelSubscription = () => invokeFunction('razorpay-cancel');
 
 /**
  * Call check-plan Edge Function for server-side verification of features and limits.
  */
-export const checkUserPlan = async () => {
-    const { data, error } = await supabase.functions.invoke('check-plan', {
-        body: {},
-    });
-    if (error) throw error;
-    return data;
-};
+export const checkUserPlan = () => invokeFunction('check-plan');

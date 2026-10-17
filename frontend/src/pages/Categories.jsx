@@ -252,7 +252,7 @@ const Categories = () => {
                 cats.map((c) => getTransactionCountByCategory(c.id).then((n) => [c.id, n]))
             );
             setTxCounts(Object.fromEntries(counts));
-        } catch (err) {
+        } catch {
             toast.error('Failed to load categories.');
         } finally {
             setLoading(false);
@@ -369,7 +369,7 @@ const Categories = () => {
                     title="No categories yet"
                     description="Create categories to organize your income and expenses better."
                     ctaLabel="+ New category"
-                    onCta={() => setFormModal({ open: true, category: null })}
+                    onCta={handleNewCategoryClick}
                 />
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -394,23 +394,30 @@ const Categories = () => {
                                 <div className="ml-auto flex-shrink-0 h-3 w-3 rounded-full" style={{ background: cat.color || '#f59e0b' }} />
                             </div>
 
-                            {/* Actions — appear on hover */}
-                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button
-                                    onClick={() => setFormModal({ open: true, category: cat })}
-                                    className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-border py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                                >
-                                    <Pencil size={12} />
-                                    Edit
-                                </button>
-                                <button
-                                    onClick={() => handleDeleteClick(cat)}
-                                    className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-border py-1.5 text-xs font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 hover:border-destructive/30 transition-colors"
-                                >
-                                    <Trash2 size={12} />
-                                    Delete
-                                </button>
-                            </div>
+                            {cat.user_id == null ? (
+                                // Built-in categories are shared by all users and can't be edited or deleted
+                                <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+                                    Default
+                                </span>
+                            ) : (
+                                /* Actions — revealed on hover for mouse users, always visible on touch screens */
+                                <div className="flex gap-2 transition-opacity pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 pointer-fine:focus-within:opacity-100">
+                                    <button
+                                        onClick={() => setFormModal({ open: true, category: cat })}
+                                        className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-border py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                                    >
+                                        <Pencil size={12} />
+                                        Edit
+                                    </button>
+                                    <button
+                                        onClick={() => handleDeleteClick(cat)}
+                                        className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-border py-1.5 text-xs font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 hover:border-destructive/30 transition-colors"
+                                    >
+                                        <Trash2 size={12} />
+                                        Delete
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>

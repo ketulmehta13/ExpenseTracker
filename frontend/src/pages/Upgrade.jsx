@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Check, Crown, Sparkles, Shield, Zap,
@@ -23,6 +23,10 @@ const loadRazorpayScript = () => {
     });
 };
 
+// After payment, the webhook activates Pro within seconds; poll until it shows up
+const ACTIVATION_POLL_MS = 3000;
+const MAX_ACTIVATION_POLLS = 10;
+
 const FEATURES = [
     { name: 'Transaction History', free: 'Last 3 months', pro: 'Unlimited history' },
     { name: 'Custom Categories', free: 'Up to 5 categories', pro: 'Unlimited categories' },
@@ -41,6 +45,21 @@ const Upgrade = () => {
     const [billingCycle, setBillingCycle] = useState('yearly'); // 'monthly' | 'yearly'
     const [submitting, setSubmitting] = useState(false);
     const [paymentStatus, setPaymentStatus] = useState(null); // { success: boolean, message: string }
+    const [awaitingActivation, setAwaitingActivation] = useState(false);
+
+    useEffect(() => {
+        if (!awaitingActivation || isPro) return;
+        let polls = 0;
+        const timer = setInterval(() => {
+            polls += 1;
+            refreshPlan();
+            if (polls >= MAX_ACTIVATION_POLLS) {
+                clearInterval(timer);
+                setAwaitingActivation(false);
+            }
+        }, ACTIVATION_POLL_MS);
+        return () => clearInterval(timer);
+    }, [awaitingActivation, isPro, refreshPlan]);
 
     const handleSubscribe = async (selectedCycle = billingCycle) => {
         if (!user) {
@@ -63,6 +82,14 @@ const Upgrade = () => {
             // 2. Call Edge Function to create subscription
             const session = await createCheckoutSubscription(selectedCycle);
 
+            if (session?.alreadySubscribed) {
+                toast.info('You already have an active Pro subscription.');
+                setSubmitting(false);
+                refreshPlan();
+                navigate('/dashboard/settings#billing');
+                return;
+            }
+
             if (!session?.subscriptionId || !session?.keyId) {
                 toast.error('Could not initialize subscription checkout.');
                 setSubmitting(false);
@@ -75,7 +102,7 @@ const Upgrade = () => {
                 subscription_id: session.subscriptionId,
                 name: 'Expense Tracker Pro',
                 description: `Pro Plan (${selectedCycle === 'yearly' ? 'Yearly' : 'Monthly'}) — 7-Day Free Trial`,
-                image: '/logo-icon.png',
+                image: '/logo.png',
                 prefill: {
                     name: user?.user_metadata?.username || user?.email?.split('@')[0] || '',
                     email: user?.email || '',
@@ -83,16 +110,15 @@ const Upgrade = () => {
                 theme: {
                     color: '#0d3a35',
                 },
-                handler: function (response) {
+                handler: function () {
                     // Payment authorized on frontend. Webhook is the actual source of truth for activation.
+                    setSubmitting(false);
                     setPaymentStatus({
                         success: true,
                         message: 'Payment authorized! Your Pro membership will activate in a few moments once verified by Razorpay.',
                     });
                     toast.success('Payment submitted! Refreshing your account…');
-                    setTimeout(() => {
-                        refreshPlan();
-                    }, 2500);
+                    setAwaitingActivation(true);
                 },
                 modal: {
                     ondismiss: function () {
@@ -171,7 +197,11 @@ const Upgrade = () => {
                 } flex items-start gap-3`}>
                     <Sparkles size={18} className="flex-shrink-0 mt-0.5" />
                     <div>
-                        <p className="text-sm font-semibold">{paymentStatus.message}</p>
+                        <p className="text-sm font-semibold">
+                            {paymentStatus.success && isPro
+                                ? 'Your Pro membership is active. Enjoy!'
+                                : paymentStatus.message}
+                        </p>
                         <p className="text-xs opacity-80 mt-0.5">
                             Status updates automatically via Razorpay secure webhooks.
                         </p>
@@ -309,8 +339,8 @@ const Upgrade = () => {
                     <div className="pt-8">
                         <button
                             type="button"
-                            onClick={() => handleSubscribe(billingCycle)}
-                            disabled={submitting || (isPro && !isTrialing)}
+                            onClick={() => (isPro ? navigate('/dashboard/settings#billing') : handleSubscribe(billingCycle))}
+                            disabled={submitting}
                             className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm shadow-md hover:opacity-90 transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {submitting ? (

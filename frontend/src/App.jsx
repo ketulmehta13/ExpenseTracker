@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'sonner';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { PlanProvider } from './context/PlanContext';
 import { ThemeProvider } from './components/ThemeProvider';
@@ -10,6 +11,7 @@ import MainLayout from './layouts/MainLayout';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
 import Analytics from './pages/Analytics';
@@ -19,23 +21,9 @@ import Categories from './pages/Categories';
 import Upgrade from './pages/Upgrade';
 import NotFound from './pages/NotFound';
 
+// AuthProvider shows a splash until the session is restored, so `user` is settled here
 const ProtectedRoute = ({ children }) => {
-    const { user, loading } = useAuth();
-
-    if (loading) {
-        return (
-            <div className="h-screen w-screen flex items-center justify-center bg-background">
-                <div className="flex flex-col items-center gap-3">
-                    <svg className="animate-spin h-10 w-10 text-primary" viewBox="0 0 24 24" fill="none">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                    </svg>
-                    <p className="text-sm text-muted-foreground font-medium">Loading your account…</p>
-                </div>
-            </div>
-        );
-    }
-
+    const { user } = useAuth();
     return user ? children : <Navigate to="/login" replace />;
 };
 
@@ -46,6 +34,7 @@ function AppRoutes() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
 
             <Route
                 path="/dashboard"
@@ -74,6 +63,16 @@ function App() {
     return (
         <ErrorBoundary>
             <ThemeProvider>
+                {/* Mounted once at the root so toasts work on every page, including the auth pages */}
+                <Toaster
+                    position="top-right"
+                    richColors
+                    toastOptions={{
+                        classNames: {
+                            toast: 'bg-card border border-border text-foreground shadow-lg rounded-xl',
+                        },
+                    }}
+                />
                 <AuthProvider>
                     <PlanProvider>
                         <Router>

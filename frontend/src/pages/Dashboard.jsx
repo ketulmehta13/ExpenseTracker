@@ -10,6 +10,7 @@ import {
 import { getTransactions, getProfile, computeSummary } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { formatCurrency, formatDate, getGreeting } from '../lib/formatters';
+import { parseDate } from '../lib/dates';
 import { SkeletonDashboard } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/ui/EmptyState';
 import TransactionModal from '../components/TransactionModal';
@@ -71,6 +72,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 ───────────────────────────────────── */
 const Dashboard = () => {
     const { user } = useAuth();
+    const userId = user?.id;
     const [allTransactions, setAllTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [profile, setProfile] = useState(null);
@@ -82,7 +84,7 @@ const Dashboard = () => {
         try {
             const [txs, prof] = await Promise.all([
                 getTransactions(),
-                getProfile(user.id),
+                getProfile(userId),
             ]);
             setAllTransactions(txs);
             setProfile(prof);
@@ -91,7 +93,7 @@ const Dashboard = () => {
         } finally {
             setLoading(false);
         }
-    }, [user]);
+    }, [userId]);
 
     useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -106,7 +108,7 @@ const Dashboard = () => {
     const filteredTransactions = React.useMemo(() => {
         const now = new Date();
         return allTransactions.filter((t) => {
-            const d = new Date(t.date);
+            const d = parseDate(t.date);
             if (dateRange === 'this_month') {
                 return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
             }
@@ -134,7 +136,7 @@ const Dashboard = () => {
             const label = d.toLocaleDateString('en-IN', { month: 'short' });
             let income = 0, expense = 0;
             allTransactions.forEach((t) => {
-                const td = new Date(t.date);
+                const td = parseDate(t.date);
                 if (td.getMonth() === d.getMonth() && td.getFullYear() === d.getFullYear()) {
                     if (t.type === 'INCOME') income += parseFloat(t.amount);
                     else expense += parseFloat(t.amount);

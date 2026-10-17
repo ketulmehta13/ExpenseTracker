@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { X, TrendingUp, TrendingDown, Loader2, Plus } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, TrendingUp, TrendingDown, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { createTransaction, updateTransaction, getCategories } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { formatCurrency } from '../lib/formatters';
+import { todayISODate } from '../lib/dates';
 
 /**
  * TransactionModal — shared modal for Add and Edit transactions.
@@ -35,7 +35,7 @@ const TransactionModal = ({
         title: '',
         amount: '',
         category_id: '',
-        date: new Date().toISOString().split('T')[0],
+        date: todayISODate(),
         notes: '',
         is_recurring: false,
     });
@@ -51,7 +51,7 @@ const TransactionModal = ({
                     title: transaction.title || '',
                     amount: transaction.amount?.toString() || '',
                     category_id: transaction.category_id || '',
-                    date: transaction.date || new Date().toISOString().split('T')[0],
+                    date: transaction.date || todayISODate(),
                     notes: transaction.notes || '',
                     is_recurring: transaction.is_recurring || false,
                 });
@@ -61,7 +61,7 @@ const TransactionModal = ({
                     title: '',
                     amount: '',
                     category_id: '',
-                    date: new Date().toISOString().split('T')[0],
+                    date: todayISODate(),
                     notes: '',
                     is_recurring: false,
                 });

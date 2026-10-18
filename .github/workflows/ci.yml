@@ -91,6 +91,9 @@ jobs:
       - name: Evaluate help-center retrieval (evaluation gate)
         run: python -m training.evaluate_rag --gate
 
+      - name: Evaluate assistant understanding (evaluation gate)
+        run: python -m training.evaluate_assistant --gate
+
       - name: Upload model reports
         if: always()
         uses: actions/upload-artifact@v4

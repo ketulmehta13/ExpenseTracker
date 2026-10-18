@@ -30,5 +30,9 @@ class TTLCache[T]:
             del self._entries[next(iter(self._entries))]
         self._entries[key] = (time.monotonic() + self.ttl_seconds, value)
 
+    def pop(self, key: str) -> None:
+        """Forget one entry, e.g. after the data behind it changed."""
+        self._entries.pop(key, None)
+
     def clear(self) -> None:
         self._entries.clear()

@@ -1,7 +1,8 @@
-"""Read the signed-in user's rows through Supabase's REST API (PostgREST).
+"""Read (and, after the user confirms, write) the signed-in user's rows through Supabase's
+REST API (PostgREST).
 
 Every request carries the user's own access token, so Postgres row level security
-decides what is visible: the service never holds the service-role key.
+decides what is visible and writable: the service never holds the service-role key.
 """
 
 from __future__ import annotations
@@ -60,6 +61,16 @@ class SupabaseData:
                 break
             rows.extend(page)
         return rows[:limit]
+
+
+    async def insert(self, table: str, row: dict[str, Any]) -> dict[str, Any]:
+        """Insert one row as the user (row level security applies) and return it as stored."""
+        headers = {**self._headers, "Prefer": "return=representation"}
+        response = await self._http.post(f"{self._rest_url}/{table}", json=row, headers=headers)
+        if response.status_code not in (200, 201):
+            raise HTTPException(status.HTTP_502_BAD_GATEWAY, f"Could not save to {table}")
+        stored = response.json()
+        return stored[0] if isinstance(stored, list) else stored
 
 
 def get_data(request: Request, user: CurrentUser = Depends(get_current_user)) -> SupabaseData:

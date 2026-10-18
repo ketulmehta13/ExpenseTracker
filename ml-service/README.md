@@ -15,6 +15,8 @@ Design notes and interview-style explanations live in [`docs/ai-ml/`](../docs/ai
 | POST | `/v1/parse` | bearer token | One line of text (`{text, today}`) to a transaction draft with a category suggestion; `llm_filled` lists fields the LLM fallback filled |
 | GET | `/v1/insights/summary?today=YYYY-MM-DD` | bearer token | The month in two or three sentences (`source`: `llm` or `template`) |
 | POST | `/v1/help` | bearer token | Answers `{question}` from the help center (`knowledge/`), with citations; declines off-topic questions |
+| POST | `/v1/assistant/chat` | bearer token | The assistant: `{message, thread_id?, today}` to a reply, citations, or a draft transaction waiting for confirmation |
+| POST | `/v1/assistant/confirm` | bearer token | `{thread_id, approve}` saves (with the user's token) or discards the pending draft |
 | GET | `/docs` | none | Interactive OpenAPI docs |
 
 ## Run locally
@@ -68,6 +70,14 @@ python -m training.evaluate_rag --gate   # downloads the ~70 MB embedding model 
 ```
 
 It compares keyword, embedding and hybrid search on two chunkings, using hand-labelled dev and test questions, and writes [`reports/rag/report.md`](reports/rag/report.md). Details are in [docs/ai-ml/07-rag.md](../docs/ai-ml/07-rag.md).
+
+## Evaluate the assistant
+
+```bash
+python -m training.evaluate_assistant --gate
+```
+
+It scores intent routing, slots and follow-ups on hand-labelled messages and conversations, and writes [`reports/assistant/report.md`](reports/assistant/report.md). Details are in [docs/ai-ml/08-assistant.md](../docs/ai-ml/08-assistant.md).
 
 ## Optional: an LLM
 

@@ -102,3 +102,26 @@ export async function getInsights(today, signal) {
     // The first call reads a year of history, so allow more time than for suggestions
     return request('GET', `/v1/insights?today=${encodeURIComponent(today)}`, { signal, timeoutMs: 8000 });
 }
+
+/**
+ * Send a message to the assistant. Replies: { thread_id, intent, reply, citations,
+ * pending: draft transaction waiting for confirmation | null, saved: row | null }.
+ * @param {string} message
+ * @param {string} threadId - the conversation, so follow-ups like "and last month?" work
+ * @param {string} today - the user's local date, YYYY-MM-DD
+ */
+export async function chatWithAssistant(message, threadId, today, signal) {
+    return request('POST', '/v1/assistant/chat', {
+        body: { message: message.trim().slice(0, 300), thread_id: threadId, today },
+        signal,
+        timeoutMs: 25000,
+    });
+}
+
+/** Answer the assistant's "Should I add this?": approve = true saves the pending transaction. */
+export async function confirmAssistantDraft(threadId, approve, today) {
+    return request('POST', '/v1/assistant/confirm', {
+        body: { thread_id: threadId, approve, today },
+        timeoutMs: 10000,
+    });
+}

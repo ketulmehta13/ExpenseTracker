@@ -1,16 +1,22 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Home, ArrowLeft } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 /**
  * NotFound — custom 404 page for unmatched routes.
  */
 const NotFound = () => {
     const navigate = useNavigate();
+    const location = useLocation();
+    const { user } = useAuth();
+    // 'default' marks the first page of the visit: there is nothing in the app to go back to
+    const canGoBack = location.key !== 'default';
+    const destination = user ? { to: '/dashboard', label: 'Dashboard' } : { to: '/', label: 'Home' };
 
     return (
-        <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 text-center">
-            {/* Decorative background blobs */}
+        <div className="relative min-h-dvh overflow-hidden bg-background flex flex-col items-center justify-center px-4 text-center">
+            {/* Decorative background blobs, clipped by the container so the page never scrolls sideways */}
             <div className="absolute top-[-10%] left-[-5%] w-72 h-72 rounded-full bg-income/10 blur-[100px] pointer-events-none" />
             <div className="absolute bottom-[-10%] right-[-5%] w-72 h-72 rounded-full bg-expense/10 blur-[100px] pointer-events-none" />
 
@@ -29,19 +35,21 @@ const NotFound = () => {
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
+                    {canGoBack && (
+                        <button
+                            onClick={() => navigate(-1)}
+                            className="inline-flex items-center justify-center gap-2 rounded-lg border border-border px-5 py-2.5 text-sm font-semibold text-foreground transition hover:bg-muted"
+                        >
+                            <ArrowLeft size={16} />
+                            Go back
+                        </button>
+                    )}
                     <button
-                        onClick={() => navigate(-1)}
-                        className="inline-flex items-center gap-2 rounded-lg border border-border px-5 py-2.5 text-sm font-semibold text-foreground transition hover:bg-muted"
-                    >
-                        <ArrowLeft size={16} />
-                        Go back
-                    </button>
-                    <button
-                        onClick={() => navigate('/dashboard')}
-                        className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:opacity-90"
+                        onClick={() => navigate(destination.to)}
+                        className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:opacity-90"
                     >
                         <Home size={16} />
-                        Dashboard
+                        {destination.label}
                     </button>
                 </div>
             </div>

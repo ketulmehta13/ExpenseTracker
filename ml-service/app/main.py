@@ -17,7 +17,8 @@ from app.cache import TTLCache
 from app.config import Settings
 from app.llm.provider import build_chat_model
 from app.ml.categorizer import CategorizerModel
-from app.routers import categorize, health, insights, parse
+from app.rag.embeddings import Embedder
+from app.routers import categorize, health, help, insights, parse
 
 logger = logging.getLogger("ml_service")
 
@@ -26,9 +27,10 @@ def create_app(
     settings: Settings | None = None,
     transport: httpx.AsyncBaseTransport | None = None,
     llm: BaseChatModel | None = None,
+    embedder: Embedder | None = None,
 ) -> FastAPI:
     """Build the app. Tests pass their own settings, an httpx transport that fakes Supabase,
-    and optionally a fake chat model."""
+    and optionally a fake chat model and embedder."""
     settings = settings or Settings.from_env()
 
     @asynccontextmanager
@@ -53,6 +55,8 @@ def create_app(
     app.state.user_context_cache = TTLCache(settings.user_context_cache_seconds)
     app.state.insights_cache = TTLCache(settings.user_context_cache_seconds)
     app.state.summary_cache = TTLCache(600)  # LLM summaries are slow; reused while their facts are unchanged
+    app.state.embedder = embedder
+    app.state.help_index = None  # built on the first help question
 
     app.add_middleware(
         CORSMiddleware,
@@ -75,6 +79,7 @@ def create_app(
     app.include_router(categorize.router)
     app.include_router(insights.router)
     app.include_router(parse.router)
+    app.include_router(help.router)
     return app
 
 

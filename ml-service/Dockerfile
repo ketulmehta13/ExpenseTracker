@@ -10,12 +10,15 @@ RUN pip install -r requirements.txt
 
 COPY app ./app
 COPY training ./training
+COPY knowledge ./knowledge
+# Bake the help-center embedding model into the image, so a new server never downloads it
+RUN python -c "from app.config import Settings; from app.rag.embeddings import load_embedder; s = Settings(); assert load_embedder(s.embedding_model, s.embedding_cache_dir)"
 # Train during the build: fixed seeds make it reproducible, the model always matches the
 # installed scikit-learn, and the evaluation gate keeps a weak model out of every image
 RUN python -m training.train_categorizer --min-holdout-f1 0.80
 
 # Run as an unprivileged user
-RUN useradd --create-home appuser
+RUN useradd --create-home appuser && chown -R appuser /srv/models
 USER appuser
 
 EXPOSE 8000

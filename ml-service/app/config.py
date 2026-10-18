@@ -8,6 +8,7 @@ from pathlib import Path
 
 DEFAULT_ORIGINS = "http://localhost:5173,https://ketul-expense-tracker.vercel.app"
 DEFAULT_MODEL_DIR = Path(__file__).resolve().parent.parent / "models"
+DEFAULT_KNOWLEDGE_DIR = Path(__file__).resolve().parent.parent / "knowledge"
 
 
 def _csv(value: str) -> tuple[str, ...]:
@@ -31,6 +32,10 @@ class Settings:
     llm_base_url: str = ""
     llm_api_key: str = field(default="", repr=False)  # never printed in logs or tracebacks
     llm_timeout_seconds: float = 20.0
+    # Help-center search: articles, and the embedding model ("" = keyword search only)
+    knowledge_dir: Path = DEFAULT_KNOWLEDGE_DIR
+    embedding_model: str = "BAAI/bge-small-en-v1.5"
+    embedding_cache_dir: Path = DEFAULT_MODEL_DIR / "embeddings"
 
     @classmethod
     def from_env(cls) -> Settings:
@@ -46,4 +51,9 @@ class Settings:
             llm_base_url=os.environ.get("LLM_BASE_URL", ""),
             llm_api_key=os.environ.get("LLM_API_KEY", ""),
             llm_timeout_seconds=float(os.environ.get("LLM_TIMEOUT_SECONDS", "20")),
+            knowledge_dir=Path(os.environ.get("KNOWLEDGE_DIR", str(DEFAULT_KNOWLEDGE_DIR))),
+            embedding_model=os.environ.get("EMBEDDING_MODEL", "BAAI/bge-small-en-v1.5"),
+            embedding_cache_dir=Path(
+                os.environ.get("EMBEDDING_CACHE_DIR", str(DEFAULT_MODEL_DIR / "embeddings"))
+            ),
         )

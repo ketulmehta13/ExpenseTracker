@@ -8,13 +8,14 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from datetime import UTC, date, datetime, timedelta
+from datetime import date, timedelta
 from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, Depends, Query, Request
 from pydantic import BaseModel
 
 from app.auth import CurrentUser, get_current_user
+from app.dates import resolve_today
 from app.ml.anomaly import find_anomalies
 from app.ml.forecast import forecast_month
 from app.ml.recurring import find_recurring
@@ -72,18 +73,6 @@ class InsightsResponse(BaseModel):
     recurring: list[RecurringPayment]
     recurring_monthly_total: float
     forecast: MonthForecast | None
-
-
-def resolve_today(requested: date | None) -> date:
-    """The user's local date. Clients send it, because the server's UTC date can be a day off."""
-    server_today = datetime.now(UTC).date()
-    if requested is None:
-        return server_today
-    if abs((requested - server_today).days) > 1:
-        raise HTTPException(
-            status.HTTP_422_UNPROCESSABLE_CONTENT, "today must be within a day of the current date"
-        )
-    return requested
 
 
 def build_insights(transactions: list[dict], categories: list[dict], budget: float | None, today: date):

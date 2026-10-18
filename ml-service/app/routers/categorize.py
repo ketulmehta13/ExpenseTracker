@@ -74,19 +74,21 @@ async def load_user_context(request: Request, user: CurrentUser, data: SupabaseD
     return context
 
 
-@router.post("/categorize", response_model=CategorizeResponse)
-async def categorize(
-    body: CategorizeRequest,
+async def suggest_category(
     request: Request,
-    user: CurrentUser = Depends(get_current_user),
-    data: SupabaseData = Depends(get_data),
+    user: CurrentUser,
+    data: SupabaseData,
+    title: str,
+    amount: float | None,
+    tx_type: str,
 ) -> CategorizeResponse:
+    """The cascade itself, shared with POST /v1/parse."""
     model: CategorizerModel | None = request.app.state.categorizer
     model_version = model.version if model else None
     context = await load_user_context(request, user, data)
     categories_by_id = {str(category["id"]): category for category in context.categories}
 
-    match = context.history.match(body.title)
+    match = context.history.match(title)
     if match and match.confidence >= HISTORY_MIN_CONFIDENCE and str(match.category_id) in categories_by_id:
         category = categories_by_id[str(match.category_id)]
         logger.info("categorize source=history confidence=%.2f", match.confidence)
@@ -100,7 +102,7 @@ async def categorize(
 
     if model is not None:
         # A few milliseconds of CPU: fine inline. A heavier model would go to a thread pool.
-        prediction = model.predict(body.title, body.amount, body.type)
+        prediction = model.predict(title, amount, tx_type)
         if prediction.confidence >= model.threshold:
             category = match_user_category(prediction.label, context.categories)
             logger.info(
@@ -119,3 +121,13 @@ async def categorize(
 
     logger.info("categorize source=none")
     return CategorizeResponse(suggestion=None, model_version=model_version)
+
+
+@router.post("/categorize", response_model=CategorizeResponse)
+async def categorize(
+    body: CategorizeRequest,
+    request: Request,
+    user: CurrentUser = Depends(get_current_user),
+    data: SupabaseData = Depends(get_data),
+) -> CategorizeResponse:
+    return await suggest_category(request, user, data, body.title, body.amount, body.type)

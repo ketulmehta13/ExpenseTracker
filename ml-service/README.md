@@ -14,6 +14,7 @@ Design notes and interview-style explanations live in [`docs/ai-ml/`](../docs/ai
 | GET | `/v1/insights?today=YYYY-MM-DD` | bearer token | Unusual spending, recurring payments and the month-end forecast |
 | POST | `/v1/parse` | bearer token | One line of text (`{text, today}`) to a transaction draft with a category suggestion; `llm_filled` lists fields the LLM fallback filled |
 | GET | `/v1/insights/summary?today=YYYY-MM-DD` | bearer token | The month in two or three sentences (`source`: `llm` or `template`) |
+| POST | `/v1/help` | bearer token | Answers `{question}` from the help center (`knowledge/`), with citations; declines off-topic questions |
 | GET | `/docs` | none | Interactive OpenAPI docs |
 
 ## Run locally
@@ -60,6 +61,14 @@ python -m training.evaluate_quickadd --gate
 
 It scores every field on hand-labelled dev and test sentences against a naive baseline, and lists every test failure in [`reports/quickadd/report.md`](reports/quickadd/report.md). Details are in [docs/ai-ml/05-quickadd.md](../docs/ai-ml/05-quickadd.md).
 
+## Evaluate help-center search
+
+```bash
+python -m training.evaluate_rag --gate   # downloads the ~70 MB embedding model on first run
+```
+
+It compares keyword, embedding and hybrid search on two chunkings, using hand-labelled dev and test questions, and writes [`reports/rag/report.md`](reports/rag/report.md). Details are in [docs/ai-ml/07-rag.md](../docs/ai-ml/07-rag.md).
+
 ## Optional: an LLM
 
 Everything works without one. To let an LLM help with quick add and write the monthly summary, run a free local model with [Ollama](https://ollama.com):
@@ -105,3 +114,6 @@ The build trains the categorizer inside the image, behind the same evaluation ga
 | `LLM_BASE_URL` | Ollama's default | Endpoint URL (for `openai`, the `/v1` base) |
 | `LLM_API_KEY` | — | Only for hosted endpoints; never commit it |
 | `LLM_TIMEOUT_SECONDS` | `20` | After this, the rules or the template are used |
+| `EMBEDDING_MODEL` | `BAAI/bge-small-en-v1.5` | Help-center embeddings; empty for keyword search only |
+| `EMBEDDING_CACHE_DIR` | `ml-service/models/embeddings` | Where the embedding model is stored |
+| `KNOWLEDGE_DIR` | `ml-service/knowledge` | The help articles |

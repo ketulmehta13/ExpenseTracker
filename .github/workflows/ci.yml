@@ -50,6 +50,32 @@ jobs:
 
       - run: deno check supabase/functions/*/index.ts
 
+  ml-service:
+    name: ML service (lint + tests + Docker image)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ml-service
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: ml-service/requirements*.txt
+
+      - run: pip install -r requirements-dev.txt
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Tests
+        run: pytest
+
+      - name: Docker image builds
+        run: docker build -t expense-ml-service .
+
   migrations:
     name: Supabase migrations (structure + PGlite tests)
     runs-on: ubuntu-latest

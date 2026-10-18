@@ -192,6 +192,14 @@ def _find_date(text: _Text, today: date) -> date | None:
     return None
 
 
+def amounts_in(text: str) -> list[float]:
+    """Every amount-like number written in `text`, e.g. to check an LLM didn't invent one."""
+    return [
+        float(match["number"].replace(",", "")) * SCALES.get(match["scale"] or "", 1.0)
+        for match in _AMOUNT.finditer(" ".join(text.split()).lower())
+    ]
+
+
 def _find_amount(text: _Text) -> float | None:
     candidates = []
     for match in _AMOUNT.finditer(text.working):

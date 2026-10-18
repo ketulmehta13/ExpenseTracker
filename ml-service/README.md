@@ -12,7 +12,8 @@ Design notes and interview-style explanations live in [`docs/ai-ml/`](../docs/ai
 | GET | `/v1/me` | bearer token | Echoes the signed-in user, for an end-to-end token check |
 | POST | `/v1/categorize` | bearer token | Suggests a category for `{title, amount?, type?}`: the user's history first, then the model |
 | GET | `/v1/insights?today=YYYY-MM-DD` | bearer token | Unusual spending, recurring payments and the month-end forecast |
-| POST | `/v1/parse` | bearer token | One line of text (`{text, today}`) to a transaction draft with a category suggestion |
+| POST | `/v1/parse` | bearer token | One line of text (`{text, today}`) to a transaction draft with a category suggestion; `llm_filled` lists fields the LLM fallback filled |
+| GET | `/v1/insights/summary?today=YYYY-MM-DD` | bearer token | The month in two or three sentences (`source`: `llm` or `template`) |
 | GET | `/docs` | none | Interactive OpenAPI docs |
 
 ## Run locally
@@ -59,6 +60,18 @@ python -m training.evaluate_quickadd --gate
 
 It scores every field on hand-labelled dev and test sentences against a naive baseline, and lists every test failure in [`reports/quickadd/report.md`](reports/quickadd/report.md). Details are in [docs/ai-ml/05-quickadd.md](../docs/ai-ml/05-quickadd.md).
 
+## Optional: an LLM
+
+Everything works without one. To let an LLM help with quick add and write the monthly summary, run a free local model with [Ollama](https://ollama.com):
+
+```bash
+ollama pull qwen2.5:3b
+# in .env: LLM_PROVIDER=ollama and LLM_MODEL=qwen2.5:3b
+python -m training.evaluate_llm      # measures it on the quick-add test set and simulated months
+```
+
+Any OpenAI-compatible endpoint works too (`LLM_PROVIDER=openai`, `LLM_BASE_URL`, `LLM_API_KEY`). How the output is checked is explained in [docs/ai-ml/06-llm.md](../docs/ai-ml/06-llm.md).
+
 ## Test and lint
 
 ```bash
@@ -87,3 +100,8 @@ The build trains the categorizer inside the image, behind the same evaluation ga
 | `AUTH_CACHE_SECONDS` | `60` | How long a validated token is trusted without re-checking |
 | `USER_CONTEXT_CACHE_SECONDS` | `60` | How long a user's history, categories and insights are reused between requests |
 | `MODEL_DIR` | `ml-service/models` | Where trained model files are read from |
+| `LLM_PROVIDER` | `none` | `none`, `ollama` or `openai` (any OpenAI-compatible endpoint) |
+| `LLM_MODEL` | `qwen2.5:3b` | Model name for the provider |
+| `LLM_BASE_URL` | Ollama's default | Endpoint URL (for `openai`, the `/v1` base) |
+| `LLM_API_KEY` | — | Only for hosted endpoints; never commit it |
+| `LLM_TIMEOUT_SECONDS` | `20` | After this, the rules or the template are used |

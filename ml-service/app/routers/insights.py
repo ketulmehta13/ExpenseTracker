@@ -1,4 +1,5 @@
 """GET /v1/insights: unusual spending, recurring payments and the month-end forecast.
+GET /v1/insights/summary: the same month in two or three sentences.
 
 Computed on request from the user's last ~13 months, read with their own token (RLS), and
 cached briefly. Nothing is stored, so there are no extra tables and no admin key.
@@ -8,14 +9,16 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from dataclasses import dataclass
 from datetime import date, timedelta
 from typing import Literal
 
 from fastapi import APIRouter, Depends, Query, Request
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.auth import CurrentUser, get_current_user
 from app.dates import resolve_today
+from app.llm.summary import month_facts, summarize
 from app.ml.anomaly import find_anomalies
 from app.ml.forecast import forecast_month
 from app.ml.recurring import find_recurring
@@ -147,14 +150,18 @@ def build_insights(transactions: list[dict], categories: list[dict], budget: flo
     )
 
 
-@router.get("/insights", response_model=InsightsResponse)
-async def insights(
-    request: Request,
-    today: date | None = Query(None, description="The user's local date (YYYY-MM-DD)"),
-    user: CurrentUser = Depends(get_current_user),
-    data: SupabaseData = Depends(get_data),
-) -> InsightsResponse:
-    today = resolve_today(today)
+@dataclass(frozen=True)
+class InsightInputs:
+    transactions: list[dict]
+    categories: list[dict]
+    budget: float | None
+    insights: InsightsResponse
+
+
+async def load_insights(
+    request: Request, user: CurrentUser, data: SupabaseData, today: date
+) -> InsightInputs:
+    """The user's last ~13 months and the insights computed from them, cached per user and day."""
     cache = request.app.state.insights_cache
     cache_key = f"{user.id}:{today.isoformat()}"
     cached = cache.get(cache_key)
@@ -181,5 +188,43 @@ async def insights(
         "insights unusual=%d recurring=%d forecast=%s",
         len(result.unusual), len(result.recurring), result.forecast is not None,
     )
-    cache.put(cache_key, result)
-    return result
+    inputs = InsightInputs(transactions, categories, budget or None, result)
+    cache.put(cache_key, inputs)
+    return inputs
+
+
+@router.get("/insights", response_model=InsightsResponse)
+async def insights(
+    request: Request,
+    today: date | None = Query(None, description="The user's local date (YYYY-MM-DD)"),
+    user: CurrentUser = Depends(get_current_user),
+    data: SupabaseData = Depends(get_data),
+) -> InsightsResponse:
+    return (await load_insights(request, user, data, resolve_today(today))).insights
+
+
+class SummaryResponse(BaseModel):
+    text: str
+    source: Literal["llm", "template"] = Field(description="llm only if every number in it was verified")
+
+
+@router.get("/insights/summary", response_model=SummaryResponse)
+async def insights_summary(
+    request: Request,
+    today: date | None = Query(None, description="The user's local date (YYYY-MM-DD)"),
+    user: CurrentUser = Depends(get_current_user),
+    data: SupabaseData = Depends(get_data),
+) -> SummaryResponse:
+    """Two or three sentences about the month: numbers from code, wording from an LLM if one is set."""
+    today = resolve_today(today)
+    inputs = await load_insights(request, user, data, today)
+    facts = month_facts(inputs.transactions, inputs.categories, inputs.insights, today)
+    # LLM calls take seconds, so a summary is reused for as long as its facts are unchanged
+    cache_key = f"{user.id}:{hash(facts)}"
+    cached = request.app.state.summary_cache.get(cache_key)
+    if cached is None:
+        timeout = request.app.state.settings.llm_timeout_seconds
+        text, source = await summarize(request.app.state.llm, facts, timeout)
+        cached = SummaryResponse(text=text, source=source)
+        request.app.state.summary_cache.put(cache_key, cached)
+    return cached

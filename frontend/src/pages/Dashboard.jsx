@@ -267,8 +267,8 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* ── Quick Add (AI natural language entry) ── */}
-            {AI_ENABLED && <QuickAdd onParsed={handleQuickAddParsed} />}
+            {/* ── Quick Add (natural-language entry: the ML service, or the LLM proxy) ── */}
+            {(ML_ENABLED || AI_ENABLED) && <QuickAdd onParsed={handleQuickAddParsed} />}
 
             {/* ── Date range selector ── */}
             <div className="flex items-center gap-2 flex-wrap">

@@ -1,0 +1,19 @@
+# Tool configuration only; dependencies are in requirements*.txt.
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+# pycodestyle, pyflakes, import order, pyupgrade, bugbear, simplify
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI's dependency-injection style (`x = Depends(...)` as a default) is intended
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Body"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+# Raised by fastapi.testclient itself, not by this code
+filterwarnings = ["ignore:Using `httpx` with `starlette.testclient` is deprecated"]

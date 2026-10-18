@@ -1,7 +1,8 @@
-# Direct dependencies only; pip resolves the transitive ones.
+# Runtime dependencies (pinned). Dev tools live in requirements-dev.txt.
 fastapi==0.143.2
 uvicorn==0.54.0
 pydantic==2.14.1
+httpx==0.28.1
 numpy==2.5.4
 pandas==3.0.6
 scikit-learn==1.9.1

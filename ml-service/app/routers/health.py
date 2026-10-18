@@ -13,6 +13,7 @@ async def health(request: Request) -> dict:
         "status": "ok",
         "version": __version__,
         "models": {"categorizer": categorizer.version if categorizer else None},
+        "llm": request.app.state.llm is not None,
     }
 
 

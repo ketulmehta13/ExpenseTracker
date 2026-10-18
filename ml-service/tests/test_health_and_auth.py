@@ -14,6 +14,7 @@ def test_health_needs_no_auth(client):
         "status": "ok",
         "version": __version__,
         "models": {"categorizer": "test-model"},
+        "llm": False,
     }
 
 

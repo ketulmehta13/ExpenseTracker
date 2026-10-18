@@ -9,11 +9,13 @@ from contextlib import asynccontextmanager
 import httpx
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from langchain_core.language_models import BaseChatModel
 
 from app import __version__
 from app.auth import TokenCache
 from app.cache import TTLCache
 from app.config import Settings
+from app.llm.provider import build_chat_model
 from app.ml.categorizer import CategorizerModel
 from app.routers import categorize, health, insights, parse
 
@@ -23,8 +25,10 @@ logger = logging.getLogger("ml_service")
 def create_app(
     settings: Settings | None = None,
     transport: httpx.AsyncBaseTransport | None = None,
+    llm: BaseChatModel | None = None,
 ) -> FastAPI:
-    """Build the app. Tests pass their own settings and an httpx transport that fakes Supabase."""
+    """Build the app. Tests pass their own settings, an httpx transport that fakes Supabase,
+    and optionally a fake chat model."""
     settings = settings or Settings.from_env()
 
     @asynccontextmanager
@@ -38,6 +42,8 @@ def create_app(
                 "Train one with: python -m training.train_categorizer",
                 settings.model_dir,
             )
+        app.state.llm = llm if llm is not None else build_chat_model(settings)
+        logger.info("LLM provider: %s", settings.llm_provider if app.state.llm is not None else "none")
         yield
         await app.state.http.aclose()
 
@@ -46,6 +52,7 @@ def create_app(
     app.state.token_cache = TokenCache(settings.auth_cache_seconds)
     app.state.user_context_cache = TTLCache(settings.user_context_cache_seconds)
     app.state.insights_cache = TTLCache(settings.user_context_cache_seconds)
+    app.state.summary_cache = TTLCache(600)  # LLM summaries are slow; reused while their facts are unchanged
 
     app.add_middleware(
         CORSMiddleware,

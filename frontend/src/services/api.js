@@ -111,6 +111,18 @@ export const getProfile = async (userId) => {
 };
 
 /**
+ * Record what happened to a category suggestion (accepted or overridden), for monitoring and,
+ * if the user opted in, retraining. Best-effort: a failure never affects saving.
+ */
+export const logSuggestionFeedback = async (row) => {
+    try {
+        await supabase.from('ml_feedback').insert({ kind: 'category_suggestion', ...row });
+    } catch {
+        // Feedback is optional; ignore network errors or a database without the table yet
+    }
+};
+
+/**
  * Update the current user's profile.
  */
 export const updateProfile = async (userId, updates) => {

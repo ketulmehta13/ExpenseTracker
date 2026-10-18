@@ -228,4 +228,56 @@ await check('deleting the auth user removes every row the user owns (delete-acco
   }
 });
 
+// ── ML feedback (re-runnable) ───────────────────────────────────────────────
+await db.exec(migration('20261018000000_ml_feedback.sql'));
+await db.exec(migration('20261018000000_ml_feedback.sql'));
+console.log('After the ML feedback migration:');
+const USER_D = '44444444-4444-4444-4444-444444444444';
+
+const feedback = (user, accepted, source = 'model') =>
+  asRole('authenticated', user, () => db.query(
+    `INSERT INTO ml_feedback (kind, title, amount, type, source, suggested_category, chosen_category, accepted)
+     VALUES ('category_suggestion', 'Swiggy', 450, 'EXPENSE', $1, 'Food', 'Food', $2) RETURNING user_id`,
+    [source, accepted],
+  ));
+
+await check('users record feedback as themselves, and opting in is off by default', async () => {
+  const { rows } = await feedback(USER_A, true);
+  assert.equal(rows[0].user_id, USER_A);
+  const profile = await db.query(`SELECT ai_training_opt_in FROM profiles WHERE id = $1`, [USER_A]);
+  assert.equal(profile.rows[0].ai_training_opt_in, false);
+});
+
+await check('feedback is append-only and private', async () => {
+  await addUser(USER_D, 'dave@example.com', 'dave');
+  await feedback(USER_D, false, 'history');
+  await asRole('authenticated', USER_A, async () => {
+    const { rows } = await db.query(`SELECT user_id FROM ml_feedback`);
+    assert.deepEqual([...new Set(rows.map((r) => r.user_id))], [USER_A]);
+    await assert.rejects(db.query(`UPDATE ml_feedback SET accepted = false`), /permission denied/);
+    await assert.rejects(db.query(`DELETE FROM ml_feedback`), /permission denied/);
+    await assert.rejects(
+      db.query(`INSERT INTO ml_feedback (user_id, kind, title, source, accepted)
+                VALUES ($1, 'category_suggestion', 'x', 'model', true)`, [USER_D]),
+      /row-level security/,
+    );
+  });
+});
+
+await check('the quality view shows each user only their own acceptance rate', async () => {
+  await feedback(USER_A, false);
+  const mine = await asRole('authenticated', USER_A, async () =>
+    (await db.query(`SELECT source, shown::int, acceptance_rate::float FROM ml_suggestion_quality`)).rows,
+  );
+  assert.deepEqual(mine, [{ source: 'model', shown: 2, acceptance_rate: 0.5 }]);
+  const all = await db.query(`SELECT sum(shown)::int AS n FROM ml_suggestion_quality`);
+  assert.equal(all.rows[0].n, 3);
+});
+
+await check('deleting the account deletes its feedback', async () => {
+  await db.query(`DELETE FROM auth.users WHERE id = $1`, [USER_D]);
+  const { rows } = await db.query(`SELECT count(*)::int AS n FROM ml_feedback WHERE user_id = $1`, [USER_D]);
+  assert.equal(rows[0].n, 0);
+});
+
 console.log(`\n${passed} checks passed`);

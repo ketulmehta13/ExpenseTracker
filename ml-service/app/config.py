@@ -36,6 +36,9 @@ class Settings:
     knowledge_dir: Path = DEFAULT_KNOWLEDGE_DIR
     embedding_model: str = "BAAI/bge-small-en-v1.5"
     embedding_cache_dir: Path = DEFAULT_MODEL_DIR / "embeddings"
+    # Monitoring: GET /metrics requires this bearer token when set
+    metrics_token: str = field(default="", repr=False)
+    log_level: str = "INFO"
 
     @classmethod
     def from_env(cls) -> Settings:
@@ -56,4 +59,6 @@ class Settings:
             embedding_cache_dir=Path(
                 os.environ.get("EMBEDDING_CACHE_DIR", str(DEFAULT_MODEL_DIR / "embeddings"))
             ),
+            metrics_token=os.environ.get("METRICS_TOKEN", ""),
+            log_level=os.environ.get("LOG_LEVEL", "INFO"),
         )

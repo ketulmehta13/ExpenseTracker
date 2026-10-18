@@ -30,6 +30,7 @@ from pathlib import Path
 from app.config import DEFAULT_MODEL_DIR
 from app.ml.categorizer import CategorizerModel
 from app.nlp.quickadd import ParsedEntry, parse_quick_add
+from training.runs import record_run
 
 TODAY = date(2026, 10, 18)
 DATA_DIR = Path(__file__).resolve().parent / "data"
@@ -169,6 +170,8 @@ def main(argv: list[str] | None = None) -> int:
     (args.report_dir / "metrics.json").write_text(json.dumps(metrics, indent=2) + "\n", encoding="utf-8")
     (args.report_dir / "report.md").write_text(report(metrics), encoding="utf-8")
     print(f"reports: {args.report_dir}")
+    headline = {key: test[key] for key in ("amount", "date", "type", "title_f1", "all_fields")}
+    record_run("quickadd", args.report_dir, {}, headline)
     failed = [name for name, ok in metrics["gate"].items() if not ok]
     for name in failed:
         print(f"FAILED evaluation gate: {name}")

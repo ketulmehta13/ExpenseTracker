@@ -56,6 +56,7 @@ async def help_answer(body: HelpRequest, request: Request) -> HelpResponse:
         index, body.question, request.app.state.llm, request.app.state.settings.llm_timeout_seconds
     )
     logger.info("help source=%s citations=%d", answer.source, len(answer.citations))
+    request.app.state.metrics.event("help", answer.source)
     return HelpResponse(
         answer=answer.text,
         source=answer.source,

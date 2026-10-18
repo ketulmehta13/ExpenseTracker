@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X, TrendingUp, TrendingDown, Loader2, Plus, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
-import { createTransaction, updateTransaction, getCategories, createCategory } from '../services/api';
+import { createTransaction, updateTransaction, getCategories, createCategory, logSuggestionFeedback } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { todayISODate } from '../lib/dates';
 import { suggestCategory } from '../services/aiService';
@@ -25,6 +25,8 @@ async function fetchCategorySuggestion({ title, amount, type }, categories, sign
             matchedId: suggestion.category_id ?? null,
             isNew: suggestion.category_id == null,
             source: suggestion.source,
+            label: suggestion.label,
+            modelVersion: suggestion.model_version,
         };
     }
     const result = await suggestCategory(title, categories.map((c) => c.name));
@@ -75,6 +77,8 @@ const TransactionModal = ({
     // Category suggestion state: { category, confidence, isNew, matchedId, source }
     const [aiSuggestion, setAiSuggestion] = useState(null);
     const [aiLoading, setAiLoading] = useState(false);
+    // The last ML suggestion shown, kept after it's applied or dismissed, to record what the user saved
+    const shownSuggestionRef = useRef(null);
 
     const [form, setForm] = useState({
         type: defaultType,
@@ -125,6 +129,7 @@ const TransactionModal = ({
             }
             setErrors({});
             setAiSuggestion(null);
+            shownSuggestionRef.current = null;
             loadCategories(transaction ? null : prefill?.category_name_hint);
         }
     }, [isOpen, transaction, defaultType, prefill]);
@@ -190,6 +195,9 @@ const TransactionModal = ({
             if (!controller.signal.aborted) {
                 setAiSuggestion(suggestion);
                 setAiLoading(false);
+                if (suggestion && ['history', 'model'].includes(suggestion.source)) {
+                    shownSuggestionRef.current = suggestion;
+                }
             }
         }, 500);
         return () => {
@@ -217,6 +225,26 @@ const TransactionModal = ({
             toast.error('Could not create category.');
         }
         setAiSuggestion(null);
+    };
+
+    /** Was the shown suggestion accepted or overridden? Compared by name, so a suggestion
+     *  the user had to create as a new category still counts as accepted. */
+    const recordSuggestionOutcome = (payload) => {
+        const shown = shownSuggestionRef.current;
+        if (!shown) return;
+        const chosen = categories.find((c) => String(c.id) === String(payload.category_id));
+        logSuggestionFeedback({
+            title: payload.title,
+            amount: payload.amount,
+            type: payload.type,
+            source: shown.source,
+            suggested_category: shown.category,
+            suggested_label: shown.label ?? null,
+            confidence: shown.confidence,
+            chosen_category: chosen?.name ?? null,
+            accepted: Boolean(chosen) && chosen.name.toLowerCase() === shown.category.toLowerCase(),
+            model_version: shown.modelVersion ?? null,
+        });
     };
 
     const validate = () => {
@@ -254,6 +282,7 @@ const TransactionModal = ({
                 toast.success('Transaction updated successfully!');
             } else {
                 await createTransaction(user.id, payload);
+                recordSuggestionOutcome(payload);
                 toast.success(
                     form.type === 'INCOME'
                         ? '💰 Income added!'

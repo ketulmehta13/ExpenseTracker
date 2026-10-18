@@ -27,6 +27,7 @@ from app.config import Settings
 from app.rag.embeddings import load_embedder
 from app.rag.knowledge import fixed_size_chunks, load_chunks
 from app.rag.retriever import DECLINE_BELOW, HelpIndex, ranked_articles
+from training.runs import record_run
 
 DATA_DIR = Path(__file__).resolve().parent / "data"
 DEFAULT_REPORT_DIR = Path(__file__).resolve().parent.parent / "reports" / "rag"
@@ -170,6 +171,9 @@ def main(argv: list[str] | None = None) -> int:
     (args.report_dir / "metrics.json").write_text(json.dumps(metrics, indent=2) + "\n", encoding="utf-8")
     (args.report_dir / "report.md").write_text(report(metrics), encoding="utf-8")
     print(f"reports: {args.report_dir}")
+    params = {"embedding_model": settings.embedding_model, "decline_below": DECLINE_BELOW}
+    headline = {key: test[key] for key in ("hit@1", "hit@3", "mrr@5", "decline_accuracy")}
+    record_run("rag", args.report_dir, params, headline)
     failed = [name for name, ok in metrics["gate"].items() if not ok]
     for name in failed:
         print(f"FAILED evaluation gate: {name}")

@@ -62,6 +62,7 @@ async def parse(
     if parsed.title:
         result = await suggest_category(request, user, data, parsed.title, parsed.amount, parsed.type)
         suggestion, model_version = result.suggestion, result.model_version
+    request.app.state.metrics.event("parse", "rules+llm" if llm_filled else "rules")
     logger.info(
         "parse found=%s llm_filled=%s suggestion=%s",
         parsed.found, llm_filled, suggestion.source if suggestion else None,

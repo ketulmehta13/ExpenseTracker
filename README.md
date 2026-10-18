@@ -18,6 +18,18 @@ A modern, production-grade expense tracker and personal finance management syste
 
 ---
 
+## 🤖 AI/ML
+
+A separate Python service ([`ml-service/`](ml-service/README.md)) adds these features, all on free, self-hosted models:
+- category suggestions;
+- spending insights (forecast, subscriptions, unusual payments);
+- natural-language quick add;
+- a monthly summary;
+- help-center search (RAG);
+- an assistant built with LangGraph.
+
+Each feature is evaluated, and CI gates on the results. How each one works, how it was measured and the trade-offs are documented in [`docs/ai-ml/`](docs/ai-ml/README.md).
+
 ## 🚀 Quickstart & Local Setup
 
 ### 1. Prerequisites

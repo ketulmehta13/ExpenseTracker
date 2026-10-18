@@ -28,6 +28,8 @@ ml-service/data/
 ml-service/models/*
 !ml-service/models/.gitkeep
 !ml-service/models/model_card.md
+# Local experiment logs (training/runs.py); CI keeps its own with the uploaded reports
+ml-service/reports/*/runs.jsonl
 
 # Editors / OS
 .vscode/*

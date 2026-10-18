@@ -92,6 +92,7 @@ async def suggest_category(
     if match and match.confidence >= HISTORY_MIN_CONFIDENCE and str(match.category_id) in categories_by_id:
         category = categories_by_id[str(match.category_id)]
         logger.info("categorize source=history confidence=%.2f", match.confidence)
+        request.app.state.metrics.event("categorize", "history")
         return CategorizeResponse(
             suggestion=Suggestion(
                 category_id=category["id"], category_name=category["name"], label=None,
@@ -108,6 +109,7 @@ async def suggest_category(
             logger.info(
                 "categorize source=model label=%s confidence=%.2f", prediction.label, prediction.confidence
             )
+            request.app.state.metrics.event("categorize", "model")
             return CategorizeResponse(
                 suggestion=Suggestion(
                     category_id=category["id"] if category else None,
@@ -120,6 +122,7 @@ async def suggest_category(
             )
 
     logger.info("categorize source=none")
+    request.app.state.metrics.event("categorize", "none")
     return CategorizeResponse(suggestion=None, model_version=model_version)
 
 

@@ -1,6 +1,26 @@
 import React, { useState, useRef } from 'react';
 import { Sparkles, Loader2, X, Zap } from 'lucide-react';
 import { parseTransaction } from '../services/aiService';
+import { parseQuickAdd } from '../services/mlService';
+import { ML_ENABLED } from '../lib/features';
+import { todayISODate } from '../lib/dates';
+
+/**
+ * Parse with the ML service when it's configured (rules + the user's own categories),
+ * otherwise with the LLM proxy. Both resolve to { type, amount, description, category, date }.
+ */
+async function parseText(text) {
+    if (!ML_ENABLED) return parseTransaction(text);
+    const draft = await parseQuickAdd(text, todayISODate());
+    if (!draft) return null;
+    return {
+        type: draft.type,
+        amount: draft.amount,
+        description: draft.title,
+        category: draft.suggestion?.category_name ?? '',
+        date: draft.date,
+    };
+}
 
 /**
  * QuickAdd — natural language transaction entry bar.
@@ -32,10 +52,10 @@ const QuickAdd = ({ onParsed }) => {
         setLoading(true);
 
         try {
-            const result = await parseTransaction(trimmed);
+            const result = await parseText(trimmed);
 
             if (!result) {
-                setError("AI isn't available right now — please add the transaction manually.");
+                setError("Quick add isn't available right now. Please add the transaction manually.");
                 return;
             }
 
@@ -78,10 +98,12 @@ const QuickAdd = ({ onParsed }) => {
                     <p className="text-sm font-semibold text-foreground leading-none">Quick Add</p>
                     <p className="text-[10px] text-muted-foreground mt-0.5">Describe a transaction in plain English</p>
                 </div>
-                <div className="ml-auto flex items-center gap-1 text-[10px] text-muted-foreground/60 font-medium">
-                    <Sparkles size={9} className="text-primary/60" />
-                    Powered by AI
-                </div>
+                {!ML_ENABLED && (
+                    <div className="ml-auto flex items-center gap-1 text-[10px] text-muted-foreground/60 font-medium">
+                        <Sparkles size={9} className="text-primary/60" />
+                        Powered by AI
+                    </div>
+                )}
             </div>
 
             {/* Input area */}

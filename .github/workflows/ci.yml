@@ -79,6 +79,9 @@ jobs:
       - name: Evaluate insight detectors (evaluation gate)
         run: python -m training.evaluate_insights --gate
 
+      - name: Evaluate quick-add parser (evaluation gate)
+        run: python -m training.evaluate_quickadd --gate
+
       - name: Upload model reports
         if: always()
         uses: actions/upload-artifact@v4

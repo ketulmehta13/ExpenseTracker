@@ -66,6 +66,21 @@ export async function suggestCategoryML({ title, amount, type }, signal) {
 }
 
 /**
+ * Turn one line ("swiggy 450 yesterday") into a transaction draft, with a category suggestion.
+ * @param {string} text
+ * @param {string} today - the user's local date, YYYY-MM-DD, for words like "yesterday"
+ * @param {AbortSignal} [signal]
+ * @returns {Promise<{ title: string, amount: number|null, date: string, type: 'INCOME'|'EXPENSE',
+ *                     found: { amount: boolean, date: boolean, type: boolean },
+ *                     suggestion: object|null } | null>}
+ */
+export async function parseQuickAdd(text, today, signal) {
+    const clean = text?.trim() ?? '';
+    if (!clean) return null;
+    return request('POST', '/v1/parse', { body: { text: clean.slice(0, 300), today }, signal, timeoutMs: 4000 });
+}
+
+/**
  * Spending insights: unusual payments, recurring payments and the month-end forecast.
  * @param {string} today - the user's local date, YYYY-MM-DD
  * @param {AbortSignal} [signal]

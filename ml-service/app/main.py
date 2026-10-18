@@ -15,7 +15,7 @@ from app.auth import TokenCache
 from app.cache import TTLCache
 from app.config import Settings
 from app.ml.categorizer import CategorizerModel
-from app.routers import categorize, health, insights
+from app.routers import categorize, health, insights, parse
 
 logger = logging.getLogger("ml_service")
 
@@ -67,6 +67,7 @@ def create_app(
     app.include_router(health.router)
     app.include_router(categorize.router)
     app.include_router(insights.router)
+    app.include_router(parse.router)
     return app
 
 

@@ -1,0 +1,129 @@
+{
+  "generated_at": "2026-10-18T12:32:52+00:00",
+  "dev": {
+    "naive": {
+      "amount": 0.8586,
+      "date": 0.6263,
+      "type": 0.8586,
+      "title_exact": 0.3434,
+      "title_f1": 0.7572,
+      "all_fields": 0.303,
+      "category": 0.8352,
+      "rows": 99
+    },
+    "rules": {
+      "amount": 1.0,
+      "date": 1.0,
+      "type": 1.0,
+      "title_exact": 1.0,
+      "title_f1": 1.0,
+      "all_fields": 1.0,
+      "category": 0.9121,
+      "rows": 99
+    }
+  },
+  "test": {
+    "naive": {
+      "amount": 0.6375,
+      "date": 0.6,
+      "type": 0.8625,
+      "title_exact": 0.225,
+      "title_f1": 0.6966,
+      "all_fields": 0.2,
+      "category": 0.8514,
+      "rows": 80
+    },
+    "rules": {
+      "amount": 1.0,
+      "date": 0.975,
+      "type": 0.9875,
+      "title_exact": 0.9625,
+      "title_f1": 0.9821,
+      "all_fields": 0.95,
+      "category": 0.9189,
+      "rows": 80
+    }
+  },
+  "test_failures": [
+    {
+      "text": "zomato 610 kal raat",
+      "wrong": [
+        "title_exact"
+      ],
+      "got": {
+        "title": "Zomato raat",
+        "amount": 610.0,
+        "date": "2026-10-17",
+        "type": "EXPENSE"
+      },
+      "want": {
+        "title": "Zomato",
+        "amount": 610,
+        "date": "2026-10-17",
+        "type": "EXPENSE"
+      }
+    },
+    {
+      "text": "ola 250 3 days back",
+      "wrong": [
+        "date",
+        "title_exact"
+      ],
+      "got": {
+        "title": "Ola 3 days back",
+        "amount": 250.0,
+        "date": "2026-10-18",
+        "type": "EXPENSE"
+      },
+      "want": {
+        "title": "Ola",
+        "amount": 250,
+        "date": "2026-10-15",
+        "type": "EXPENSE"
+      }
+    },
+    {
+      "text": "cab 300 last night",
+      "wrong": [
+        "date",
+        "title_exact"
+      ],
+      "got": {
+        "title": "Cab last night",
+        "amount": 300.0,
+        "date": "2026-10-18",
+        "type": "EXPENSE"
+      },
+      "want": {
+        "title": "Cab",
+        "amount": 300,
+        "date": "2026-10-17",
+        "type": "EXPENSE"
+      }
+    },
+    {
+      "text": "got paid 40000 freelance",
+      "wrong": [
+        "type"
+      ],
+      "got": {
+        "title": "Freelance",
+        "amount": 40000.0,
+        "date": "2026-10-18",
+        "type": "EXPENSE"
+      },
+      "want": {
+        "title": "Freelance",
+        "amount": 40000,
+        "date": "2026-10-18",
+        "type": "INCOME"
+      }
+    }
+  ],
+  "gate": {
+    "amount >= 0.95 (got 1.000)": true,
+    "date >= 0.9 (got 0.975)": true,
+    "type >= 0.9 (got 0.988)": true,
+    "title_f1 >= 0.85 (got 0.982)": true
+  }
+}

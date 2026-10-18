@@ -1,0 +1,99 @@
+{"text": "swiggy 450", "title": "Swiggy", "amount": 450, "date": "2026-10-18", "type": "EXPENSE", "label": "food"}
+{"text": "swiggy 450 yesterday", "title": "Swiggy", "amount": 450, "date": "2026-10-17", "type": "EXPENSE", "label": "food"}
+{"text": "paid 1200 for groceries at dmart", "title": "Groceries at dmart", "amount": 1200, "date": "2026-10-18", "type": "EXPENSE", "label": "food"}
+{"text": "uber 340 to office", "title": "Uber to office", "amount": 340, "date": "2026-10-18", "type": "EXPENSE", "label": "travel"}
+{"text": "₹2,499 amazon headphones", "title": "Amazon headphones", "amount": 2499, "date": "2026-10-18", "type": "EXPENSE", "label": "shopping"}
+{"text": "received salary 85000", "title": "Salary", "amount": 85000, "date": "2026-10-18", "type": "INCOME", "label": "salary"}
+{"text": "salary credited 92k", "title": "Salary", "amount": 92000, "date": "2026-10-18", "type": "INCOME", "label": "salary"}
+{"text": "netflix 649", "title": "Netflix", "amount": 649, "date": "2026-10-18", "type": "EXPENSE", "label": "entertainment"}
+{"text": "electricity bill 1850 on 5th oct", "title": "Electricity bill", "amount": 1850, "date": "2026-10-05", "type": "EXPENSE", "label": "utilities"}
+{"text": "petrol 500 rs", "title": "Petrol", "amount": 500, "date": "2026-10-18", "type": "EXPENSE", "label": "travel"}
+{"text": "rs 60 chai", "title": "Chai", "amount": 60, "date": "2026-10-18", "type": "EXPENSE", "label": "food"}
+{"text": "movie tickets 600 saturday", "title": "Movie tickets", "amount": 600, "date": "2026-10-17", "type": "EXPENSE", "label": "entertainment"}
+{"text": "rent 18000 1st oct", "title": "Rent", "amount": 18000, "date": "2026-10-01", "type": "EXPENSE", "label": "rent"}
+{"text": "got 2000 from dad", "title": "Dad", "amount": 2000, "date": "2026-10-18", "type": "INCOME", "label": null}
+{"text": "paid 500 to rahul", "title": "Rahul", "amount": 500, "date": "2026-10-18", "type": "EXPENSE", "label": "other"}
+{"text": "zomato dinner 820 last friday", "title": "Zomato dinner", "amount": 820, "date": "2026-10-16", "type": "EXPENSE", "label": "food"}
+{"text": "ola cab 230 2 days ago", "title": "Ola cab", "amount": 230, "date": "2026-10-16", "type": "EXPENSE", "label": "travel"}
+{"text": "jio recharge 299", "title": "Jio recharge", "amount": 299, "date": "2026-10-18", "type": "EXPENSE", "label": "utilities"}
+{"text": "gym fees 2500 monday", "title": "Gym fees", "amount": 2500, "date": "2026-10-12", "type": "EXPENSE", "label": "health"}
+{"text": "medicines 340 apollo", "title": "Medicines apollo", "amount": 340, "date": "2026-10-18", "type": "EXPENSE", "label": "health"}
+{"text": "udemy course 449", "title": "Udemy course", "amount": 449, "date": "2026-10-18", "type": "EXPENSE", "label": "education"}
+{"text": "spent 1.5k on shopping", "title": "Shopping", "amount": 1500, "date": "2026-10-18", "type": "EXPENSE", "label": "shopping"}
+{"text": "bigbasket order 2,340 yesterday", "title": "Bigbasket order", "amount": 2340, "date": "2026-10-17", "type": "EXPENSE", "label": "food"}
+{"text": "cashback 150 from paytm", "title": "Cashback from paytm", "amount": 150, "date": "2026-10-18", "type": "INCOME", "label": null}
+{"text": "refund 499 amazon", "title": "Refund amazon", "amount": 499, "date": "2026-10-18", "type": "INCOME", "label": null}
+{"text": "dinner with friends 2400 sat", "title": "Dinner with friends", "amount": 2400, "date": "2026-10-17", "type": "EXPENSE", "label": "food"}
+{"text": "auto 80", "title": "Auto", "amount": 80, "date": "2026-10-18", "type": "EXPENSE", "label": "travel"}
+{"text": "metro card recharge 500", "title": "Metro card recharge", "amount": 500, "date": "2026-10-18", "type": "EXPENSE", "label": "travel"}
+{"text": "bescom bill 1340 12/10", "title": "Bescom bill", "amount": 1340, "date": "2026-10-12", "type": "EXPENSE", "label": "utilities"}
+{"text": "maid salary 3000", "title": "Maid salary", "amount": 3000, "date": "2026-10-18", "type": "EXPENSE", "label": "other"}
+{"text": "freelance payment received 15000", "title": "Freelance payment", "amount": 15000, "date": "2026-10-18", "type": "INCOME", "label": "salary"}
+{"text": "interest credited 342", "title": "Interest", "amount": 342, "date": "2026-10-18", "type": "INCOME", "label": null}
+{"text": "coffee 180 starbucks", "title": "Coffee starbucks", "amount": 180, "date": "2026-10-18", "type": "EXPENSE", "label": "food"}
+{"text": "flight to goa 5600 15 sept", "title": "Flight to goa", "amount": 5600, "date": "2026-09-15", "type": "EXPENSE", "label": "travel"}
+{"text": "hotel booking 4200 on 3rd", "title": "Hotel booking", "amount": 4200, "date": "2026-10-03", "type": "EXPENSE", "label": "travel"}
+{"text": "pharmacy 260 day before yesterday", "title": "Pharmacy", "amount": 260, "date": "2026-10-16", "type": "EXPENSE", "label": "health"}
+{"text": "books 899", "title": "Books", "amount": 899, "date": "2026-10-18", "type": "EXPENSE", "label": "education"}
+{"text": "electricity 2100 sept 30", "title": "Electricity", "amount": 2100, "date": "2026-09-30", "type": "EXPENSE", "label": "utilities"}
+{"text": "parking 40", "title": "Parking", "amount": 40, "date": "2026-10-18", "type": "EXPENSE", "label": "travel"}
+{"text": "birthday gift for sister 1500", "title": "Birthday gift for sister", "amount": 1500, "date": "2026-10-18", "type": "EXPENSE", "label": "other"}
+{"text": "donation 501 temple", "title": "Donation temple", "amount": 501, "date": "2026-10-18", "type": "EXPENSE", "label": "other"}
+{"text": "atm withdrawal 5000", "title": "Atm withdrawal", "amount": 5000, "date": "2026-10-18", "type": "EXPENSE", "label": "other"}
+{"text": "credit card bill 12000", "title": "Credit card bill", "amount": 12000, "date": "2026-10-18", "type": "EXPENSE", "label": "other"}
+{"text": "bonus 25000 received", "title": "Bonus", "amount": 25000, "date": "2026-10-18", "type": "INCOME", "label": "salary"}
+{"text": "stipend 20000", "title": "Stipend", "amount": 20000, "date": "2026-10-18", "type": "INCOME", "label": "salary"}
+{"text": "sold old phone 8000", "title": "Old phone", "amount": 8000, "date": "2026-10-18", "type": "INCOME", "label": null}
+{"text": "pizza 450 kal", "title": "Pizza", "amount": 450, "date": "2026-10-17", "type": "EXPENSE", "label": "food"}
+{"text": "chai samosa 60 aaj", "title": "Chai samosa", "amount": 60, "date": "2026-10-18", "type": "EXPENSE", "label": "food"}
+{"text": "groceries 1,250.50", "title": "Groceries", "amount": 1250.5, "date": "2026-10-18", "type": "EXPENSE", "label": "food"}
+{"text": "uber 1.2k", "title": "Uber", "amount": 1200, "date": "2026-10-18", "type": "EXPENSE", "label": "travel"}
+{"text": "amazon 3k headphones", "title": "Amazon headphones", "amount": 3000, "date": "2026-10-18", "type": "EXPENSE", "label": "shopping"}
+{"text": "rent 15k", "title": "Rent", "amount": 15000, "date": "2026-10-18", "type": "EXPENSE", "label": "rent"}
+{"text": "laptop 75,000 croma", "title": "Laptop croma", "amount": 75000, "date": "2026-10-18", "type": "EXPENSE", "label": "shopping"}
+{"text": "2 coffees 300", "title": "2 coffees", "amount": 300, "date": "2026-10-18", "type": "EXPENSE", "label": "food"}
+{"text": "iphone 15 79900", "title": "Iphone 15", "amount": 79900, "date": "2026-10-18", "type": "EXPENSE", "label": "shopping"}
+{"text": "petrol 2000 3 days ago", "title": "Petrol", "amount": 2000, "date": "2026-10-15", "type": "EXPENSE", "label": "travel"}
+{"text": "doctor 800 tuesday", "title": "Doctor", "amount": 800, "date": "2026-10-13", "type": "EXPENSE", "label": "health"}
+{"text": "school fees 12000 on 1st", "title": "School fees", "amount": 12000, "date": "2026-10-01", "type": "EXPENSE", "label": "education"}
+{"text": "paid electricity bill of 1600", "title": "Electricity bill", "amount": 1600, "date": "2026-10-18", "type": "EXPENSE", "label": "utilities"}
+{"text": "spent 300 on snacks yesterday", "title": "Snacks", "amount": 300, "date": "2026-10-17", "type": "EXPENSE", "label": "food"}
+{"text": "bought shoes for 2999", "title": "Shoes", "amount": 2999, "date": "2026-10-18", "type": "EXPENSE", "label": "shopping"}
+{"text": "lunch 250", "title": "Lunch", "amount": 250, "date": "2026-10-18", "type": "EXPENSE", "label": "food"}
+{"text": "rapido 65 to station", "title": "Rapido to station", "amount": 65, "date": "2026-10-18", "type": "EXPENSE", "label": "travel"}
+{"text": "water bill 450 on 10/10", "title": "Water bill", "amount": 450, "date": "2026-10-10", "type": "EXPENSE", "label": "utilities"}
+{"text": "broadband 999 1st", "title": "Broadband", "amount": 999, "date": "2026-10-01", "type": "EXPENSE", "label": "utilities"}
+{"text": "movie 500 last sunday", "title": "Movie", "amount": 500, "date": "2026-10-11", "type": "EXPENSE", "label": "entertainment"}
+{"text": "gas cylinder 903", "title": "Gas cylinder", "amount": 903, "date": "2026-10-18", "type": "EXPENSE", "label": "utilities"}
+{"text": "train ticket 890 mumbai", "title": "Train ticket mumbai", "amount": 890, "date": "2026-10-18", "type": "EXPENSE", "label": "travel"}
+{"text": "consultation fee 1000 at apollo", "title": "Consultation fee at apollo", "amount": 1000, "date": "2026-10-18", "type": "EXPENSE", "label": "health"}
+{"text": "tuition 3000", "title": "Tuition", "amount": 3000, "date": "2026-10-18", "type": "EXPENSE", "label": "education"}
+{"text": "pg rent 9500", "title": "Pg rent", "amount": 9500, "date": "2026-10-18", "type": "EXPENSE", "label": "rent"}
+{"text": "maintenance 2500 society", "title": "Maintenance society", "amount": 2500, "date": "2026-10-18", "type": "EXPENSE", "label": "rent"}
+{"text": "salary 60000 1st oct", "title": "Salary", "amount": 60000, "date": "2026-10-01", "type": "INCOME", "label": "salary"}
+{"text": "received 1500 from rahul for dinner", "title": "Rahul for dinner", "amount": 1500, "date": "2026-10-18", "type": "INCOME", "label": null}
+{"text": "ola 180 yday", "title": "Ola", "amount": 180, "date": "2026-10-17", "type": "EXPENSE", "label": "travel"}
+{"text": "medplus 420 wed", "title": "Medplus", "amount": 420, "date": "2026-10-14", "type": "EXPENSE", "label": "health"}
+{"text": "zepto 760 thursday", "title": "Zepto", "amount": 760, "date": "2026-10-15", "type": "EXPENSE", "label": "food"}
+{"text": "myntra order 1,799 on 2nd oct", "title": "Myntra order", "amount": 1799, "date": "2026-10-02", "type": "EXPENSE", "label": "shopping"}
+{"text": "spotify 119", "title": "Spotify", "amount": 119, "date": "2026-10-18", "type": "EXPENSE", "label": "entertainment"}
+{"text": "concert tickets 3500 25 dec", "title": "Concert tickets", "amount": 3500, "date": "2025-12-25", "type": "EXPENSE", "label": "entertainment"}
+{"text": "insurance premium 14500 on 5 sep", "title": "Insurance premium", "amount": 14500, "date": "2026-09-05", "type": "EXPENSE", "label": "health"}
+{"text": "dentist 1500 05/10/2026", "title": "Dentist", "amount": 1500, "date": "2026-10-05", "type": "EXPENSE", "label": "health"}
+{"text": "coursera 3999 2026-10-01", "title": "Coursera", "amount": 3999, "date": "2026-10-01", "type": "EXPENSE", "label": "education"}
+{"text": "fuel 1500 rs yesterday", "title": "Fuel", "amount": 1500, "date": "2026-10-17", "type": "EXPENSE", "label": "travel"}
+{"text": "INR 450 swiggy", "title": "Swiggy", "amount": 450, "date": "2026-10-18", "type": "EXPENSE", "label": "food"}
+{"text": "450/- swiggy", "title": "Swiggy", "amount": 450, "date": "2026-10-18", "type": "EXPENSE", "label": "food"}
+{"text": "dmart 3,450 on saturday", "title": "Dmart", "amount": 3450, "date": "2026-10-17", "type": "EXPENSE", "label": "food"}
+{"text": "cab to airport 780 last thursday", "title": "Cab to airport", "amount": 780, "date": "2026-10-15", "type": "EXPENSE", "label": "travel"}
+{"text": "veggies 140", "title": "Veggies", "amount": 140, "date": "2026-10-18", "type": "EXPENSE", "label": "food"}
+{"text": "milk 64 today", "title": "Milk", "amount": 64, "date": "2026-10-18", "type": "EXPENSE", "label": "food"}
+{"text": "haircut 300 last week", "title": "Haircut", "amount": 300, "date": "2026-10-11", "type": "EXPENSE", "label": null}
+{"text": "car service 3500 a week ago", "title": "Car service", "amount": 3500, "date": "2026-10-11", "type": "EXPENSE", "label": "travel"}
+{"text": "uber eats 380", "title": "Uber eats", "amount": 380, "date": "2026-10-18", "type": "EXPENSE", "label": "food"}
+{"text": "amazon prime 1499", "title": "Amazon prime", "amount": 1499, "date": "2026-10-18", "type": "EXPENSE", "label": "entertainment"}
+{"text": "lent 2000 to amit", "title": "Lent to amit", "amount": 2000, "date": "2026-10-18", "type": "EXPENSE", "label": "other"}
+{"text": "dividend 1200", "title": "Dividend", "amount": 1200, "date": "2026-10-18", "type": "INCOME", "label": null}
+{"text": "freelance 15k received yesterday", "title": "Freelance", "amount": 15000, "date": "2026-10-17", "type": "INCOME", "label": "salary"}
+{"text": "paid rent 20000 for october", "title": "Rent for october", "amount": 20000, "date": "2026-10-18", "type": "EXPENSE", "label": "rent"}
+{"text": "1500 groceries", "title": "Groceries", "amount": 1500, "date": "2026-10-18", "type": "EXPENSE", "label": "food"}

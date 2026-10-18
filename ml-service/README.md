@@ -12,6 +12,7 @@ Design notes and interview-style explanations live in [`docs/ai-ml/`](../docs/ai
 | GET | `/v1/me` | bearer token | Echoes the signed-in user, for an end-to-end token check |
 | POST | `/v1/categorize` | bearer token | Suggests a category for `{title, amount?, type?}`: the user's history first, then the model |
 | GET | `/v1/insights?today=YYYY-MM-DD` | bearer token | Unusual spending, recurring payments and the month-end forecast |
+| POST | `/v1/parse` | bearer token | One line of text (`{text, today}`) to a transaction draft with a category suggestion |
 | GET | `/docs` | none | Interactive OpenAPI docs |
 
 ## Run locally
@@ -49,6 +50,14 @@ python -m training.evaluate_insights --gate   # what CI runs; about 2 minutes
 ```
 
 It simulates two groups of users with known answers, tunes every threshold on one and scores on the other, then writes [`reports/insights/report.md`](reports/insights/report.md). The methods are explained in [docs/ai-ml/04-insights.md](../docs/ai-ml/04-insights.md).
+
+## Evaluate the quick-add parser
+
+```bash
+python -m training.evaluate_quickadd --gate
+```
+
+It scores every field on hand-labelled dev and test sentences against a naive baseline, and lists every test failure in [`reports/quickadd/report.md`](reports/quickadd/report.md). Details are in [docs/ai-ml/05-quickadd.md](../docs/ai-ml/05-quickadd.md).
 
 ## Test and lint
 

@@ -15,7 +15,7 @@ Every AI/ML feature in this project is documented here: what it does, the techni
 React (Vercel) ──Supabase JWT──► ml-service (FastAPI, Python)
                                    ├─ /v1/categorize   user history match → TF-IDF + logistic regression
                                    ├─ /v1/insights     unusual spending · recurring payments · month-end forecast
-                                   ├─ /v1/parse        rule-based extraction → LLM fallback (LangChain)
+                                   ├─ /v1/parse        rule-based slot filling (+ LLM fallback in step 6)
                                    ├─ /v1/assistant    LangGraph agent: tools · RAG · human-in-the-loop
                                    └─ reads data through Supabase REST with the user's JWT (RLS applies)
 ```
@@ -28,8 +28,8 @@ React (Vercel) ──Supabase JWT──► ml-service (FastAPI, Python)
 | 2 | [ML service foundation](02-ml-service.md) | FastAPI, JWT verification, config, testing, Docker | done |
 | 3 | [Transaction categorizer](03-categorizer.md) | Text classification, TF-IDF, logistic regression, leakage-free evaluation, macro-F1, thresholds, calibration | done |
 | 4 | [Spending insights](04-insights.md) | Evaluation by simulation, robust statistics vs percentile rules, Isolation Forest baseline, periodicity detection, forecasting with backtests, conformal calibration | done |
-| 5 | Natural-language quick-add | Rule-based extraction, slot filling, entity-level evaluation | next |
-| 6 | LLM features | LangChain, structured output, provider abstraction, grounding and number verification | planned |
+| 5 | [Natural-language quick add](05-quickadd.md) | Slot filling, rule-based extraction, entity-level evaluation, dev/test discipline | done |
+| 6 | LLM features | LangChain, structured output, provider abstraction, grounding and number verification | next |
 | 7 | RAG | Chunking, embeddings, vector search, retrieval with citations | planned |
 | 8 | Finance assistant agent | LangGraph state machines, tool calling, routing, human-in-the-loop, memory | planned |
 | 9 | MLOps | Experiment tracking, evaluation gates in CI, monitoring, retraining | planned |

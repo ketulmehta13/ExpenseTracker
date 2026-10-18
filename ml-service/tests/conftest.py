@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import httpx
 import pytest
 from fastapi.testclient import TestClient
 
 from app.config import Settings
 from app.main import create_app
+from app.ml.categorizer import CategorizerModel, build_pipeline, to_frame
+from training.generate_data import generate_dataset
 
 SUPABASE_URL = "https://test-project.supabase.co"
 VALID_TOKEN = "valid-token"
@@ -19,6 +23,7 @@ class FakeSupabase:
         self.tables: dict[str, list[dict]] = {}
         self.max_rows = 1000  # PostgREST's per-response cap
         self.auth_calls = 0
+        self.rest_calls = 0
         self.auth_down = False
         self.last_params: dict[str, str] = {}
 
@@ -33,6 +38,7 @@ class FakeSupabase:
             return httpx.Response(401, json={"msg": "invalid JWT"})
 
         if path.startswith("/rest/v1/"):
+            self.rest_calls += 1
             if request.headers.get("authorization") != f"Bearer {VALID_TOKEN}":
                 return httpx.Response(401, json={"message": "JWT invalid"})
             self.last_params = dict(request.url.params)
@@ -52,9 +58,19 @@ def supabase() -> FakeSupabase:
     return FakeSupabase()
 
 
+@pytest.fixture(scope="session")
+def model_dir(tmp_path_factory) -> Path:
+    """A small categorizer, trained once per test run (CI trains and gates the real one separately)."""
+    data = generate_dataset(rows_per_label=150, seed=7)
+    pipeline = build_pipeline(c=1.0).fit(to_frame(data["title"], data["amount"], data["type"]), data["label"])
+    path = tmp_path_factory.mktemp("models")
+    CategorizerModel(pipeline, version="test-model", threshold=0.5).save(path)
+    return path
+
+
 @pytest.fixture
-def settings() -> Settings:
-    return Settings(supabase_url=SUPABASE_URL, supabase_anon_key="anon-key")
+def settings(model_dir) -> Settings:
+    return Settings(supabase_url=SUPABASE_URL, supabase_anon_key="anon-key", model_dir=model_dir)
 
 
 @pytest.fixture

@@ -10,7 +10,11 @@ from tests.conftest import SUPABASE_URL, TEST_USER
 def test_health_needs_no_auth(client):
     response = client.get("/health")
     assert response.status_code == 200
-    assert response.json() == {"status": "ok", "version": __version__}
+    assert response.json() == {
+        "status": "ok",
+        "version": __version__,
+        "models": {"categorizer": "test-model"},
+    }
 
 
 def test_missing_token_is_rejected(client):

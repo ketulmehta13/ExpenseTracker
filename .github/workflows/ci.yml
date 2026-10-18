@@ -1,52 +1,77 @@
-name: CI - Build, Lint & Security Checks
+name: CI
 
 on:
   push:
-    branches: [ main, 'backend/**', 'redesign/**' ]
+    branches: ['**']
   pull_request:
-    branches: [ main ]
+    branches: [main]
+
+# A newer push to the same branch makes the older run pointless
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  frontend-build-and-lint:
-    name: Frontend Build & Typecheck
+  frontend:
+    name: Frontend (lint + build)
     runs-on: ubuntu-latest
-
+    defaults:
+      run:
+        working-directory: frontend
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Install dependencies
-        working-directory: ./frontend
-        run: npm ci
+      - run: npm ci
 
-      - name: Build frontend production bundle
-        working-directory: ./frontend
+      - name: Lint
+        run: npm run lint
+
+      - name: Build production bundle
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://dummy-test.supabase.co' }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'dummy-anon-key' }}
         run: npm run build
 
-  sql-migration-lint:
-    name: Validate Supabase SQL Migrations
+  edge-functions:
+    name: Edge Functions (type check)
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Verify SQL migration files exist and are well-formed
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - run: deno check supabase/functions/*/index.ts
+
+  migrations:
+    name: Supabase migrations (structure + PGlite tests)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Every migration keeps row level security in mind
         run: |
-          test -d supabase/migrations
           for file in supabase/migrations/*.sql; do
             echo "Checking $file..."
             test -s "$file"
             grep -q "ROW LEVEL SECURITY" "$file" || (echo "Missing RLS in $file" && exit 1)
           done
-          echo "All SQL migrations passed security structure checks."
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: supabase/tests/package-lock.json
+
+      - name: Replay migrations on fresh and legacy databases
+        working-directory: supabase/tests
+        run: |
+          npm ci
+          npm test

@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Toaster } from 'sonner';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { PlanProvider } from './context/PlanContext';
-import { ThemeProvider } from './components/ThemeProvider';
 import ErrorBoundary from './components/ErrorBoundary';
 import MainLayout from './layouts/MainLayout';
 
@@ -62,25 +61,23 @@ function AppRoutes() {
 function App() {
     return (
         <ErrorBoundary>
-            <ThemeProvider>
-                {/* Mounted once at the root so toasts work on every page, including the auth pages */}
-                <Toaster
-                    position="top-right"
-                    richColors
-                    toastOptions={{
-                        classNames: {
-                            toast: 'bg-card border border-border text-foreground shadow-lg rounded-xl',
-                        },
-                    }}
-                />
-                <AuthProvider>
-                    <PlanProvider>
-                        <Router>
-                            <AppRoutes />
-                        </Router>
-                    </PlanProvider>
-                </AuthProvider>
-            </ThemeProvider>
+            {/* Mounted once at the root so toasts work on every page, including the auth pages */}
+            <Toaster
+                position="top-right"
+                richColors
+                toastOptions={{
+                    classNames: {
+                        toast: 'bg-card border border-border text-foreground shadow-lg rounded-xl',
+                    },
+                }}
+            />
+            <AuthProvider>
+                <PlanProvider>
+                    <Router>
+                        <AppRoutes />
+                    </Router>
+                </PlanProvider>
+            </AuthProvider>
         </ErrorBoundary>
     );
 }

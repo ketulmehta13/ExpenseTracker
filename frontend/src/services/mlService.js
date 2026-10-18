@@ -81,6 +81,17 @@ export async function parseQuickAdd(text, today, signal) {
 }
 
 /**
+ * The month in two or three sentences: { text, source: 'llm' | 'template' }. Numbers in it are
+ * always computed by the service; an LLM, if configured, only words them.
+ * @param {string} today - the user's local date, YYYY-MM-DD
+ * @param {AbortSignal} [signal]
+ */
+export async function getInsightsSummary(today, signal) {
+    // An LLM may write it, so allow it longer than the cards; the service falls back to a template
+    return request('GET', `/v1/insights/summary?today=${encodeURIComponent(today)}`, { signal, timeoutMs: 25000 });
+}
+
+/**
  * Spending insights: unusual payments, recurring payments and the month-end forecast.
  * @param {string} today - the user's local date, YYYY-MM-DD
  * @param {AbortSignal} [signal]

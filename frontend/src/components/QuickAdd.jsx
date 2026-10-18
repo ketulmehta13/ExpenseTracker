@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Sparkles, Loader2, X, Zap } from 'lucide-react';
+import { toast } from 'sonner';
 import { parseTransaction } from '../services/aiService';
 import { parseQuickAdd } from '../services/mlService';
 import { ML_ENABLED } from '../lib/features';
@@ -13,6 +14,10 @@ async function parseText(text) {
     if (!ML_ENABLED) return parseTransaction(text);
     const draft = await parseQuickAdd(text, todayISODate());
     if (!draft) return null;
+    if (draft.llm_filled?.length) {
+        // An LLM's numbers are checked against the text, but a date can only be checked for plausibility
+        toast.info(`Filled with AI help: please check the ${draft.llm_filled.join(' and ')}.`);
+    }
     return {
         type: draft.type,
         amount: draft.amount,

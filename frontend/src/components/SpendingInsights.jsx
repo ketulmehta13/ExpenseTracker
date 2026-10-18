@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { AlertTriangle, Repeat, TrendingUp } from 'lucide-react';
-import { getInsights } from '../services/mlService';
+import { AlertTriangle, Repeat, Sparkles, TrendingUp } from 'lucide-react';
+import { getInsights, getInsightsSummary } from '../services/mlService';
 import { formatCurrency, formatCurrencyWhole, formatDate } from '../lib/formatters';
 import { todayISODate } from '../lib/dates';
 import { Skeleton } from './ui/Skeleton';
@@ -134,15 +134,33 @@ const UnusualCard = ({ payments }) => (
     </Card>
 );
 
+const Summary = ({ summary }) => (
+    <div className="rounded-2xl border border-border bg-card px-5 py-4">
+        <p className="text-sm text-foreground leading-relaxed">{summary.text}</p>
+        {summary.source === 'llm' && (
+            <p className="mt-1.5 flex items-center gap-1 text-[11px] text-muted-foreground">
+                <Sparkles size={11} className="text-primary" />
+                Written by AI · every number computed and checked by the app
+            </p>
+        )}
+    </div>
+);
+
 const SpendingInsights = ({ refreshKey }) => {
     // undefined while the first request runs; null when the service is unavailable
     const [insights, setInsights] = useState(undefined);
+    const [summary, setSummary] = useState(null);
 
     useEffect(() => {
         const controller = new AbortController();
-        getInsights(todayISODate(), controller.signal).then((data) => {
+        const today = todayISODate();
+        getInsights(today, controller.signal).then((data) => {
             // A failed refresh keeps the last good insights on screen
             if (!controller.signal.aborted) setInsights((previous) => data ?? previous ?? null);
+        });
+        // The summary can take a few seconds when an LLM writes it, so it arrives separately
+        getInsightsSummary(today, controller.signal).then((data) => {
+            if (!controller.signal.aborted) setSummary((previous) => data ?? previous);
         });
         return () => controller.abort();
     }, [refreshKey]);
@@ -165,7 +183,12 @@ const SpendingInsights = ({ refreshKey }) => {
     if (!cards.length) return null;
 
     const columns = { 1: '', 2: 'lg:grid-cols-2', 3: 'lg:grid-cols-3' }[cards.length];
-    return <div className={`grid grid-cols-1 gap-4 ${columns}`}>{cards}</div>;
+    return (
+        <div className="space-y-4">
+            {summary?.text && <Summary summary={summary} />}
+            <div className={`grid grid-cols-1 gap-4 ${columns}`}>{cards}</div>
+        </div>
+    );
 };
 
 export default SpendingInsights;

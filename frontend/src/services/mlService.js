@@ -4,27 +4,28 @@ import { ML_API_URL, ML_ENABLED } from '../lib/features';
 /**
  * Client for the self-hosted ML service (ml-service/).
  * Every function resolves to null when the service is off, slow or failing, and never
- * throws: a suggestion is a nice-to-have and must never block the form.
+ * throws: ML features are extras and must never block the rest of the app.
  */
 
-const TIMEOUT_MS = 2000;
-
-async function postJson(path, body, signal) {
+async function request(method, path, { body, signal, timeoutMs = 2000 } = {}) {
     if (!ML_ENABLED) return null;
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
     if (!token) return null;
 
-    // Give up after TIMEOUT_MS, or as soon as the caller aborts (e.g. the user kept typing)
+    // Give up after timeoutMs, or as soon as the caller aborts (e.g. the user kept typing)
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
     const abort = () => controller.abort();
     signal?.addEventListener('abort', abort);
     try {
         const response = await fetch(`${ML_API_URL}${path}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify(body),
+            method,
+            headers: {
+                Authorization: `Bearer ${token}`,
+                ...(body ? { 'Content-Type': 'application/json' } : {}),
+            },
+            body: body ? JSON.stringify(body) : undefined,
             signal: controller.signal,
         });
         if (!response.ok) {
@@ -53,14 +54,25 @@ export async function suggestCategoryML({ title, amount, type }, signal) {
     const cleanTitle = title?.trim() ?? '';
     if (cleanTitle.length < 3) return null;
     const parsedAmount = parseFloat(amount);
-    const result = await postJson(
-        '/v1/categorize',
-        {
+    const result = await request('POST', '/v1/categorize', {
+        body: {
             title: cleanTitle.slice(0, 200),
             amount: Number.isFinite(parsedAmount) && parsedAmount >= 0 ? parsedAmount : null,
             type: type === 'INCOME' ? 'INCOME' : 'EXPENSE',
         },
         signal,
-    );
+    });
     return result?.suggestion ?? null;
+}
+
+/**
+ * Spending insights: unusual payments, recurring payments and the month-end forecast.
+ * @param {string} today - the user's local date, YYYY-MM-DD
+ * @param {AbortSignal} [signal]
+ * @returns {Promise<{ as_of: string, unusual: object[], recurring: object[],
+ *                     recurring_monthly_total: number, forecast: object|null } | null>}
+ */
+export async function getInsights(today, signal) {
+    // The first call reads a year of history, so allow more time than for suggestions
+    return request('GET', `/v1/insights?today=${encodeURIComponent(today)}`, { signal, timeoutMs: 8000 });
 }

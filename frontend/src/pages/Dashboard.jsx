@@ -15,7 +15,8 @@ import { EmptyState } from '../components/ui/EmptyState';
 import TransactionModal from '../components/TransactionModal';
 import QuickAdd from '../components/QuickAdd';
 import AIInsightsCard from '../components/AIInsightsCard';
-import { AI_ENABLED } from '../lib/features';
+import SpendingInsights from '../components/SpendingInsights';
+import { AI_ENABLED, ML_ENABLED } from '../lib/features';
 
 /* ── Color palette for category donut chart (Brand #0d3a35 Teal-Green) ── */
 const CAT_COLORS = [
@@ -320,6 +321,9 @@ const Dashboard = () => {
                     {...netTrend}
                 />
             </div>
+
+            {/* ── ML insights: month-end forecast, subscriptions & bills, unusual spending ── */}
+            {ML_ENABLED && <SpendingInsights refreshKey={allTransactions} />}
 
             {/* ── AI Insights card ── */}
             {AI_ENABLED && <AIInsightsCard summary={summary} month={currentMonth} />}

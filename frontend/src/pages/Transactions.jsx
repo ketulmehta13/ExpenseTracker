@@ -17,6 +17,10 @@ import { SkeletonTable } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/ui/EmptyState';
 import TransactionModal from '../components/TransactionModal';
 import ConfirmModal from '../components/ConfirmModal';
+import UnusualSpendingBadge from '../components/UnusualSpendingBadge';
+import { getInsights } from '../services/mlService';
+import { ML_ENABLED } from '../lib/features';
+import { todayISODate } from '../lib/dates';
 
 // TODO: Replace with server-side pagination if the Supabase transactions table
 // grows beyond ~1000 rows and client-side filtering becomes slow.
@@ -33,6 +37,8 @@ const Transactions = () => {
     const [transactions, setTransactions] = useState([]);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
+    // Ids of recent payments the ML service found unusually large
+    const [unusualIds, setUnusualIds] = useState(() => new Set());
 
     // Filters
     const [search, setSearch] = useState('');
@@ -74,6 +80,17 @@ const Transactions = () => {
     }, [historyMonths]);
 
     useEffect(() => { fetchData(); }, [fetchData]);
+
+    useEffect(() => {
+        if (!ML_ENABLED) return undefined;
+        const controller = new AbortController();
+        getInsights(todayISODate(), controller.signal).then((insights) => {
+            if (insights && !controller.signal.aborted) {
+                setUnusualIds(new Set(insights.unusual.map((p) => String(p.transaction_id))));
+            }
+        });
+        return () => controller.abort();
+    }, [transactions]);
 
     // Re-fetch when sidebar modal updates
     useEffect(() => {
@@ -402,6 +419,7 @@ const Transactions = () => {
                                             <div className="flex items-center gap-2">
                                                 <div className={`h-2 w-2 rounded-full flex-shrink-0 ${t.type === 'INCOME' ? 'bg-income' : 'bg-expense'}`} />
                                                 <span className="font-medium text-foreground">{t.title}</span>
+                                                {unusualIds.has(String(t.id)) && <UnusualSpendingBadge />}
                                                 {t.is_recurring && (
                                                     <span className="rounded-full bg-blue-500/10 text-blue-400 px-2 py-0.5 text-[10px] font-medium">
                                                         Recurring
@@ -469,6 +487,7 @@ const Transactions = () => {
                                             {formatDate(t.date, 'short')}
                                             {t.category_name && ` · ${t.category_name}`}
                                         </p>
+                                        {unusualIds.has(String(t.id)) && <div className="mt-1"><UnusualSpendingBadge /></div>}
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2 flex-shrink-0 ml-3">

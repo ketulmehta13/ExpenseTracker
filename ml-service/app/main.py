@@ -15,7 +15,7 @@ from app.auth import TokenCache
 from app.cache import TTLCache
 from app.config import Settings
 from app.ml.categorizer import CategorizerModel
-from app.routers import categorize, health
+from app.routers import categorize, health, insights
 
 logger = logging.getLogger("ml_service")
 
@@ -45,6 +45,7 @@ def create_app(
     app.state.settings = settings
     app.state.token_cache = TokenCache(settings.auth_cache_seconds)
     app.state.user_context_cache = TTLCache(settings.user_context_cache_seconds)
+    app.state.insights_cache = TTLCache(settings.user_context_cache_seconds)
 
     app.add_middleware(
         CORSMiddleware,
@@ -65,6 +66,7 @@ def create_app(
 
     app.include_router(health.router)
     app.include_router(categorize.router)
+    app.include_router(insights.router)
     return app
 
 

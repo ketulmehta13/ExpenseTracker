@@ -9,7 +9,7 @@ import { parseDate } from './dates';
  * Currency defaults to the value stored in localStorage (set via Settings page),
  * falling back to INR.
  */
-export const formatCurrency = (amount, currencyOverride) => {
+const formatMoney = (amount, currencyOverride, fractionDigits) => {
     const currency =
         currencyOverride ||
         localStorage.getItem('et-currency') ||
@@ -21,10 +21,15 @@ export const formatCurrency = (amount, currencyOverride) => {
     return new Intl.NumberFormat('en-IN', {
         style: 'currency',
         currency,
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
+        minimumFractionDigits: fractionDigits,
+        maximumFractionDigits: fractionDigits,
     }).format(num);
 };
+
+export const formatCurrency = (amount, currencyOverride) => formatMoney(amount, currencyOverride, 2);
+
+/** Whole units, for estimates and statistics where paise would be false precision. */
+export const formatCurrencyWhole = (amount, currencyOverride) => formatMoney(amount, currencyOverride, 0);
 
 /**
  * Format a date string for consistent display across the app.

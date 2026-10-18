@@ -22,6 +22,8 @@ import { toast } from 'sonner';
 import TransactionModal from '../components/TransactionModal';
 import PlanBadge from '../components/PlanBadge';
 import { useAutoLogout } from '../hooks/useAutoLogout';
+import AssistantPanel from '../components/AssistantPanel';
+import { ML_ENABLED } from '../lib/features';
 
 const navItems = [
     { path: '/dashboard', name: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -365,6 +367,9 @@ const MainLayout = () => {
                     </button>
                 </nav>
             </div>
+
+            {/* ───── ASSISTANT (ML service) ───── */}
+            {ML_ENABLED && <AssistantPanel />}
 
             {/* ───── TRANSACTION MODAL ───── */}
             <TransactionModal

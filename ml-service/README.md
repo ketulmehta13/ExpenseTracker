@@ -11,6 +11,7 @@ Design notes and interview-style explanations live in [`docs/ai-ml/`](../docs/ai
 | GET | `/health` | none | Liveness check, version and loaded model versions |
 | GET | `/v1/me` | bearer token | Echoes the signed-in user, for an end-to-end token check |
 | POST | `/v1/categorize` | bearer token | Suggests a category for `{title, amount?, type?}`: the user's history first, then the model |
+| GET | `/v1/insights?today=YYYY-MM-DD` | bearer token | Unusual spending, recurring payments and the month-end forecast |
 | GET | `/docs` | none | Interactive OpenAPI docs |
 
 ## Run locally
@@ -41,6 +42,14 @@ python -m training.train_categorizer --min-holdout-f1 0.80 # what CI and the Doc
 
 Training takes under a minute on a laptop. It writes [`reports/categorizer/model_card.md`](reports/categorizer/model_card.md) (metrics, ablation, confusion matrix, worst mistakes) and `metrics.json`. Without a model file the service still starts, and `/v1/categorize` falls back to history matching only. How the model is built and evaluated is explained in [docs/ai-ml/03-categorizer.md](../docs/ai-ml/03-categorizer.md).
 
+## Evaluate the insight detectors
+
+```bash
+python -m training.evaluate_insights --gate   # what CI runs; about 2 minutes
+```
+
+It simulates two groups of users with known answers, tunes every threshold on one and scores on the other, then writes [`reports/insights/report.md`](reports/insights/report.md). The methods are explained in [docs/ai-ml/04-insights.md](../docs/ai-ml/04-insights.md).
+
 ## Test and lint
 
 ```bash
@@ -67,5 +76,5 @@ The build trains the categorizer inside the image, behind the same evaluation ga
 | `SUPABASE_ANON_KEY` | — | Public anon/publishable key |
 | `ALLOWED_ORIGINS` | localhost + production URL | CORS origins, comma-separated |
 | `AUTH_CACHE_SECONDS` | `60` | How long a validated token is trusted without re-checking |
-| `USER_CONTEXT_CACHE_SECONDS` | `60` | How long a user's history and categories are reused between suggestions |
+| `USER_CONTEXT_CACHE_SECONDS` | `60` | How long a user's history, categories and insights are reused between requests |
 | `MODEL_DIR` | `ml-service/models` | Where trained model files are read from |

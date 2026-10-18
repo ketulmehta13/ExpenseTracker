@@ -1,5 +1,9 @@
 import { serve } from 'https://deno.land/std@0.208.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+// No generated DB types here, so table rows are untyped
+// deno-lint-ignore no-explicit-any
+type AdminClient = SupabaseClient<any>;
 
 // ---------------------------------------------------------------------------
 // Configuration
@@ -63,7 +67,7 @@ async function callOpenAI(messages: object[], jsonMode = true): Promise<string> 
 // ---------------------------------------------------------------------------
 // Rate limiting (service-role client, bypasses RLS)
 // ---------------------------------------------------------------------------
-async function checkRateLimit(supabase: ReturnType<typeof createClient>, userId: string): Promise<boolean> {
+async function checkRateLimit(supabase: AdminClient, userId: string): Promise<boolean> {
   const now = new Date();
   const windowStart = new Date(now.getTime() - 60 * 60 * 1000); // 1 hour ago
 
@@ -95,7 +99,7 @@ async function checkRateLimit(supabase: ReturnType<typeof createClient>, userId:
   return true;
 }
 
-async function logUsage(supabase: ReturnType<typeof createClient>, userId: string, feature: string) {
+async function logUsage(supabase: AdminClient, userId: string, feature: string) {
   await supabase.from('ai_usage_log').insert({ user_id: userId, feature });
 }
 

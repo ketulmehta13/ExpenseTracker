@@ -1,0 +1,12 @@
+{
+  "name": "supabase-migration-tests",
+  "private": true,
+  "type": "module",
+  "description": "Replays supabase/migrations on an in-memory Postgres (PGlite) and checks RLS, triggers and functions.",
+  "scripts": {
+    "test": "node migrations.test.mjs ../.. && node legacy-upgrade.test.mjs ../.."
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.3.16"
+  }
+}

@@ -65,15 +65,12 @@ const TransactionModal = ({
                     is_recurring: transaction.is_recurring || false,
                 });
             } else if (prefill) {
-                // QuickAdd pre-fill: match category_name_hint to an existing category id
-                const matchedCat = prefill.category_name_hint
-                    ? categories.find((c) => c.name.toLowerCase() === prefill.category_name_hint.toLowerCase())
-                    : null;
+                // QuickAdd pre-fill; category_name_hint is matched once categories have loaded
                 setForm({
                     type: defaultType,
                     title: prefill.title || '',
                     amount: prefill.amount || '',
-                    category_id: matchedCat?.id || '',
+                    category_id: '',
                     date: prefill.date || todayISODate(),
                     notes: prefill.notes || '',
                     is_recurring: false,
@@ -91,7 +88,7 @@ const TransactionModal = ({
             }
             setErrors({});
             setAiSuggestion(null);
-            loadCategories();
+            loadCategories(transaction ? null : prefill?.category_name_hint);
         }
     }, [isOpen, transaction, defaultType, prefill]);
 
@@ -112,11 +109,16 @@ const TransactionModal = ({
         return () => document.removeEventListener('keydown', handler);
     }, [isOpen, onClose]);
 
-    const loadCategories = async () => {
+    // categoryHint: a category name (e.g. from QuickAdd) to preselect if it exists
+    const loadCategories = async (categoryHint) => {
         setCatLoading(true);
         try {
             const data = await getCategories();
             setCategories(data || []);
+            const match = categoryHint
+                ? (data || []).find((c) => c.name.toLowerCase() === categoryHint.toLowerCase())
+                : null;
+            if (match) setForm((f) => (f.category_id ? f : { ...f, category_id: match.id }));
         } catch {
             setCategories([]);
         } finally {

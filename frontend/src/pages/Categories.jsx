@@ -178,10 +178,8 @@ const CategoryFormModal = ({ isOpen, onClose, onSave, category }) => {
 const ReassignModal = ({ isOpen, onClose, onConfirm, categories, deletingCategory, isLoading }) => {
     const [targetId, setTargetId] = useState('');
     const others = categories.filter((c) => c.id !== deletingCategory?.id);
-
-    useEffect(() => {
-        if (isOpen && others.length > 0) setTargetId(others[0].id);
-    }, [isOpen]);
+    // Until the user picks one (or if their pick no longer exists), default to the first option
+    const selectedId = others.some((c) => String(c.id) === String(targetId)) ? targetId : (others[0]?.id ?? '');
 
     if (!isOpen) return null;
 
@@ -202,7 +200,7 @@ const ReassignModal = ({ isOpen, onClose, onConfirm, categories, deletingCategor
                 <div className="mb-4">
                     <label className="block text-sm font-medium text-foreground mb-1.5">Move to</label>
                     <select
-                        value={targetId}
+                        value={selectedId}
                         onChange={(e) => setTargetId(e.target.value)}
                         className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/30"
                     >
@@ -214,8 +212,8 @@ const ReassignModal = ({ isOpen, onClose, onConfirm, categories, deletingCategor
                         Cancel
                     </button>
                     <button
-                        onClick={() => onConfirm(targetId)}
-                        disabled={!targetId || isLoading}
+                        onClick={() => onConfirm(selectedId)}
+                        disabled={!selectedId || isLoading}
                         className="flex-1 rounded-xl bg-destructive py-2.5 text-sm font-semibold text-destructive-foreground hover:opacity-90 transition disabled:opacity-60"
                     >
                         {isLoading ? 'Deleting…' : 'Reassign & Delete'}
@@ -446,6 +444,8 @@ const Categories = () => {
             />
 
             <ReassignModal
+                // Remount per category so a previous choice doesn't carry over
+                key={reassignModal.category?.id ?? 'none'}
                 isOpen={reassignModal.open}
                 onClose={() => setReassignModal({ open: false, category: null })}
                 onConfirm={handleReassignAndDelete}

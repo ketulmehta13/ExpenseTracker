@@ -12,13 +12,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from langchain_core.language_models import BaseChatModel
 
 from app import __version__
+from app.assistant.graph import build_graph
 from app.auth import TokenCache
 from app.cache import TTLCache
 from app.config import Settings
 from app.llm.provider import build_chat_model
 from app.ml.categorizer import CategorizerModel
 from app.rag.embeddings import Embedder
-from app.routers import categorize, health, help, insights, parse
+from app.routers import assistant, categorize, health, help, insights, parse
 
 logger = logging.getLogger("ml_service")
 
@@ -57,6 +58,7 @@ def create_app(
     app.state.summary_cache = TTLCache(600)  # LLM summaries are slow; reused while their facts are unchanged
     app.state.embedder = embedder
     app.state.help_index = None  # built on the first help question
+    app.state.assistant_graph = build_graph()
 
     app.add_middleware(
         CORSMiddleware,
@@ -80,6 +82,7 @@ def create_app(
     app.include_router(insights.router)
     app.include_router(parse.router)
     app.include_router(help.router)
+    app.include_router(assistant.router)
     return app
 
 

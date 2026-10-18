@@ -1,0 +1,41 @@
+{"messages": ["how much did I spend on food last month"], "intent": "spending", "period": "last_month", "category": "Food", "merchant": null}
+{"messages": ["total spent this month"], "intent": "spending", "period": "this_month", "category": null, "merchant": null}
+{"messages": ["how much have i spent on travel this week"], "intent": "spending", "period": "this_week", "category": "Travel", "merchant": null}
+{"messages": ["what did I spend yesterday"], "intent": "spending", "period": "yesterday", "category": null, "merchant": null}
+{"messages": ["how much did i pay for rent in september"], "intent": "spending", "period": "month:9", "category": "Rent", "merchant": null}
+{"messages": ["spending on shopping in the last 30 days"], "intent": "spending", "period": "last_30_days", "category": "Shopping", "merchant": null}
+{"messages": ["how much on swiggy this month"], "intent": "spending", "period": "this_month", "category": null, "merchant": "swiggy"}
+{"messages": ["total expenses today"], "intent": "spending", "period": "today", "category": null, "merchant": null}
+{"messages": ["kitna kharcha hua is mahine"], "intent": "spending", "period": "this_month", "category": null, "merchant": null}
+{"messages": ["how much did I spend on entertainment this year"], "intent": "spending", "period": "this_year", "category": "Entertainment", "merchant": null}
+{"messages": ["where did most of my money go this month"], "intent": "breakdown", "period": "this_month", "category": null, "merchant": null}
+{"messages": ["top categories last month"], "intent": "breakdown", "period": "last_month", "category": null, "merchant": null}
+{"messages": ["spending breakdown for september"], "intent": "breakdown", "period": "month:9", "category": null, "merchant": null}
+{"messages": ["am i on track with my budget"], "intent": "budget", "period": null, "category": null, "merchant": null}
+{"messages": ["will i go over budget this month"], "intent": "budget", "period": null, "category": null, "merchant": null}
+{"messages": ["what is my month end forecast"], "intent": "budget", "period": null, "category": null, "merchant": null}
+{"messages": ["how much will i spend by the end of the month"], "intent": "budget", "period": null, "category": null, "merchant": null}
+{"messages": ["what subscriptions do i have"], "intent": "subscriptions", "period": null, "category": null, "merchant": null}
+{"messages": ["list my recurring payments"], "intent": "subscriptions", "period": null, "category": null, "merchant": null}
+{"messages": ["which bills are due next"], "intent": "subscriptions", "period": null, "category": null, "merchant": null}
+{"messages": ["how much do i pay for subscriptions every month"], "intent": "subscriptions", "period": null, "category": null, "merchant": null}
+{"messages": ["any unusual spending"], "intent": "unusual", "period": null, "category": null, "merchant": null}
+{"messages": ["anything weird in my transactions"], "intent": "unusual", "period": null, "category": null, "merchant": null}
+{"messages": ["show suspicious payments"], "intent": "unusual", "period": null, "category": null, "merchant": null}
+{"messages": ["add 450 swiggy yesterday"], "intent": "add", "period": null, "category": null, "merchant": null}
+{"messages": ["log 1200 groceries"], "intent": "add", "period": null, "category": null, "merchant": null}
+{"messages": ["spent 300 on uber today"], "intent": "add", "period": null, "category": null, "merchant": null}
+{"messages": ["record salary 85000 credited"], "intent": "add", "period": null, "category": null, "merchant": null}
+{"messages": ["paid 649 for netflix"], "intent": "add", "period": null, "category": null, "merchant": null}
+{"messages": ["how do i export to pdf"], "intent": "help", "period": null, "category": null, "merchant": null}
+{"messages": ["how do i change my password"], "intent": "help", "period": null, "category": null, "merchant": null}
+{"messages": ["what does unusual spending mean"], "intent": "help", "period": null, "category": null, "merchant": null}
+{"messages": ["how is the forecast calculated"], "intent": "help", "period": null, "category": null, "merchant": null}
+{"messages": ["can i delete a default category"], "intent": "help", "period": null, "category": null, "merchant": null}
+{"messages": ["why was i logged out"], "intent": "help", "period": null, "category": null, "merchant": null}
+{"messages": ["hi"], "intent": "greeting", "period": null, "category": null, "merchant": null}
+{"messages": ["thanks!"], "intent": "greeting", "period": null, "category": null, "merchant": null}
+{"messages": ["hello there"], "intent": "greeting", "period": null, "category": null, "merchant": null}
+{"messages": ["how much did I spend on food last month", "and this month?"], "intent": "spending", "period": "this_month", "category": "Food", "merchant": null}
+{"messages": ["how much did i spend on travel in september", "what about shopping?"], "intent": "spending", "period": "month:9", "category": "Shopping", "merchant": null}
+{"messages": ["top categories this month", "and last month?"], "intent": "breakdown", "period": "last_month", "category": null, "merchant": null}

@@ -12,5 +12,6 @@ rapidfuzz==3.14.6
 langchain-core==1.6.12
 langchain-ollama==1.1.0
 langchain-openai==1.7.2
+langgraph==1.2.16
 # Help-center search: a small ONNX embedding model on the CPU
 fastembed==0.9.0

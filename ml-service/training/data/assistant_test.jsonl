@@ -1,0 +1,33 @@
+{"messages": ["how much money went on food this month"], "intent": "spending", "period": "this_month", "category": "Food", "merchant": null}
+{"messages": ["what's my total spending last week"], "intent": "spending", "period": "last_week", "category": null, "merchant": null}
+{"messages": ["how much did i spend on groceries in august"], "intent": "spending", "period": "month:8", "category": "Food", "merchant": null}
+{"messages": ["uber spending this month"], "intent": "spending", "period": "this_month", "category": null, "merchant": "uber"}
+{"messages": ["expenses for the last 7 days"], "intent": "spending", "period": "last_7_days", "category": null, "merchant": null}
+{"messages": ["how much did i spend today"], "intent": "spending", "period": "today", "category": null, "merchant": null}
+{"messages": ["pichle mahine kitna kharcha hua"], "intent": "spending", "period": "last_month", "category": null, "merchant": null}
+{"messages": ["spent on utilities this year?"], "intent": "spending", "period": "this_year", "category": "Utilities", "merchant": null}
+{"messages": ["how much rent did i pay last month"], "intent": "spending", "period": "last_month", "category": "Rent", "merchant": null}
+{"messages": ["what are my biggest expenses this month"], "intent": "breakdown", "period": "this_month", "category": null, "merchant": null}
+{"messages": ["show my spending by category for last month"], "intent": "breakdown", "period": "last_month", "category": null, "merchant": null}
+{"messages": ["am i going to exceed my budget"], "intent": "budget", "period": null, "category": null, "merchant": null}
+{"messages": ["how am i doing against my budget"], "intent": "budget", "period": null, "category": null, "merchant": null}
+{"messages": ["projected spending for this month"], "intent": "budget", "period": null, "category": null, "merchant": null}
+{"messages": ["show my subscriptions"], "intent": "subscriptions", "period": null, "category": null, "merchant": null}
+{"messages": ["what recurring bills do i have"], "intent": "subscriptions", "period": null, "category": null, "merchant": null}
+{"messages": ["when is my next bill due"], "intent": "subscriptions", "period": null, "category": null, "merchant": null}
+{"messages": ["did anything look odd this month"], "intent": "unusual", "period": null, "category": null, "merchant": null}
+{"messages": ["flag strange payments"], "intent": "unusual", "period": null, "category": null, "merchant": null}
+{"messages": ["add 250 auto"], "intent": "add", "period": null, "category": null, "merchant": null}
+{"messages": ["log 89 chai today"], "intent": "add", "period": null, "category": null, "merchant": null}
+{"messages": ["i paid 1500 for electricity bill yesterday"], "intent": "add", "period": null, "category": null, "merchant": null}
+{"messages": ["note 2,499 amazon headphones"], "intent": "add", "period": null, "category": null, "merchant": null}
+{"messages": ["how do i download my data"], "intent": "help", "period": null, "category": null, "merchant": null}
+{"messages": ["what is the free plan limit for categories"], "intent": "help", "period": null, "category": null, "merchant": null}
+{"messages": ["how does quick add work"], "intent": "help", "period": null, "category": null, "merchant": null}
+{"messages": ["what does on track mean"], "intent": "help", "period": null, "category": null, "merchant": null}
+{"messages": ["how do i cancel pro"], "intent": "help", "period": null, "category": null, "merchant": null}
+{"messages": ["hey"], "intent": "greeting", "period": null, "category": null, "merchant": null}
+{"messages": ["thank you so much"], "intent": "greeting", "period": null, "category": null, "merchant": null}
+{"messages": ["how much did i spend on shopping last month", "and in september?"], "intent": "spending", "period": "month:9", "category": "Shopping", "merchant": null}
+{"messages": ["how much on swiggy this month", "what about last month"], "intent": "spending", "period": "last_month", "category": null, "merchant": "swiggy"}
+{"messages": ["spending breakdown this month", "last month?"], "intent": "breakdown", "period": "last_month", "category": null, "merchant": null}

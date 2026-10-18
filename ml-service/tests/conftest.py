@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import httpx
@@ -14,6 +15,9 @@ from training.generate_data import generate_dataset
 SUPABASE_URL = "https://test-project.supabase.co"
 VALID_TOKEN = "valid-token"
 TEST_USER = {"id": "11111111-1111-1111-1111-111111111111", "email": "test@example.com"}
+OTHER_TOKEN = "other-token"  # a second signed-in user, for isolation tests
+OTHER_USER = {"id": "22222222-2222-2222-2222-222222222222", "email": "other@example.com"}
+USERS = {f"Bearer {VALID_TOKEN}": TEST_USER, f"Bearer {OTHER_TOKEN}": OTHER_USER}
 
 
 class FakeSupabase:
@@ -33,16 +37,22 @@ class FakeSupabase:
             self.auth_calls += 1
             if self.auth_down:
                 raise httpx.ConnectError("auth unreachable", request=request)
-            if request.headers.get("authorization") == f"Bearer {VALID_TOKEN}":
-                return httpx.Response(200, json=TEST_USER)
+            user = USERS.get(request.headers.get("authorization", ""))
+            if user:
+                return httpx.Response(200, json=user)
             return httpx.Response(401, json={"msg": "invalid JWT"})
 
         if path.startswith("/rest/v1/"):
             self.rest_calls += 1
-            if request.headers.get("authorization") != f"Bearer {VALID_TOKEN}":
+            if request.headers.get("authorization") not in USERS:
                 return httpx.Response(401, json={"message": "JWT invalid"})
             self.last_params = dict(request.url.params)
-            rows = self.tables.get(path.removeprefix("/rest/v1/"), [])
+            table = path.removeprefix("/rest/v1/")
+            if request.method == "POST":  # an insert: store it with an id, return it as PostgREST does
+                row = {"id": len(self.tables.get(table, [])) + 10_000, **json.loads(request.content)}
+                self.tables.setdefault(table, []).append(row)
+                return httpx.Response(201, json=[row])
+            rows = self.tables.get(table, [])
             start, end = (int(n) for n in request.headers.get("range", f"0-{len(rows) - 1}").split("-"))
             end = min(end, start + self.max_rows - 1)
             page = rows[start : end + 1]

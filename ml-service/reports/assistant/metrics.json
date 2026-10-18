@@ -1,0 +1,24 @@
+{
+  "generated_at": "2026-10-18T13:36:08+00:00",
+  "dev": {
+    "intent": 1.0,
+    "slots": 1.0,
+    "follow_ups": 1.0,
+    "messages": 41,
+    "data_questions": 16,
+    "conversations": 3
+  },
+  "test": {
+    "intent": 1.0,
+    "slots": 1.0,
+    "follow_ups": 1.0,
+    "messages": 33,
+    "data_questions": 14,
+    "conversations": 3
+  },
+  "test_failures": [],
+  "gate": {
+    "intent >= 0.9 (got 1.000)": true,
+    "slots >= 0.85 (got 1.000)": true
+  }
+}

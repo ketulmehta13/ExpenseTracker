@@ -23,6 +23,7 @@ from pathlib import Path
 
 from app.assistant.router import DATA_INTENTS, understand
 from app.ml.recurring import merchant_key
+from training.runs import record_run
 from training.simulate_history import CATEGORY_IDS, EVERYDAY, RECURRING
 
 TODAY = date(2026, 10, 18)
@@ -144,6 +145,8 @@ def main(argv: list[str] | None = None) -> int:
     (args.report_dir / "metrics.json").write_text(json.dumps(metrics, indent=2) + "\n", encoding="utf-8")
     (args.report_dir / "report.md").write_text(report(metrics), encoding="utf-8")
     print(f"reports: {args.report_dir}")
+    headline = {key: test[key] for key in ("intent", "slots", "follow_ups")}
+    record_run("assistant", args.report_dir, {}, headline)
     failed = [name for name, ok in metrics["gate"].items() if not ok]
     for name in failed:
         print(f"FAILED evaluation gate: {name}")

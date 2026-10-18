@@ -36,6 +36,7 @@ from app.ml import anomaly, forecast
 from app.ml.anomaly import MIN_AMOUNT, candidate_expenses, find_anomalies, peer_groups
 from app.ml.forecast import Z_80, forecast_month
 from app.ml.recurring import find_recurring, merchant_key
+from training.runs import record_run
 from training.simulate_history import SimulatedUser, simulate_users
 
 VALIDATION_SEED, TEST_SEED = 1, 2
@@ -379,6 +380,13 @@ def main(argv: list[str] | None = None) -> int:
     (args.report_dir / "metrics.json").write_text(json.dumps(metrics, indent=2) + "\n", encoding="utf-8")
     (args.report_dir / "report.md").write_text(report(metrics), encoding="utf-8")
     print(f"reports: {args.report_dir}")
+    record_run("insights", args.report_dir, {"users_per_group": args.users, "min_ratio": anomaly.MIN_RATIO,
+                                              "sd_inflation": forecast.SD_INFLATION}, {
+        "anomaly_f1": metrics["anomalies"][SHIPPED]["at_shipped_threshold"]["f1"],
+        "recurring_f1": metrics["recurring"]["f1"],
+        "forecast_mape": metrics["forecast"]["mape"]["shipped"],
+        "interval_coverage": metrics["forecast"]["interval_coverage"],
+    })
 
     failures = [name for name, ok in metrics["gate"].items() if not ok]
     for name in failures:

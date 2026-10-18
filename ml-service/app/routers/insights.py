@@ -188,6 +188,7 @@ async def load_insights(
         "insights unusual=%d recurring=%d forecast=%s",
         len(result.unusual), len(result.recurring), result.forecast is not None,
     )
+    request.app.state.metrics.event("insights", "computed")
     inputs = InsightInputs(transactions, categories, budget or None, result)
     cache.put(cache_key, inputs)
     return inputs
@@ -226,5 +227,6 @@ async def insights_summary(
         timeout = request.app.state.settings.llm_timeout_seconds
         text, source = await summarize(request.app.state.llm, facts, timeout)
         cached = SummaryResponse(text=text, source=source)
+        request.app.state.metrics.event("summary", source)
         request.app.state.summary_cache.put(cache_key, cached)
     return cached

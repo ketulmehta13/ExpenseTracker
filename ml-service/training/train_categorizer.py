@@ -35,6 +35,7 @@ from sklearn.model_selection import GridSearchCV, StratifiedGroupKFold, cross_va
 from app.config import DEFAULT_MODEL_DIR
 from app.ml.categorizer import CategorizerModel, build_pipeline, to_frame
 from training.generate_data import generate_dataset
+from training.runs import record_run
 
 SEED = 42
 HOLDOUT_PATH = Path(__file__).resolve().parent / "data" / "holdout_real.csv"
@@ -339,6 +340,13 @@ def main(argv: list[str] | None = None) -> int:
     for name, split in (("test", test_metrics), ("holdout", holdout_metrics)):
         print(f"{name + ':':<9}macro-F1 {split['macro_f1']:.3f}  at threshold {split['at_threshold']}")
     print(f"reports: {args.report_dir}")
+    record_run("categorizer", args.report_dir, {"rows_per_label": args.rows_per_label, "C": best_c,
+                                                 "threshold": threshold}, {
+        "holdout_macro_f1": holdout_metrics["macro_f1"],
+        "test_macro_f1": test_metrics["macro_f1"],
+        "holdout_precision": holdout_metrics["at_threshold"]["precision"],
+        "holdout_coverage": holdout_metrics["at_threshold"]["coverage"],
+    })
 
     if holdout_metrics["macro_f1"] < args.min_holdout_f1:
         print(f"FAILED evaluation gate: holdout macro-F1 {holdout_metrics['macro_f1']:.3f}"

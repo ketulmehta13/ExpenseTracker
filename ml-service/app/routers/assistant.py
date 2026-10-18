@@ -115,7 +115,9 @@ async def chat(
         # A new message instead of an answer to the pending confirmation counts as "no"
         await graph.ainvoke(Command(resume={"approve": False}), config)
     result = await graph.ainvoke({"message": body.message}, config)
-    return _reply(body.thread_id, result)
+    reply = _reply(body.thread_id, result)
+    request.app.state.metrics.event("assistant", reply.intent)
+    return reply
 
 
 @router.post("/confirm", response_model=AssistantReply)
@@ -131,4 +133,5 @@ async def confirm(
         raise HTTPException(status.HTTP_409_CONFLICT, "Nothing is waiting for confirmation")
     result = await graph.ainvoke(Command(resume={"approve": body.approve}), config)
     logger.info("assistant confirm approve=%s saved=%s", body.approve, bool(result.get("saved")))
+    request.app.state.metrics.event("assistant_confirm", "saved" if result.get("saved") else "cancelled")
     return _reply(body.thread_id, result)

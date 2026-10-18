@@ -18,6 +18,7 @@ from app.cache import TTLCache
 from app.config import Settings
 from app.llm.provider import build_chat_model
 from app.ml.categorizer import CategorizerModel
+from app.observability import Metrics, configure_logging
 from app.rag.embeddings import Embedder
 from app.routers import assistant, categorize, health, help, insights, parse
 
@@ -33,6 +34,7 @@ def create_app(
     """Build the app. Tests pass their own settings, an httpx transport that fakes Supabase,
     and optionally a fake chat model and embedder."""
     settings = settings or Settings.from_env()
+    configure_logging(settings.log_level)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -52,6 +54,7 @@ def create_app(
 
     app = FastAPI(title="Expense Tracker ML service", version=__version__, lifespan=lifespan)
     app.state.settings = settings
+    app.state.metrics = Metrics()
     app.state.token_cache = TokenCache(settings.auth_cache_seconds)
     app.state.user_context_cache = TTLCache(settings.user_context_cache_seconds)
     app.state.insights_cache = TTLCache(settings.user_context_cache_seconds)
@@ -71,10 +74,11 @@ def create_app(
     async def log_requests(request: Request, call_next):
         started = time.perf_counter()
         response = await call_next(request)
-        elapsed_ms = (time.perf_counter() - started) * 1000
-        logger.info(
-            "%s %s -> %s in %.1f ms", request.method, request.url.path, response.status_code, elapsed_ms
-        )
+        elapsed = time.perf_counter() - started
+        # The route template ("/v1/insights"), not the URL: query strings and ids would explode the labels
+        route = getattr(request.scope.get("route"), "path", "unmatched")
+        app.state.metrics.observe_request(route, response.status_code, elapsed)
+        logger.info("%s %s -> %s in %.1f ms", request.method, route, response.status_code, elapsed * 1000)
         return response
 
     app.include_router(health.router)

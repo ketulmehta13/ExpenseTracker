@@ -17,6 +17,12 @@ from collections.abc import Iterable
 
 PLACEHOLDER = re.compile(r"\[([a-z_]+)\]")
 _DIGIT = re.compile(r"\d")
+_NUMBER = re.compile(r"(?<![\w.,])\d{1,3}(?:,\d{2,3})+(?:\.\d+)?|(?<![\w.,])\d+(?:\.\d+)?")
+
+
+def numbers_in(text: str) -> set[float]:
+    """The numbers written in `text`, with Indian or Western digit grouping: "₹1,25,000" -> 125000."""
+    return {float(match.replace(",", "")) for match in _NUMBER.findall(text)}
 
 
 def fill_placeholders(text: str, values: dict[str, str], names: Iterable[str] = ()) -> str | None:

@@ -67,6 +67,12 @@ jobs:
 
       - run: pip install -r requirements-dev.txt
 
+      # The help-center embedding model (~70 MB), downloaded once and reused between runs
+      - uses: actions/cache@v4
+        with:
+          path: ml-service/models/embeddings
+          key: embeddings-bge-small-en-v1.5
+
       - name: Lint
         run: ruff check .
 
@@ -81,6 +87,9 @@ jobs:
 
       - name: Evaluate quick-add parser (evaluation gate)
         run: python -m training.evaluate_quickadd --gate
+
+      - name: Evaluate help-center retrieval (evaluation gate)
+        run: python -m training.evaluate_rag --gate
 
       - name: Upload model reports
         if: always()

@@ -17,6 +17,7 @@ React (Vercel) ──Supabase JWT──► ml-service (FastAPI, Python)
                                    ├─ /v1/insights     unusual spending · recurring payments · month-end forecast
                                    ├─ /v1/parse        rule-based slot filling → checked LLM fallback (LangChain)
                                    ├─ /v1/insights/summary  facts in code → LLM wording with placeholders
+                                   ├─ /v1/help         hybrid search (BM25 + embeddings) → cited, checked answer
                                    ├─ /v1/assistant    LangGraph agent: tools · RAG · human-in-the-loop
                                    └─ reads data through Supabase REST with the user's JWT (RLS applies)
 ```
@@ -31,8 +32,8 @@ React (Vercel) ──Supabase JWT──► ml-service (FastAPI, Python)
 | 4 | [Spending insights](04-insights.md) | Evaluation by simulation, robust statistics vs percentile rules, Isolation Forest baseline, periodicity detection, forecasting with backtests, conformal calibration | done |
 | 5 | [Natural-language quick add](05-quickadd.md) | Slot filling, rule-based extraction, entity-level evaluation, dev/test discipline | done |
 | 6 | [LLM features](06-llm.md) | LangChain (LCEL, output parsers, fakes), provider abstraction, structured output, grounding by placeholders, fallbacks | done |
-| 7 | RAG | Chunking, embeddings, vector search, retrieval with citations | next |
-| 8 | Finance assistant agent | LangGraph state machines, tool calling, routing, human-in-the-loop, memory | planned |
+| 7 | [Help-center search (RAG)](07-rag.md) | Section chunking, BM25 from scratch, embeddings (bge-small, ONNX), hybrid search with RRF, declining off-topic questions, cited and checked answers | done |
+| 8 | Finance assistant agent | LangGraph state machines, tool calling, routing, human-in-the-loop, memory | next |
 | 9 | MLOps | Experiment tracking, evaluation gates in CI, monitoring, retraining | planned |
 
 Each step gets its own page in this folder when it lands.

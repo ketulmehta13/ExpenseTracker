@@ -1,0 +1,204 @@
+{
+  "generated_at": "2026-10-18T08:42:03+00:00",
+  "users_per_group": 100,
+  "test_anomalies": 300,
+  "anomalies": {
+    "z-score on amounts, per category": {
+      "threshold": 5.0,
+      "precision": 0.9064,
+      "recall": 0.8067,
+      "f1": 0.8536,
+      "true_positives": 242,
+      "false_positives": 25,
+      "false_negatives": 58
+    },
+    "robust z on amounts, per category": {
+      "threshold": 20.0,
+      "precision": 0.8056,
+      "recall": 0.9533,
+      "f1": 0.8733,
+      "true_positives": 286,
+      "false_positives": 69,
+      "false_negatives": 14
+    },
+    "Isolation Forest on log amounts, per category": {
+      "threshold": 0.75,
+      "precision": 0.8217,
+      "recall": 0.86,
+      "f1": 0.8404,
+      "true_positives": 258,
+      "false_positives": 56,
+      "false_negatives": 42
+    },
+    "robust z on log amounts, per category": {
+      "threshold": 5.0,
+      "precision": 0.4811,
+      "recall": 0.5933,
+      "f1": 0.5313,
+      "true_positives": 178,
+      "false_positives": 192,
+      "false_negatives": 122
+    },
+    "+ merchant's own history first": {
+      "threshold": 4.0,
+      "precision": 0.7296,
+      "recall": 0.9533,
+      "f1": 0.8266,
+      "true_positives": 286,
+      "false_positives": 106,
+      "false_negatives": 14
+    },
+    "+ recurring payments left out": {
+      "threshold": 4.0,
+      "precision": 0.875,
+      "recall": 0.9567,
+      "f1": 0.914,
+      "true_positives": 287,
+      "false_positives": 41,
+      "false_negatives": 13
+    },
+    "percentile ratio instead of z-score (shipped)": {
+      "threshold": 6.0,
+      "precision": 0.9934,
+      "recall": 0.9967,
+      "f1": 0.995,
+      "true_positives": 299,
+      "false_positives": 2,
+      "false_negatives": 1,
+      "shipped_threshold": 6.0,
+      "at_shipped_threshold": {
+        "precision": 0.9934,
+        "recall": 0.9967,
+        "f1": 0.995,
+        "true_positives": 299,
+        "false_positives": 2,
+        "false_negatives": 1
+      },
+      "validation_curve": {
+        "2.0": {
+          "precision": 0.4545,
+          "recall": 1.0,
+          "f1": 0.625,
+          "true_positives": 300,
+          "false_positives": 360,
+          "false_negatives": 0
+        },
+        "3.0": {
+          "precision": 0.8403,
+          "recall": 1.0,
+          "f1": 0.9132,
+          "true_positives": 300,
+          "false_positives": 57,
+          "false_negatives": 0
+        },
+        "4.0": {
+          "precision": 0.9615,
+          "recall": 1.0,
+          "f1": 0.9804,
+          "true_positives": 300,
+          "false_positives": 12,
+          "false_negatives": 0
+        },
+        "5.0": {
+          "precision": 0.9868,
+          "recall": 1.0,
+          "f1": 0.9934,
+          "true_positives": 300,
+          "false_positives": 4,
+          "false_negatives": 0
+        },
+        "6.0": {
+          "precision": 0.9967,
+          "recall": 0.9967,
+          "f1": 0.9967,
+          "true_positives": 299,
+          "false_positives": 1,
+          "false_negatives": 1
+        },
+        "7.0": {
+          "precision": 0.9966,
+          "recall": 0.98,
+          "f1": 0.9882,
+          "true_positives": 294,
+          "false_positives": 1,
+          "false_negatives": 6
+        },
+        "8.0": {
+          "precision": 1.0,
+          "recall": 0.94,
+          "f1": 0.9691,
+          "true_positives": 282,
+          "false_positives": 0,
+          "false_negatives": 18
+        },
+        "10.0": {
+          "precision": 1.0,
+          "recall": 0.7867,
+          "f1": 0.8806,
+          "true_positives": 236,
+          "false_positives": 0,
+          "false_negatives": 64
+        },
+        "12.0": {
+          "precision": 1.0,
+          "recall": 0.6667,
+          "f1": 0.8,
+          "true_positives": 200,
+          "false_positives": 0,
+          "false_negatives": 100
+        }
+      }
+    }
+  },
+  "recurring": {
+    "precision": 0.9978,
+    "recall": 0.9978,
+    "f1": 0.9978,
+    "true_positives": 456,
+    "false_positives": 1,
+    "false_negatives": 1,
+    "period_accuracy": 1.0
+  },
+  "forecast": {
+    "mape": {
+      "last month's total": 0.3312,
+      "run-rate (spent / days so far)": 0.3457,
+      "shipped": 0.14
+    },
+    "mape_by_day": {
+      "last month's total": {
+        "5": 0.3312,
+        "10": 0.3312,
+        "15": 0.3312,
+        "20": 0.3312,
+        "25": 0.3312
+      },
+      "run-rate (spent / days so far)": {
+        "5": 0.6092,
+        "10": 0.4451,
+        "15": 0.3256,
+        "20": 0.2296,
+        "25": 0.1188
+      },
+      "shipped": {
+        "5": 0.2047,
+        "10": 0.1738,
+        "15": 0.1439,
+        "20": 0.1083,
+        "25": 0.069
+      }
+    },
+    "interval_coverage": 0.8103,
+    "sd_inflation": {
+      "calibrated_on_validation": 1.419,
+      "shipped": 1.45
+    },
+    "cases": 3000
+  },
+  "gate": {
+    "unusual-spending F1 >= 0.95 (got 0.995)": true,
+    "recurring-payment F1 >= 0.95 (got 0.998)": true,
+    "forecast MAPE >= 10 points below the better baseline (got 0.191)": true,
+    "80% interval covers 75-85% of actual totals (got 0.810)": true
+  }
+}

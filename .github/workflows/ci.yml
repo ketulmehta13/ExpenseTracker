@@ -51,7 +51,7 @@ jobs:
       - run: deno check supabase/functions/*/index.ts
 
   ml-service:
-    name: ML service (lint + tests + model gate + Docker image)
+    name: ML service (lint + tests + evaluation gates + Docker image)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -75,6 +75,9 @@ jobs:
 
       - name: Train categorizer (evaluation gate)
         run: python -m training.train_categorizer --min-holdout-f1 0.80
+
+      - name: Evaluate insight detectors (evaluation gate)
+        run: python -m training.evaluate_insights --gate
 
       - name: Upload model reports
         if: always()

@@ -9,6 +9,10 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 
 COPY app ./app
+COPY training ./training
+# Train during the build: fixed seeds make it reproducible, the model always matches the
+# installed scikit-learn, and the evaluation gate keeps a weak model out of every image
+RUN python -m training.train_categorizer --min-holdout-f1 0.80
 
 # Run as an unprivileged user
 RUN useradd --create-home appuser

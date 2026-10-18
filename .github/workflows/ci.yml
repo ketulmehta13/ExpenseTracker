@@ -51,7 +51,7 @@ jobs:
       - run: deno check supabase/functions/*/index.ts
 
   ml-service:
-    name: ML service (lint + tests + Docker image)
+    name: ML service (lint + tests + model gate + Docker image)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -72,6 +72,17 @@ jobs:
 
       - name: Tests
         run: pytest
+
+      - name: Train categorizer (evaluation gate)
+        run: python -m training.train_categorizer --min-holdout-f1 0.80
+
+      - name: Upload model reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-reports
+          path: ml-service/reports/
+          if-no-files-found: ignore
 
       - name: Docker image builds
         run: docker build -t expense-ml-service .

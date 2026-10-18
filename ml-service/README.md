@@ -10,6 +10,7 @@ Design notes and interview-style explanations live in [`docs/ai-ml/`](../docs/ai
 |---|---|---|---|
 | GET | `/health` | none | Liveness check, version and loaded model versions |
 | GET | `/v1/me` | bearer token | Echoes the signed-in user, for an end-to-end token check |
+| GET | `/metrics` | `METRICS_TOKEN`, if set | Prometheus metrics: requests, latency, and what each ML feature did |
 | POST | `/v1/categorize` | bearer token | Suggests a category for `{title, amount?, type?}`: the user's history first, then the model |
 | GET | `/v1/insights?today=YYYY-MM-DD` | bearer token | Unusual spending, recurring payments and the month-end forecast |
 | POST | `/v1/parse` | bearer token | One line of text (`{text, today}`) to a transaction draft with a category suggestion; `llm_filled` lists fields the LLM fallback filled |
@@ -91,6 +92,19 @@ python -m training.evaluate_llm      # measures it on the quick-add test set and
 
 Any OpenAI-compatible endpoint works too (`LLM_PROVIDER=openai`, `LLM_BASE_URL`, `LLM_API_KEY`). How the output is checked is explained in [docs/ai-ml/06-llm.md](../docs/ai-ml/06-llm.md).
 
+## Retrain from feedback
+
+```bash
+python -m training.retrain_categorizer --feedback feedback.csv   # or --from-supabase with the service-role key
+python -m training.runs                                         # the history of every training and evaluation run
+```
+
+Retraining compares a challenger with the current model and promotes it only if it is better on held-out feedback and no worse on the hand-written holdout. Details, monitoring and deployment are in [docs/ai-ml/09-mlops.md](../docs/ai-ml/09-mlops.md).
+
+## Deploy
+
+The repository's [`render.yaml`](../render.yaml) deploys this service to Render's free plan. See [docs/ai-ml/09-mlops.md](../docs/ai-ml/09-mlops.md#6-deployment-free) for the steps, the memory trade-off and the Hugging Face Spaces alternative.
+
 ## Test and lint
 
 ```bash
@@ -127,3 +141,5 @@ The build trains the categorizer inside the image, behind the same evaluation ga
 | `EMBEDDING_MODEL` | `BAAI/bge-small-en-v1.5` | Help-center embeddings; empty for keyword search only |
 | `EMBEDDING_CACHE_DIR` | `ml-service/models/embeddings` | Where the embedding model is stored |
 | `KNOWLEDGE_DIR` | `ml-service/knowledge` | The help articles |
+| `METRICS_TOKEN` | — | When set, `GET /metrics` requires `Authorization: Bearer <token>` |
+| `LOG_LEVEL` | `INFO` | The service's log level (logs are JSON lines) |

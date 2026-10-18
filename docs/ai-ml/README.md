@@ -34,6 +34,6 @@ React (Vercel) ──Supabase JWT──► ml-service (FastAPI, Python)
 | 6 | [LLM features](06-llm.md) | LangChain (LCEL, output parsers, fakes), provider abstraction, structured output, grounding by placeholders, fallbacks | done |
 | 7 | [Help-center search (RAG)](07-rag.md) | Section chunking, BM25 from scratch, embeddings (bge-small, ONNX), hybrid search with RRF, declining off-topic questions, cited and checked answers | done |
 | 8 | [The assistant (LangGraph)](08-assistant.md) | LangGraph state graphs, routing, tools, checkpointed memory, human-in-the-loop with interrupt/resume, per-user isolation | done |
-| 9 | MLOps | Experiment tracking, evaluation gates in CI, monitoring, retraining | next |
+| 9 | [MLOps](09-mlops.md) | Prometheus metrics, structured logs, a feedback loop with consent, champion/challenger retraining with a paired gate, an experiment log, free deployment | done |
 
-Each step gets its own page in this folder when it lands.
+Every step is done. Each page explains one step: the problem, the technique, how it was evaluated (with the numbers), the trade-offs, and the interview questions it answers.

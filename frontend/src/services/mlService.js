@@ -62,7 +62,7 @@ export async function suggestCategoryML({ title, amount, type }, signal) {
         },
         signal,
     });
-    return result?.suggestion ?? null;
+    return result?.suggestion ? { ...result.suggestion, model_version: result.model_version } : null;
 }
 
 /**

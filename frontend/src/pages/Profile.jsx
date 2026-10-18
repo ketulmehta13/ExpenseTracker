@@ -9,6 +9,7 @@ import {
     Mail, Phone, BadgeCheck, Crown, CreditCard
 } from 'lucide-react';
 import { getProfile, updateProfile, getTransactions, authChangePassword, exportTransactionsCSV, deleteAccount, cancelSubscription } from '../services/api';
+import { ML_ENABLED } from '../lib/features';
 import { Skeleton } from '../components/ui/Skeleton';
 import ConfirmModal from '../components/ConfirmModal';
 import { usePlan } from '../context/PlanContext';
@@ -78,6 +79,7 @@ const Profile = () => {
 
     /* Preferences */
     const [currency, setCurrency] = useState(() => localStorage.getItem('et-currency') || 'INR');
+    const [trainingOptIn, setTrainingOptIn] = useState(false);
 
     /* Danger zone */
     const [deleteModal, setDeleteModal] = useState(false);
@@ -100,6 +102,7 @@ const Profile = () => {
                     phone: profileData.phone || '',
                 });
                 setBudget(profileData.monthly_budget ?? '');
+                setTrainingOptIn(Boolean(profileData.ai_training_opt_in));
                 if (profileData.profile_photo) setPhotoPreview(profileData.profile_photo);
             } catch {
                 toast.error('Failed to load profile.');
@@ -139,6 +142,18 @@ const Profile = () => {
             toast.error(err.message || 'Failed to update profile.');
         } finally {
             setSaving(false);
+        }
+    };
+
+    /* ── Opt in to improving suggestions ── */
+    const handleTrainingOptIn = async (value) => {
+        setTrainingOptIn(value);
+        try {
+            await updateProfile(user.id, { ai_training_opt_in: value });
+            toast.success(value ? 'Thanks! Your choices will help improve suggestions.' : 'Turned off.');
+        } catch {
+            setTrainingOptIn(!value);
+            toast.error('Could not save this setting.');
         }
     };
 
@@ -416,6 +431,25 @@ const Profile = () => {
                             </button>
                         </div>
                     </form>
+
+                    {/* Improving suggestions (ML) */}
+                    {ML_ENABLED && (
+                        <label className="flex items-start gap-3 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={trainingOptIn}
+                                onChange={(e) => handleTrainingOptIn(e.target.checked)}
+                                className="mt-0.5 h-4 w-4 rounded border-border text-primary focus:ring-ring"
+                            />
+                            <span className="text-sm">
+                                <span className="font-medium text-foreground">Help improve category suggestions</span>
+                                <span className="block text-xs text-muted-foreground mt-0.5">
+                                    Let the app learn from the categories you choose: titles, amounts and
+                                    categories only. Off by default, and you can turn it off at any time.
+                                </span>
+                            </span>
+                        </label>
+                    )}
 
                     {/* Currency */}
                     <div>

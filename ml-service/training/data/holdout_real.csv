@@ -1,0 +1,143 @@
+title,amount,type,label
+Blinkit order,420,EXPENSE,food
+UPI/BLINKIT/40213/grocery,650,EXPENSE,food
+dinner at barbeque nation,2400,EXPENSE,food
+Chaayos,180,EXPENSE,food
+swiggy order #88213,349,EXPENSE,food
+Zomato*Online,512,EXPENSE,food
+grocery shopping more supermarket,1840,EXPENSE,food
+Natures Basket,2200,EXPENSE,food
+burger king,299,EXPENSE,food
+tea and samosa,60,EXPENSE,food
+sabzi wala,140,EXPENSE,food
+doodh,64,EXPENSE,food
+team lunch,1500,EXPENSE,food
+UPI/EATCLUB/88213/Payment,310,EXPENSE,food
+licious chicken order,780,EXPENSE,food
+Starbucks India,410,EXPENSE,food
+Uber trip to airport,780,EXPENSE,travel
+OLA*RIDE 22091,240,EXPENSE,travel
+petrol,1500,EXPENSE,travel
+BPCL fuel station,2000,EXPENSE,travel
+Namma Metro recharge,500,EXPENSE,travel
+train tickets to pune,890,EXPENSE,travel
+Akasa Air flight,5600,EXPENSE,travel
+goibibo hotel booking,4200,EXPENSE,travel
+cab fare,320,EXPENSE,travel
+toll plaza,165,EXPENSE,travel
+rapido auto,85,EXPENSE,travel
+Blablacar ride,450,EXPENSE,travel
+abhibus ticket,780,EXPENSE,travel
+car servicing,3500,EXPENSE,travel
+UPI/UBER/55123/Pay,212,EXPENSE,travel
+Amazon.in order,1299,EXPENSE,shopping
+AMZN MKTP IN,2499,EXPENSE,shopping
+Flipkart Big Billion sale,7999,EXPENSE,shopping
+new jeans from levis,2999,EXPENSE,shopping
+H&M t-shirts,1499,EXPENSE,shopping
+Uniqlo,2990,EXPENSE,shopping
+headphones from croma store,3499,EXPENSE,shopping
+Vijay Sales TV,32990,EXPENSE,shopping
+puma sneakers,4599,EXPENSE,shopping
+shoppers stop,2200,EXPENSE,shopping
+firstcry baby clothes,1100,EXPENSE,shopping
+pepperfry sofa,18000,EXPENSE,shopping
+watch from titan,5500,EXPENSE,shopping
+MYNTRA*ORDER 8812,1799,EXPENSE,shopping
+snapdeal order,699,EXPENSE,shopping
+MSEDCL electricity,1850,EXPENSE,utilities
+light bill,1240,EXPENSE,utilities
+Jio prepaid 299,299,EXPENSE,utilities
+Airtel Xstream fiber,999,EXPENSE,utilities
+broadband renewal,1178,EXPENSE,utilities
+gas booking hp gas,903,EXPENSE,utilities
+water tanker,600,EXPENSE,utilities
+BBMP water bill,450,EXPENSE,utilities
+postpaid bill vodafone idea,599,EXPENSE,utilities
+adani electricity,2310,EXPENSE,utilities
+d2h recharge,350,EXPENSE,utilities
+phone recharge,239,EXPENSE,utilities
+you broadband,850,EXPENSE,utilities
+UPI/JIO/88123/Recharge,666,EXPENSE,utilities
+torrent power bill,1500,EXPENSE,utilities
+Netflix.com,649,EXPENSE,entertainment
+Spotify India,119,EXPENSE,entertainment
+movie tickets,600,EXPENSE,entertainment
+BMS*BOOKMYSHOW 2201,850,EXPENSE,entertainment
+Disney+ Hotstar annual,1499,EXPENSE,entertainment
+jiocinema premium,89,EXPENSE,entertainment
+xbox game pass,489,EXPENSE,entertainment
+Wonderla tickets,2800,EXPENSE,entertainment
+standup comedy tickets,999,EXPENSE,entertainment
+apple music,99,EXPENSE,entertainment
+smaaash games,1200,EXPENSE,entertainment
+imagica theme park,3600,EXPENSE,entertainment
+audible membership,199,EXPENSE,entertainment
+cinepolis,500,EXPENSE,entertainment
+amazon prime membership,1499,EXPENSE,entertainment
+Apollo Pharmacy medicines,560,EXPENSE,health
+doctor fees,800,EXPENSE,health
+PharmEasy*ORDER,920,EXPENSE,health
+blood test at lal pathlabs,1200,EXPENSE,health
+dentist visit,1500,EXPENSE,health
+gold's gym,2500,EXPENSE,health
+cult.fit membership,3999,EXPENSE,health
+Max hospital,8600,EXPENSE,health
+medicine,240,EXPENSE,health
+physio session,700,EXPENSE,health
+health insurance premium,14500,EXPENSE,health
+Tata 1mg,430,EXPENSE,health
+spectacles eye test,900,EXPENSE,health
+whey protein,2899,EXPENSE,health
+fortis consultation,1000,EXPENSE,health
+Udemy python course,449,EXPENSE,education
+semester fees,45000,EXPENSE,education
+textbooks,1200,EXPENSE,education
+GATE exam fee,1800,EXPENSE,education
+IELTS registration,16250,EXPENSE,education
+notebooks and pens,240,EXPENSE,education
+Coursera Plus,3999,EXPENSE,education
+tuition fees for maths,2500,EXPENSE,education
+Scaler academy,15000,EXPENSE,education
+school bus fees,1800,EXPENSE,education
+leetcode premium,1500,EXPENSE,education
+kindle unlimited,169,EXPENSE,education
+great learning course,5000,EXPENSE,education
+crossword books,899,EXPENSE,education
+rent for october,18000,EXPENSE,rent
+flat rent paid,22000,EXPENSE,rent
+PG monthly,9500,EXPENSE,rent
+landlord payment,15000,EXPENSE,rent
+apartment maintenance,2500,EXPENSE,rent
+rent nov,21000,EXPENSE,rent
+hostel rent,6000,EXPENSE,rent
+NoBroker*RENT,19500,EXPENSE,rent
+house rent transfer,16000,EXPENSE,rent
+security deposit flat,40000,EXPENSE,rent
+co-living stay zolo,11000,EXPENSE,rent
+rent paid via cred,25000,EXPENSE,rent
+Salary for September,85000,INCOME,salary
+NEFT SALARY ACME TECHNOLOGIES,92000,INCOME,salary
+salary,60000,INCOME,salary
+monthly pay credited,75000,INCOME,salary
+internship stipend,20000,INCOME,salary
+annual bonus,150000,INCOME,salary
+SAL CREDIT CAPGEMINI,68000,INCOME,salary
+payroll,58000,INCOME,salary
+salary from employer,90000,INCOME,salary
+diwali bonus,25000,INCOME,salary
+variable pay,40000,INCOME,salary
+pay slip credit,71000,INCOME,salary
+ATM withdrawal,5000,EXPENSE,other
+cash from atm,2000,EXPENSE,other
+sent to rahul,1500,EXPENSE,other
+gift for sister,2500,EXPENSE,other
+donation to ngo,1000,EXPENSE,other
+home loan EMI,28000,EXPENSE,other
+credit card payment,15000,EXPENSE,other
+penalty charges,500,EXPENSE,other
+UPI/RAHUL KUMAR/8812/Sent,800,EXPENSE,other
+mandir daan,501,EXPENSE,other
+bank service charge,118,EXPENSE,other
+personal loan emi,9500,EXPENSE,other
+money to dad,5000,EXPENSE,other

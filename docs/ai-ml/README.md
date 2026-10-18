@@ -26,8 +26,8 @@ React (Vercel) ──Supabase JWT──► ml-service (FastAPI, Python)
 |---|---|---|---|
 | 1 | Workflow setup | CI gates, branching, definition of done | done |
 | 2 | [ML service foundation](02-ml-service.md) | FastAPI, JWT verification, config, testing, Docker | done |
-| 3 | Transaction categorizer | Text classification, TF-IDF, logistic regression, macro-F1, confusion matrix, calibration | next |
-| 4 | Spending insights | Robust z-score, Isolation Forest, periodicity detection, time-series forecasting and backtesting | planned |
+| 3 | [Transaction categorizer](03-categorizer.md) | Text classification, TF-IDF, logistic regression, leakage-free evaluation, macro-F1, thresholds, calibration | done |
+| 4 | Spending insights | Robust z-score, Isolation Forest, periodicity detection, time-series forecasting and backtesting | next |
 | 5 | Natural-language quick-add | Rule-based extraction, slot filling, entity-level evaluation | planned |
 | 6 | LLM features | LangChain, structured output, provider abstraction, grounding and number verification | planned |
 | 7 | RAG | Chunking, embeddings, vector search, retrieval with citations | planned |

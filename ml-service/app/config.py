@@ -23,6 +23,8 @@ class Settings:
     model_dir: Path = DEFAULT_MODEL_DIR
     # A validated token is trusted for this long, so a burst of requests costs one auth round trip
     auth_cache_seconds: int = 60
+    # How long a user's history and categories are reused before being re-read from Supabase
+    user_context_cache_seconds: int = 60
 
     @classmethod
     def from_env(cls) -> Settings:
@@ -32,4 +34,5 @@ class Settings:
             allowed_origins=_csv(os.environ.get("ALLOWED_ORIGINS", DEFAULT_ORIGINS)),
             model_dir=Path(os.environ.get("MODEL_DIR", str(DEFAULT_MODEL_DIR))),
             auth_cache_seconds=int(os.environ.get("AUTH_CACHE_SECONDS", "60")),
+            user_context_cache_seconds=int(os.environ.get("USER_CONTEXT_CACHE_SECONDS", "60")),
         )

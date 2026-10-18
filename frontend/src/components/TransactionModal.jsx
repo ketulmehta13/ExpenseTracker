@@ -6,7 +6,45 @@ import { createTransaction, updateTransaction, getCategories, createCategory } f
 import { useAuth } from '../context/AuthContext';
 import { todayISODate } from '../lib/dates';
 import { suggestCategory } from '../services/aiService';
-import { AI_ENABLED } from '../lib/features';
+import { suggestCategoryML } from '../services/mlService';
+import { AI_ENABLED, ML_ENABLED } from '../lib/features';
+
+const SUGGESTIONS_ENABLED = ML_ENABLED || AI_ENABLED;
+
+/**
+ * A category suggestion in the chip's shape. The ML service is preferred: it checks the
+ * user's own history before its model. The LLM proxy is the fallback when only AI is on.
+ */
+async function fetchCategorySuggestion({ title, amount, type }, categories, signal) {
+    if (ML_ENABLED) {
+        const suggestion = await suggestCategoryML({ title, amount, type }, signal);
+        if (!suggestion) return null;
+        return {
+            category: suggestion.category_name,
+            confidence: suggestion.confidence,
+            matchedId: suggestion.category_id ?? null,
+            isNew: suggestion.category_id == null,
+            source: suggestion.source,
+        };
+    }
+    const result = await suggestCategory(title, categories.map((c) => c.name));
+    if (!result) return null;
+    const matched = categories.find((c) => c.name.toLowerCase() === result.category.toLowerCase());
+    return {
+        category: result.category,
+        confidence: result.confidence,
+        matchedId: matched?.id ?? null,
+        isNew: !matched,
+        source: 'llm',
+    };
+}
+
+/** Why the chip suggests what it does, so users can judge it */
+function suggestionReason(suggestion) {
+    if (suggestion.source === 'history') return 'from your history';
+    if (suggestion.source === 'model') return `${Math.round(suggestion.confidence * 100)}% sure`;
+    return null;
+}
 
 /**
  * TransactionModal — shared modal for Add and Edit transactions.
@@ -34,10 +72,9 @@ const TransactionModal = ({
     const [submitting, setSubmitting] = useState(false);
     const [errors, setErrors] = useState({});
 
-    // AI category suggestion state
-    const [aiSuggestion, setAiSuggestion] = useState(null);  // { category: string, confidence: string, isNew: bool, matchedId: string|null }
+    // Category suggestion state: { category, confidence, isNew, matchedId, source }
+    const [aiSuggestion, setAiSuggestion] = useState(null);
     const [aiLoading, setAiLoading] = useState(false);
-    const aiDebounceRef = useRef(null);
 
     const [form, setForm] = useState({
         type: defaultType,
@@ -133,41 +170,34 @@ const TransactionModal = ({
         if (key === 'category_id') setAiSuggestion(null);
     };
 
-    // Debounced AI category suggestion — fires 500ms after title stops changing
+    // Debounced category suggestion: fires 500ms after the user stops typing
     useEffect(() => {
-        // Only suggest in Add mode (not Edit) and when title has ≥3 chars
-        if (!AI_ENABLED || isEdit || !isOpen || form.title.trim().length < 3) {
+        const title = form.title.trim();
+        // Only in Add mode, once a few characters are typed, while no category is picked
+        if (!SUGGESTIONS_ENABLED || isEdit || !isOpen || title.length < 3 || form.category_id) {
             setAiSuggestion(null);
             return;
         }
-        // Don't suggest if user already picked a category
-        if (form.category_id) return;
-
-        clearTimeout(aiDebounceRef.current);
-        aiDebounceRef.current = setTimeout(async () => {
+        // Each keystroke cancels the previous request, so a slow answer never overwrites a newer one
+        const controller = new AbortController();
+        const timer = setTimeout(async () => {
             setAiLoading(true);
-            try {
-                const catNames = categories.map((c) => c.name);
-                const result = await suggestCategory(form.title.trim(), catNames);
-                if (!result) { setAiSuggestion(null); return; }
-
-                const matched = categories.find(
-                    (c) => c.name.toLowerCase() === result.category.toLowerCase()
-                );
-                setAiSuggestion({
-                    category: result.category,
-                    confidence: result.confidence,
-                    matchedId: matched?.id ?? null,
-                    isNew: !matched,
-                });
-            } finally {
+            const suggestion = await fetchCategorySuggestion(
+                { title, amount: form.amount, type: form.type },
+                categories,
+                controller.signal,
+            );
+            if (!controller.signal.aborted) {
+                setAiSuggestion(suggestion);
                 setAiLoading(false);
             }
         }, 500);
-
-        return () => clearTimeout(aiDebounceRef.current);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [form.title, isOpen]);
+        return () => {
+            clearTimeout(timer);
+            controller.abort();
+            setAiLoading(false);
+        };
+    }, [isEdit, isOpen, form.title, form.amount, form.type, form.category_id, categories]);
 
     /** Apply the AI suggested category — create it first if it's new */
     const applyAiSuggestion = async () => {
@@ -347,6 +377,7 @@ const TransactionModal = ({
                                             {aiSuggestion.isNew && <Plus size={9} />}
                                             {aiSuggestion.category}
                                         </button>
+                                        {suggestionReason(aiSuggestion) && <> · {suggestionReason(aiSuggestion)}</>}
                                         {' '}— {aiSuggestion.isNew ? 'tap to create & use' : 'tap to apply'}
                                         <button
                                             type="button"

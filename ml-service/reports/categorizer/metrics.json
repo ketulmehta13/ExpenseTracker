@@ -1,0 +1,337 @@
+{
+  "version": "20261018-ccaf45cc",
+  "trained_at": "2026-10-18T06:46:51+00:00",
+  "sklearn_version": "1.9.1",
+  "data": {
+    "synthetic_rows": 6000,
+    "templates": 178,
+    "train_rows": 4859,
+    "test_rows": 1141,
+    "holdout_rows": 142
+  },
+  "params": {
+    "C": 1.0,
+    "cv_macro_f1_by_C": {
+      "0.1": 0.5412,
+      "0.25": 0.5528,
+      "0.5": 0.557,
+      "1.0": 0.5601,
+      "2.0": 0.557,
+      "4.0": 0.551,
+      "8.0": 0.5595
+    },
+    "threshold": 0.7,
+    "target_precision": 0.9
+  },
+  "ablation": {
+    "majority class": {
+      "test": {
+        "rows": 1141,
+        "accuracy": 0.0815,
+        "macro_f1": 0.0151
+      },
+      "holdout": {
+        "rows": 142,
+        "accuracy": 0.0845,
+        "macro_f1": 0.0156
+      }
+    },
+    "words only": {
+      "test": {
+        "rows": 1141,
+        "accuracy": 0.4443,
+        "macro_f1": 0.4725
+      },
+      "holdout": {
+        "rows": 142,
+        "accuracy": 0.7113,
+        "macro_f1": 0.7372
+      }
+    },
+    "words + characters": {
+      "test": {
+        "rows": 1141,
+        "accuracy": 0.4899,
+        "macro_f1": 0.5024
+      },
+      "holdout": {
+        "rows": 142,
+        "accuracy": 0.7746,
+        "macro_f1": 0.7738
+      }
+    },
+    "full (+ amount band + type)": {
+      "test": {
+        "rows": 1141,
+        "accuracy": 0.5329,
+        "macro_f1": 0.5325
+      },
+      "holdout": {
+        "rows": 142,
+        "accuracy": 0.8169,
+        "macro_f1": 0.8174
+      }
+    }
+  },
+  "leaky_random_split_macro_f1": 0.9925,
+  "out_of_fold_curve": {
+    "0.3": {
+      "coverage": 0.5736,
+      "precision": 0.7223
+    },
+    "0.4": {
+      "coverage": 0.44,
+      "precision": 0.7834
+    },
+    "0.5": {
+      "coverage": 0.3707,
+      "precision": 0.8168
+    },
+    "0.6": {
+      "coverage": 0.3221,
+      "precision": 0.8486
+    },
+    "0.7": {
+      "coverage": 0.268,
+      "precision": 0.9209
+    },
+    "0.8": {
+      "coverage": 0.2221,
+      "precision": 0.9759
+    },
+    "0.9": {
+      "coverage": 0.1721,
+      "precision": 1.0
+    }
+  },
+  "test": {
+    "rows": 1141,
+    "accuracy": 0.5329,
+    "macro_f1": 0.5325,
+    "ece": 0.0813,
+    "mean_confidence": 0.5054,
+    "at_threshold": {
+      "coverage": 0.326,
+      "precision": 0.9409
+    },
+    "curve": {
+      "0.3": {
+        "coverage": 0.5451,
+        "precision": 0.8103
+      },
+      "0.4": {
+        "coverage": 0.4479,
+        "precision": 0.8571
+      },
+      "0.5": {
+        "coverage": 0.3953,
+        "precision": 0.9401
+      },
+      "0.6": {
+        "coverage": 0.3611,
+        "precision": 0.9417
+      },
+      "0.7": {
+        "coverage": 0.326,
+        "precision": 0.9409
+      },
+      "0.8": {
+        "coverage": 0.3146,
+        "precision": 0.9387
+      },
+      "0.9": {
+        "coverage": 0.2323,
+        "precision": 1.0
+      }
+    }
+  },
+  "holdout": {
+    "rows": 142,
+    "accuracy": 0.8873,
+    "macro_f1": 0.8878,
+    "ece": 0.1877,
+    "mean_confidence": 0.6997,
+    "at_threshold": {
+      "coverage": 0.5563,
+      "precision": 0.9747
+    },
+    "curve": {
+      "0.3": {
+        "coverage": 0.8873,
+        "precision": 0.9048
+      },
+      "0.4": {
+        "coverage": 0.8028,
+        "precision": 0.9298
+      },
+      "0.5": {
+        "coverage": 0.7324,
+        "precision": 0.9423
+      },
+      "0.6": {
+        "coverage": 0.662,
+        "precision": 0.9574
+      },
+      "0.7": {
+        "coverage": 0.5563,
+        "precision": 0.9747
+      },
+      "0.8": {
+        "coverage": 0.4789,
+        "precision": 1.0
+      },
+      "0.9": {
+        "coverage": 0.331,
+        "precision": 1.0
+      }
+    }
+  },
+  "holdout_per_class": {
+    "education": {
+      "precision": 0.9166666666666666,
+      "recall": 0.7857142857142857,
+      "f1-score": 0.8461538461538461,
+      "support": 14.0
+    },
+    "entertainment": {
+      "precision": 0.8461538461538461,
+      "recall": 0.7333333333333333,
+      "f1-score": 0.7857142857142857,
+      "support": 15.0
+    },
+    "food": {
+      "precision": 0.875,
+      "recall": 0.875,
+      "f1-score": 0.875,
+      "support": 16.0
+    },
+    "health": {
+      "precision": 0.8823529411764706,
+      "recall": 1.0,
+      "f1-score": 0.9375,
+      "support": 15.0
+    },
+    "other": {
+      "precision": 0.8571428571428571,
+      "recall": 0.9230769230769231,
+      "f1-score": 0.8888888888888888,
+      "support": 13.0
+    },
+    "rent": {
+      "precision": 0.7857142857142857,
+      "recall": 0.9166666666666666,
+      "f1-score": 0.8461538461538461,
+      "support": 12.0
+    },
+    "salary": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 12.0
+    },
+    "shopping": {
+      "precision": 0.8,
+      "recall": 0.8,
+      "f1-score": 0.8,
+      "support": 15.0
+    },
+    "travel": {
+      "precision": 0.9333333333333333,
+      "recall": 0.9333333333333333,
+      "f1-score": 0.9333333333333333,
+      "support": 15.0
+    },
+    "utilities": {
+      "precision": 1.0,
+      "recall": 0.9333333333333333,
+      "f1-score": 0.9655172413793104,
+      "support": 15.0
+    }
+  },
+  "holdout_mistakes": [
+    {
+      "title": "leetcode premium",
+      "amount": 1500,
+      "label": "education",
+      "predicted": "entertainment",
+      "confidence": 0.741
+    },
+    {
+      "title": "semester fees",
+      "amount": 45000,
+      "label": "education",
+      "predicted": "rent",
+      "confidence": 0.735
+    },
+    {
+      "title": "gas booking hp gas",
+      "amount": 903,
+      "label": "utilities",
+      "predicted": "travel",
+      "confidence": 0.632
+    },
+    {
+      "title": "audible membership",
+      "amount": 199,
+      "label": "entertainment",
+      "predicted": "health",
+      "confidence": 0.627
+    },
+    {
+      "title": "Disney+ Hotstar annual",
+      "amount": 1499,
+      "label": "entertainment",
+      "predicted": "other",
+      "confidence": 0.503
+    },
+    {
+      "title": "grocery shopping more supermarket",
+      "amount": 1840,
+      "label": "food",
+      "predicted": "shopping",
+      "confidence": 0.5
+    },
+    {
+      "title": "Vijay Sales TV",
+      "amount": 32990,
+      "label": "shopping",
+      "predicted": "rent",
+      "confidence": 0.478
+    },
+    {
+      "title": "train tickets to pune",
+      "amount": 890,
+      "label": "travel",
+      "predicted": "entertainment",
+      "confidence": 0.414
+    },
+    {
+      "title": "notebooks and pens",
+      "amount": 240,
+      "label": "education",
+      "predicted": "food",
+      "confidence": 0.392
+    },
+    {
+      "title": "apple music",
+      "amount": 99,
+      "label": "entertainment",
+      "predicted": "shopping",
+      "confidence": 0.383
+    },
+    {
+      "title": "amazon prime membership",
+      "amount": 1499,
+      "label": "entertainment",
+      "predicted": "shopping",
+      "confidence": 0.381
+    },
+    {
+      "title": "mandir daan",
+      "amount": 501,
+      "label": "other",
+      "predicted": "food",
+      "confidence": 0.347
+    }
+  ]
+}

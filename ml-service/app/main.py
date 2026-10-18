@@ -12,8 +12,10 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__
 from app.auth import TokenCache
+from app.cache import TTLCache
 from app.config import Settings
-from app.routers import health
+from app.ml.categorizer import CategorizerModel
+from app.routers import categorize, health
 
 logger = logging.getLogger("ml_service")
 
@@ -29,12 +31,20 @@ def create_app(
     async def lifespan(app: FastAPI):
         # One pooled HTTP client for the app's lifetime (Supabase Auth + REST calls)
         app.state.http = httpx.AsyncClient(timeout=10, transport=transport)
+        app.state.categorizer = CategorizerModel.load(settings.model_dir)
+        if app.state.categorizer is None:
+            logger.warning(
+                "No categorizer model in %s; /v1/categorize will use history only. "
+                "Train one with: python -m training.train_categorizer",
+                settings.model_dir,
+            )
         yield
         await app.state.http.aclose()
 
     app = FastAPI(title="Expense Tracker ML service", version=__version__, lifespan=lifespan)
     app.state.settings = settings
     app.state.token_cache = TokenCache(settings.auth_cache_seconds)
+    app.state.user_context_cache = TTLCache(settings.user_context_cache_seconds)
 
     app.add_middleware(
         CORSMiddleware,
@@ -54,6 +64,7 @@ def create_app(
         return response
 
     app.include_router(health.router)
+    app.include_router(categorize.router)
     return app
 
 

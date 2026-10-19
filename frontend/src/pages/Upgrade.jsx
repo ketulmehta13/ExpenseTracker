@@ -103,7 +103,7 @@ const Upgrade = () => {
                 subscription_id: session.subscriptionId,
                 name: 'Expense Tracker Pro',
                 description: `Pro Plan (${selectedCycle === 'yearly' ? 'Yearly' : 'Monthly'}) — 7-Day Free Trial`,
-                image: '/logo.png',
+                image: '/icons/icon-192.png',
                 prefill: {
                     name: user?.user_metadata?.username || user?.email?.split('@')[0] || '',
                     email: user?.email || '',

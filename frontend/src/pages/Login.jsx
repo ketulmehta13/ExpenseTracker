@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { Loader2, Eye, EyeOff, TrendingUp, PieChart, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { getAuthErrorMessage } from '../lib/authErrors';
-import logoIcon from '../assets/logo-icon.png';
+import logoIcon from '../assets/logo-icon.webp';
 
 const Login = () => {
     const [email, setEmail] = useState('');

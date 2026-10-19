@@ -42,7 +42,7 @@ const bottomTabs = [
 
 const MainLayout = () => {
     const { logout, user } = useAuth();
-    const { isPro, isTrialing, isPastDue } = usePlan();
+    const { billingEnabled, isPro, isTrialing, isPastDue } = usePlan();
     const navigate = useNavigate();
     const isUpgradePage = useLocation().pathname === '/dashboard/upgrade';
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -255,9 +255,11 @@ const MainLayout = () => {
                                 <span className="text-sm font-semibold text-foreground max-w-[120px] truncate leading-tight">
                                     {displayName}
                                 </span>
-                                <span className="text-[10px] text-muted-foreground leading-none">
-                                    {isPro ? (isTrialing ? 'Pro Trial' : 'Pro Member') : 'Free Plan'}
-                                </span>
+                                {billingEnabled && (
+                                    <span className="text-[10px] text-muted-foreground leading-none">
+                                        {isPro ? (isTrialing ? 'Pro Trial' : 'Pro Member') : 'Free Plan'}
+                                    </span>
+                                )}
                             </div>
                             <ChevronDown
                                 size={14}
@@ -288,7 +290,7 @@ const MainLayout = () => {
                                         Profile & Settings
                                     </Link>
 
-                                    {!isPro ? (
+                                    {!billingEnabled ? null : !isPro ? (
                                         <Link
                                             to="/dashboard/upgrade"
                                             onClick={() => setUserMenuOpen(false)}

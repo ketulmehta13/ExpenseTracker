@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { PlanProvider } from './context/PlanContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import MainLayout from './layouts/MainLayout';
+import { BILLING_ENABLED } from './lib/features';
 
 // Pages
 import Login from './pages/Login';
@@ -48,7 +49,7 @@ function AppRoutes() {
                 <Route path="analytics" element={<Analytics />} />
                 <Route path="categories" element={<Categories />} />
                 <Route path="settings" element={<Profile />} />
-                <Route path="upgrade" element={<Upgrade />} />
+                <Route path="upgrade" element={BILLING_ENABLED ? <Upgrade /> : <Navigate to="/dashboard" replace />} />
                 <Route path="profile" element={<Navigate to="/dashboard/settings" replace />} />
             </Route>
 

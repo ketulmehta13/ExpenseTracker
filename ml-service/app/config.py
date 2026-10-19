@@ -15,6 +15,13 @@ def _csv(value: str) -> tuple[str, ...]:
     return tuple(item.strip() for item in value.split(",") if item.strip())
 
 
+def _model_name(value: str) -> str:
+    """A model name, or "" when switched off with "none" or "off" (an explicit value, because
+    some hosts drop environment variables whose value is empty)."""
+    value = value.strip()
+    return "" if value.lower() in {"", "none", "off"} else value
+
+
 @dataclass(frozen=True)
 class Settings:
     supabase_url: str = ""
@@ -32,7 +39,8 @@ class Settings:
     llm_base_url: str = ""
     llm_api_key: str = field(default="", repr=False)  # never printed in logs or tracebacks
     llm_timeout_seconds: float = 20.0
-    # Help-center search: articles, and the embedding model ("" = keyword search only)
+    # Help-center search: articles, and the embedding model ("" = keyword search only, which
+    # EMBEDDING_MODEL=none selects)
     knowledge_dir: Path = DEFAULT_KNOWLEDGE_DIR
     embedding_model: str = "BAAI/bge-small-en-v1.5"
     embedding_cache_dir: Path = DEFAULT_MODEL_DIR / "embeddings"
@@ -55,7 +63,7 @@ class Settings:
             llm_api_key=os.environ.get("LLM_API_KEY", ""),
             llm_timeout_seconds=float(os.environ.get("LLM_TIMEOUT_SECONDS", "20")),
             knowledge_dir=Path(os.environ.get("KNOWLEDGE_DIR", str(DEFAULT_KNOWLEDGE_DIR))),
-            embedding_model=os.environ.get("EMBEDDING_MODEL", "BAAI/bge-small-en-v1.5"),
+            embedding_model=_model_name(os.environ.get("EMBEDDING_MODEL", "BAAI/bge-small-en-v1.5")),
             embedding_cache_dir=Path(
                 os.environ.get("EMBEDDING_CACHE_DIR", str(DEFAULT_MODEL_DIR / "embeddings"))
             ),

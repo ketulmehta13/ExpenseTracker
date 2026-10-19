@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { useAuth } from './AuthContext';
 import { getSubscription, checkUserPlan } from '../services/api';
 import { supabase } from '../services/supabaseClient';
+import { BILLING_ENABLED } from '../lib/features';
 
 export const PlanContext = createContext();
 
@@ -21,7 +22,8 @@ export const PlanProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     const fetchPlan = useCallback(async () => {
-        if (!userId) {
+        // With billing off there is no plan to look up: everyone gets every feature
+        if (!userId || !BILLING_ENABLED) {
             setSubscription(null);
             setPlanInfo(null);
             setLoading(false);
@@ -56,7 +58,7 @@ export const PlanProvider = ({ children }) => {
 
     // Listen to real-time updates on user's subscription row (e.g. when webhook fires)
     useEffect(() => {
-        if (!userId) return;
+        if (!userId || !BILLING_ENABLED) return;
 
         const channel = supabase
             .channel(`subscription:${userId}`)
@@ -84,7 +86,7 @@ export const PlanProvider = ({ children }) => {
 
     // check-plan (server) is the source of truth; the table values are a fallback
     // for when the Edge Function can't be reached.
-    const isPro = Boolean(
+    const isPro = !BILLING_ENABLED || Boolean(
         planInfo?.isPro ?? (
             (plan === 'pro_monthly' || plan === 'pro_yearly') &&
             (status === 'active' || status === 'trialing' || status === 'past_due')
@@ -102,6 +104,8 @@ export const PlanProvider = ({ children }) => {
     const canUseAI = isPro;
 
     const value = {
+        // false: hide plan names, upgrade prompts and billing settings (features are all unlocked)
+        billingEnabled: BILLING_ENABLED,
         subscription,
         planInfo,
         plan,

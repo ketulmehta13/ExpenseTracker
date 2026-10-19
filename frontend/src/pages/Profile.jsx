@@ -87,7 +87,7 @@ const Profile = () => {
     const [deleteLoading, setDeleteLoading] = useState(false);
 
     /* Subscription & Billing */
-    const { isPro, isTrialing, isPastDue, isCanceled, plan, trialEnd, periodEnd, gracePeriodEnd, refreshPlan } = usePlan();
+    const { billingEnabled, isPro, isTrialing, isPastDue, isCanceled, plan, trialEnd, periodEnd, gracePeriodEnd, refreshPlan } = usePlan();
     const [cancelModal, setCancelModal] = useState(false);
     const [cancelLoading, setCancelLoading] = useState(false);
 
@@ -474,7 +474,8 @@ const Profile = () => {
                 </div>
             </Section>
 
-            {/* 4. Billing & Subscription */}
+            {/* 4. Billing & Subscription (hidden while everything is free) */}
+            {billingEnabled && (
             <Section id="billing" title="Billing & Subscription" icon={CreditCard}>
                 <div className="space-y-4">
                     {/* Past Due Warning Banner */}
@@ -541,6 +542,7 @@ const Profile = () => {
                     </div>
                 </div>
             </Section>
+            )}
 
             {/* 5. Data */}
             <Section title="Data & Exports" icon={Database}>

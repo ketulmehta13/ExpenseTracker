@@ -529,14 +529,13 @@ export const saveAIInsight = async (userId, month, insight) => {
 
 export const exportTransactionsCSV = (transactions) => {
 
-    const headers = ['Date', 'Title', 'Category', 'Type', 'Amount', 'Notes', 'Is Recurring'];
+    const headers = ['Date', 'Title', 'Category', 'Type', 'Amount', 'Is Recurring'];
     const rows = transactions.map(t => [
         t.date,
         csvTextCell(t.title),
         csvTextCell(t.category_name),
         t.type,
         t.amount,
-        csvTextCell(t.notes),
         t.is_recurring ? 'Yes' : 'No',
     ]);
 

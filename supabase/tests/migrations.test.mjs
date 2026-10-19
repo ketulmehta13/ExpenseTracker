@@ -53,6 +53,18 @@ await db.exec(`
   CREATE TABLE auth.users (id uuid PRIMARY KEY, email text, raw_user_meta_data jsonb DEFAULT '{}'::jsonb);
   CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE
     AS $$ SELECT NULLIF(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
+  CREATE SCHEMA storage;
+  CREATE TABLE storage.buckets (id text PRIMARY KEY, name text NOT NULL, public boolean DEFAULT false,
+                                file_size_limit bigint, allowed_mime_types text[]);
+  CREATE TABLE storage.objects (id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                                bucket_id text REFERENCES storage.buckets (id), name text NOT NULL,
+                                owner uuid DEFAULT auth.uid(), created_at timestamptz DEFAULT now());
+  -- Supabase's own helper: the folders of a path, without the file name
+  CREATE FUNCTION storage.foldername(name text) RETURNS text[] LANGUAGE sql IMMUTABLE
+    AS $$ SELECT (string_to_array(name, '/'))[1:array_length(string_to_array(name, '/'), 1) - 1] $$;
+  ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+  GRANT USAGE ON SCHEMA storage TO anon, authenticated, service_role;
+  GRANT ALL ON storage.buckets, storage.objects TO anon, authenticated, service_role;
   GRANT USAGE ON SCHEMA public, auth TO anon, authenticated, service_role;
   ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated, service_role;
   ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO anon, authenticated, service_role;
@@ -278,6 +290,58 @@ await check('deleting the account deletes its feedback', async () => {
   await db.query(`DELETE FROM auth.users WHERE id = $1`, [USER_D]);
   const { rows } = await db.query(`SELECT count(*)::int AS n FROM ml_feedback WHERE user_id = $1`, [USER_D]);
   assert.equal(rows[0].n, 0);
+});
+
+// ── Scanned bills (re-runnable) ─────────────────────────────────────────────
+await db.exec(migration('20261019000000_receipts.sql'));
+await db.exec(migration('20261019000000_receipts.sql'));
+console.log('After the receipts migration:');
+
+const storeBill = (user, path) =>
+  asRole('authenticated', user, () =>
+    db.query(`INSERT INTO storage.objects (bucket_id, name) VALUES ('receipts', $1)`, [path]),
+  );
+
+await check('the receipts bucket is private and takes only photos and PDFs', async () => {
+  const { rows } = await db.query(
+    `SELECT public, file_size_limit::int AS size, allowed_mime_types AS types FROM storage.buckets WHERE id = 'receipts'`,
+  );
+  assert.deepEqual(rows, [
+    { public: false, size: 10485760, types: ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'] },
+  ]);
+});
+
+await check('users store bills only in their own folder', async () => {
+  await storeBill(USER_A, `${USER_A}/bill-1.jpg`);
+  await assert.rejects(storeBill(USER_A, `${USER_B}/bill-2.jpg`), /row-level security/);
+  await assert.rejects(storeBill(USER_A, 'bill-3.jpg'), /row-level security/);
+  await assert.rejects(
+    asRole('anon', null, () => db.query(`INSERT INTO storage.objects (bucket_id, name) VALUES ('receipts', 'x/y.jpg')`)),
+    /row-level security/,
+  );
+});
+
+await check('users see and delete only their own bills', async () => {
+  await storeBill(USER_B, `${USER_B}/bill-9.pdf`);
+  await asRole('authenticated', USER_A, async () => {
+    const { rows } = await db.query(`SELECT name FROM storage.objects WHERE bucket_id = 'receipts'`);
+    assert.deepEqual(rows.map((row) => row.name), [`${USER_A}/bill-1.jpg`]);
+    const removed = await db.query(`DELETE FROM storage.objects WHERE name = $1 RETURNING name`, [`${USER_B}/bill-9.pdf`]);
+    assert.equal(removed.rows.length, 0);
+  });
+  const { rows } = await db.query(`SELECT count(*)::int AS n FROM storage.objects WHERE name = $1`, [`${USER_B}/bill-9.pdf`]);
+  assert.equal(rows[0].n, 1);
+});
+
+await check('transactions made from a bill point at it', async () => {
+  const { rows } = await asRole('authenticated', USER_A, () =>
+    db.query(
+      `INSERT INTO transactions (user_id, title, amount, type, receipt_path)
+       VALUES ($1, 'DMart · Groceries', 611.2, 'EXPENSE', $2) RETURNING receipt_path`,
+      [USER_A, `${USER_A}/bill-1.jpg`],
+    ),
+  );
+  assert.equal(rows[0].receipt_path, `${USER_A}/bill-1.jpg`);
 });
 
 console.log(`\n${passed} checks passed`);

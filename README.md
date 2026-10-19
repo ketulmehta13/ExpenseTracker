@@ -30,6 +30,10 @@ A separate Python service ([`ml-service/`](ml-service/README.md)) adds these fea
 
 Each feature is evaluated, and CI gates on the results. How each one works, how it was measured and the trade-offs are documented in [`docs/ai-ml/`](docs/ai-ml/README.md).
 
+The features appear in the app once the service is running and the frontend's `VITE_ML_API_URL` points to it; until then the app works as before. Deploying it is free ([steps](docs/ai-ml/09-mlops.md#6-deployment-free)):
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/ketulmehta13/ExpenseTracker)
+
 ## 🚀 Quickstart & Local Setup
 
 ### 1. Prerequisites

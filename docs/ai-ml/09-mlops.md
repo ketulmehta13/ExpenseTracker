@@ -131,11 +131,14 @@ MLflow does this, and much more, for teams. For one service a JSON-lines file pe
 | Help-center embedding model (ONNX) | about **370 MB** more |
 
 **Render** (the blueprint is in [`render.yaml`](../../render.yaml)):
-1. In the Render dashboard, choose **New → Blueprint**, pick this repository, and enter `SUPABASE_URL` and `SUPABASE_ANON_KEY` (the public anon key).
-2. On the free plan (512 MB) the blueprint sets `EMBEDDING_MODEL` empty, so help search runs on keywords alone. On test questions that's 0.73 hit@1 instead of 0.83. With 1 GB or more, delete that line.
-3. Free services sleep after 15 minutes. The first request then takes about a minute, and the app simply shows no ML features until the service is awake.
-4. In Vercel, set `VITE_ML_API_URL` to the service's URL (e.g. `https://expense-ml-service.onrender.com`) and redeploy.
-5. Apply the feedback migration to Supabase (SQL editor, or `supabase db push`): `supabase/migrations/20261018000000_ml_feedback.sql`.
+1. Click [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/ketulmehta13/ExpenseTracker) (or choose **New → Blueprint** in the Render dashboard and pick this repository). Enter `SUPABASE_URL` and `SUPABASE_ANON_KEY`: the same public values as the frontend's `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
+2. The first build installs the dependencies, bakes the embedding model and trains the categorizer: about 5–10 minutes. When it's live, `https://<service>.onrender.com/health` returns `"status": "ok"`.
+3. On the free plan (512 MB) the blueprint sets `EMBEDDING_MODEL=none`, so help search runs on keywords alone. On test questions that's 0.73 hit@1 instead of 0.83. With 1 GB or more, delete that entry.
+4. Free services sleep after 15 minutes. The first request then takes about a minute, and the app simply shows no ML features until the service is awake. Opening `/health` wakes it.
+5. In Vercel, set `VITE_ML_API_URL` to the service's URL (e.g. `https://expense-ml-service.onrender.com`, no trailing slash) and redeploy. Vite reads it at build time, so a redeploy is required.
+6. Apply the feedback migration to Supabase: paste `supabase/migrations/20261018000000_ml_feedback.sql` into the SQL editor and run it. It is re-runnable. Until then, everything works except the "Help improve category suggestions" setting, and no feedback is recorded.
+
+The service only accepts requests from the origins in `ALLOWED_ORIGINS` (the production site). Add a preview URL there to try the features on a Vercel preview.
 
 **Alternative: Hugging Face Spaces** (Docker SDK, 16 GB RAM on the free CPU tier). Full hybrid search fits. Create a Docker Space from `ml-service/`, set the same variables as Space secrets, and use port 7860 (`PORT=7860`).
 

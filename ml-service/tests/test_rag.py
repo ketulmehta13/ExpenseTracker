@@ -6,10 +6,11 @@ import pytest
 from langchain_core.language_models.fake_chat_models import FakeListChatModel
 from langchain_core.runnables import RunnableLambda
 
+from app.config import Settings
 from app.llm.verify import numbers_in
 from app.rag.answer import NOT_FOUND, answer_question, checked_llm_answer
 from app.rag.bm25 import BM25, tokenize
-from app.rag.embeddings import normalize
+from app.rag.embeddings import load_embedder, normalize
 from app.rag.knowledge import Chunk, fixed_size_chunks, load_chunks
 from app.rag.retriever import HelpIndex, ranked_articles
 from training.evaluate_rag import decline_accuracy, retrieval_metrics
@@ -96,6 +97,20 @@ def test_without_embeddings_search_falls_back_to_keywords(chunks):
     # subscription". The right section is still in the top three; hybrid search exists for this.
     assert "plans-and-billing" in ranked_articles(hits)
     assert keyword_only.in_scope("anything at all")
+
+
+@pytest.mark.parametrize("value", ["", "none", "None", " off "])
+def test_embeddings_can_be_switched_off(monkeypatch, value):
+    # Small servers can't hold the 370 MB model (Render's free plan has 512 MB in all)
+    monkeypatch.setenv("EMBEDDING_MODEL", value)
+    settings = Settings.from_env()
+    assert settings.embedding_model == ""
+    assert load_embedder(settings.embedding_model, settings.embedding_cache_dir) is None
+
+
+def test_an_embedding_model_name_is_kept(monkeypatch):
+    monkeypatch.setenv("EMBEDDING_MODEL", " BAAI/bge-small-en-v1.5 ")
+    assert Settings.from_env().embedding_model == "BAAI/bge-small-en-v1.5"
 
 
 # ---------- answers ----------

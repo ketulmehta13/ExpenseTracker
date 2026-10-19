@@ -103,6 +103,8 @@ Retraining compares a challenger with the current model and promotes it only if 
 
 ## Deploy
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/ketulmehta13/ExpenseTracker)
+
 The repository's [`render.yaml`](../render.yaml) deploys this service to Render's free plan. See [docs/ai-ml/09-mlops.md](../docs/ai-ml/09-mlops.md#6-deployment-free) for the steps, the memory trade-off and the Hugging Face Spaces alternative.
 
 ## Test and lint
@@ -138,7 +140,7 @@ The build trains the categorizer inside the image, behind the same evaluation ga
 | `LLM_BASE_URL` | Ollama's default | Endpoint URL (for `openai`, the `/v1` base) |
 | `LLM_API_KEY` | — | Only for hosted endpoints; never commit it |
 | `LLM_TIMEOUT_SECONDS` | `20` | After this, the rules or the template are used |
-| `EMBEDDING_MODEL` | `BAAI/bge-small-en-v1.5` | Help-center embeddings; empty for keyword search only |
+| `EMBEDDING_MODEL` | `BAAI/bge-small-en-v1.5` | Help-center embeddings; `none` for keyword search only |
 | `EMBEDDING_CACHE_DIR` | `ml-service/models/embeddings` | Where the embedding model is stored |
 | `KNOWLEDGE_DIR` | `ml-service/knowledge` | The help articles |
 | `METRICS_TOKEN` | — | When set, `GET /metrics` requires `Authorization: Bearer <token>` |

@@ -10,24 +10,20 @@ import {
 import { Skeleton } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/ui/EmptyState';
 import ConfirmModal from '../components/ConfirmModal';
+import CategoryIcon from '../components/CategoryIcon';
 import { usePlan } from '../context/PlanContext';
 
-/* ── 12 preset color swatches (with Brand #0d3a35) ── */
+/* ── 10 clearly different color swatches (brand #0d3a35 first) ── */
 const PRESET_COLORS = [
-    '#0d3a35', '#16574f', '#247a70', '#3b9e92',
-    '#0284c7', '#f59e0b', '#dc2626', '#7c3aed',
-    '#ef4444', '#84cc16', '#e879f9', '#2dd4bf',
+    '#0d3a35', '#0d9488', '#0284c7', '#4f46e5', '#7c3aed',
+    '#db2777', '#dc2626', '#ea580c', '#d97706', '#65a30d',
 ];
-
-/* ── Default emoji icons ── */
-const PRESET_ICONS = ['🛒', '🍔', '🚗', '💊', '🎬', '✈️', '📚', '💼', '🏠', '💡', '🎁', '🏋️'];
 
 /* ── Category Form Modal ── */
 const CategoryFormModal = ({ isOpen, onClose, onSave, category }) => {
     const isEdit = Boolean(category);
     const [name, setName] = useState('');
     const [color, setColor] = useState(PRESET_COLORS[0]);
-    const [icon, setIcon] = useState(PRESET_ICONS[0]);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
 
@@ -35,7 +31,6 @@ const CategoryFormModal = ({ isOpen, onClose, onSave, category }) => {
         if (isOpen) {
             setName(category?.name || '');
             setColor(category?.color || PRESET_COLORS[0]);
-            setIcon(category?.icon || PRESET_ICONS[0]);
             setError('');
         }
     }, [isOpen, category]);
@@ -53,10 +48,10 @@ const CategoryFormModal = ({ isOpen, onClose, onSave, category }) => {
         setSaving(true);
         try {
             if (isEdit) {
-                await updateCategory(category.id, { name: name.trim(), color, icon });
+                await updateCategory(category.id, { name: name.trim(), color });
                 toast.success(`Category "${name.trim()}" updated!`);
             } else {
-                await createCategory({ name: name.trim(), color, icon });
+                await createCategory({ name: name.trim(), color });
                 toast.success(`Category "${name.trim()}" created!`);
             }
             onSave();
@@ -96,34 +91,17 @@ const CategoryFormModal = ({ isOpen, onClose, onSave, category }) => {
                                     error ? 'border-destructive focus:ring-destructive/30' : 'border-border focus:ring-ring/30 focus:border-ring'
                                 }`}
                             />
-                            {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
-                        </div>
-
-                        {/* Icon picker */}
-                        <div>
-                            <label className="block text-sm font-medium text-foreground mb-1.5">Icon</label>
-                            <div className="flex flex-wrap gap-2">
-                                {PRESET_ICONS.map((ic) => (
-                                    <button
-                                        type="button"
-                                        key={ic}
-                                        onClick={() => setIcon(ic)}
-                                        className={`h-9 w-9 rounded-xl text-lg flex items-center justify-center transition-all ${
-                                            icon === ic
-                                                ? 'ring-2 ring-primary ring-offset-2 ring-offset-card scale-110'
-                                                : 'bg-muted hover:scale-105'
-                                        }`}
-                                    >
-                                        {ic}
-                                    </button>
-                                ))}
-                            </div>
+                            {error ? (
+                                <p className="mt-1 text-xs text-destructive">{error}</p>
+                            ) : (
+                                <p className="mt-1 text-xs text-muted-foreground">The icon is picked from the name.</p>
+                            )}
                         </div>
 
                         {/* Color picker */}
                         <div>
                             <label className="block text-sm font-medium text-foreground mb-1.5">Color</label>
-                            <div className="flex flex-wrap gap-2">
+                            <div className="flex justify-between gap-1">
                                 {PRESET_COLORS.map((c) => (
                                     <button
                                         type="button"
@@ -140,12 +118,7 @@ const CategoryFormModal = ({ isOpen, onClose, onSave, category }) => {
 
                         {/* Preview */}
                         <div className="flex items-center gap-3 rounded-xl bg-muted/50 p-3">
-                            <div
-                                className="flex h-10 w-10 items-center justify-center rounded-xl text-lg"
-                                style={{ background: color + '30' }}
-                            >
-                                {icon}
-                            </div>
+                            <CategoryIcon name={name} color={color} />
                             <span className="font-medium text-foreground">{name || 'Category name'}</span>
                             <div className="ml-auto h-3 w-3 rounded-full" style={{ background: color }} />
                         </div>
@@ -381,12 +354,7 @@ const Categories = () => {
                             className="group relative rounded-2xl border border-border bg-card p-4 hover:shadow-md transition-shadow"
                         >
                             <div className="flex items-center gap-3 mb-3">
-                                <div
-                                    className="flex h-10 w-10 items-center justify-center rounded-xl text-lg flex-shrink-0"
-                                    style={{ background: (cat.color || '#f59e0b') + '25' }}
-                                >
-                                    {cat.icon || '🏷️'}
-                                </div>
+                                <CategoryIcon name={cat.name} color={cat.color || '#d97706'} />
                                 <div className="min-w-0">
                                     <p className="font-semibold text-foreground truncate">{cat.name}</p>
                                     <p className="text-xs text-muted-foreground">

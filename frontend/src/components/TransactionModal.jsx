@@ -64,7 +64,7 @@ const TransactionModal = ({
     onSuccess,
     defaultType = 'EXPENSE',
     transaction = null,
-    prefill = null,   // { title, amount, date, notes, category_name_hint } from QuickAdd
+    prefill = null,   // { title, amount, date, category_name_hint } from QuickAdd
 }) => {
     const { user } = useAuth();
     const isEdit = Boolean(transaction);
@@ -86,7 +86,6 @@ const TransactionModal = ({
         amount: '',
         category_id: '',
         date: todayISODate(),
-        notes: '',
         is_recurring: false,
     });
 
@@ -102,7 +101,6 @@ const TransactionModal = ({
                     amount: transaction.amount?.toString() || '',
                     category_id: transaction.category_id || '',
                     date: transaction.date || todayISODate(),
-                    notes: transaction.notes || '',
                     is_recurring: transaction.is_recurring || false,
                 });
             } else if (prefill) {
@@ -113,7 +111,6 @@ const TransactionModal = ({
                     amount: prefill.amount || '',
                     category_id: '',
                     date: prefill.date || todayISODate(),
-                    notes: prefill.notes || '',
                     is_recurring: false,
                 });
             } else {
@@ -123,7 +120,6 @@ const TransactionModal = ({
                     amount: '',
                     category_id: '',
                     date: todayISODate(),
-                    notes: '',
                     is_recurring: false,
                 });
             }
@@ -273,7 +269,6 @@ const TransactionModal = ({
                 amount: parseFloat(parseFloat(form.amount).toFixed(2)),
                 category_id: form.category_id || null,
                 date: form.date,
-                notes: form.notes.trim(),
                 is_recurring: form.is_recurring,
             };
 
@@ -281,7 +276,7 @@ const TransactionModal = ({
                 await updateTransaction(transaction.id, payload);
                 toast.success('Transaction updated successfully!');
             } else {
-                await createTransaction(user.id, payload);
+                await createTransaction(user.id, { ...payload, notes: '' });
                 recordSuggestionOutcome(payload);
                 toast.success(
                     form.type === 'INCOME'
@@ -463,7 +458,7 @@ const TransactionModal = ({
                         </div>
                     </div>
 
-                    {/* Category Searchable Dropdown */}
+                    {/* Category */}
                     <div className="relative">
                         <label htmlFor="tx-category" className="block text-sm font-medium text-foreground mb-1">
                             Category
@@ -476,32 +471,15 @@ const TransactionModal = ({
                                 disabled={catLoading}
                                 className="w-full rounded-xl border border-border px-3.5 py-2.5 text-sm bg-background text-foreground outline-none focus:ring-2 focus:ring-ring/30 focus:border-ring transition disabled:opacity-50 appearance-none cursor-pointer"
                             >
-                                <option value="">— Select Category (Optional) —</option>
+                                <option value="" disabled hidden>Select a category</option>
                                 {categories.map((cat) => (
-                                    <option key={cat.id} value={cat.id}>
-                                        {cat.icon ? `${cat.icon} ` : ''}{cat.name}
-                                    </option>
+                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
                                 ))}
                             </select>
                             <div className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">
                                 ▼
                             </div>
                         </div>
-                    </div>
-
-                    {/* Notes */}
-                    <div>
-                        <label htmlFor="tx-notes" className="block text-sm font-medium text-foreground mb-1">
-                            Notes <span className="text-muted-foreground font-normal">(optional)</span>
-                        </label>
-                        <input
-                            id="tx-notes"
-                            type="text"
-                            value={form.notes}
-                            onChange={(e) => set('notes', e.target.value)}
-                            placeholder="Add a note…"
-                            className="w-full rounded-xl border border-border px-3.5 py-2.5 text-sm bg-background text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring/30 focus:border-ring transition"
-                        />
                     </div>
 
                     {/* Recurring toggle */}

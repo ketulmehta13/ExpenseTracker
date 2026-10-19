@@ -5,7 +5,7 @@ import { Loader2, Eye, EyeOff, Check, MailCheck, ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner';
 import { checkUsernameAvailable } from '../services/api';
 import { getAuthErrorMessage } from '../lib/authErrors';
-import logoIcon from '../assets/logo-icon.png';
+import logoIcon from '../assets/logo-icon.webp';
 
 const passwordStrength = (pwd) => {
     if (pwd.length < 6) return { score: 0, label: 'Too short', color: 'bg-destructive' };

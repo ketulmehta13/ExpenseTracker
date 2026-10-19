@@ -16,7 +16,7 @@ import {
     Crown,
     Sparkles,
 } from 'lucide-react';
-import logoIcon from '../assets/logo-icon.png';
+import logoIcon from '../assets/logo-icon.webp';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
 import TransactionModal from '../components/TransactionModal';

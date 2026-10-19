@@ -4,7 +4,7 @@ import { Loader2, Mail, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '../services/supabaseClient';
 import { getAuthErrorMessage } from '../lib/authErrors';
-import logoIcon from '../assets/logo-icon.png';
+import logoIcon from '../assets/logo-icon.webp';
 
 // TODO: Ensure Supabase email templates are configured in the Supabase dashboard
 // (Authentication → Email Templates → Reset Password) for this flow to deliver emails.

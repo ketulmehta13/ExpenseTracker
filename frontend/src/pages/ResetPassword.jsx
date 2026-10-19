@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { useAuth } from '../context/AuthContext';
 import { authChangePassword } from '../services/api';
 import { getAuthErrorMessage } from '../lib/authErrors';
-import logoIcon from '../assets/logo-icon.png';
+import logoIcon from '../assets/logo-icon.webp';
 
 const MIN_PASSWORD_LENGTH = 6;
 

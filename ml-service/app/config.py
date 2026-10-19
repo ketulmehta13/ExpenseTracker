@@ -47,6 +47,8 @@ class Settings:
     # Monitoring: GET /metrics requires this bearer token when set
     metrics_token: str = field(default="", repr=False)
     log_level: str = "INFO"
+    # Bill scanning: CPU threads for OCR (1 suits a small shared server)
+    ocr_threads: int = 1
 
     @classmethod
     def from_env(cls) -> Settings:
@@ -69,4 +71,5 @@ class Settings:
             ),
             metrics_token=os.environ.get("METRICS_TOKEN", ""),
             log_level=os.environ.get("LOG_LEVEL", "INFO"),
+            ocr_threads=int(os.environ.get("OCR_THREADS", "1")),
         )

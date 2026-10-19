@@ -73,6 +73,16 @@ jobs:
           path: ml-service/models/embeddings
           key: embeddings-bge-small-en-v1.5
 
+      # The OCR models (~32 MB) live in the rapidocr package folder: cache them by version
+      - name: Find the OCR model folder
+        id: ocr
+        run: echo "dir=$(python -c 'import os, rapidocr; print(os.path.join(os.path.dirname(rapidocr.__file__), "models"))')" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/cache@v4
+        with:
+          path: ${{ steps.ocr.outputs.dir }}
+          key: rapidocr-models-3.10.0
+
       - name: Lint
         run: ruff check .
 
@@ -93,6 +103,12 @@ jobs:
 
       - name: Evaluate assistant understanding (evaluation gate)
         run: python -m training.evaluate_assistant --gate
+
+      - name: Evaluate bill parsing (evaluation gate)
+        run: python -m training.evaluate_receipts --gate
+
+      - name: Evaluate bill scanning end to end on rendered photos (evaluation gate)
+        run: python -m training.evaluate_receipt_ocr --gate
 
       - name: Upload model reports
         if: always()

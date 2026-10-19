@@ -1,0 +1,222 @@
+{
+  "generated_at": "2026-10-19T12:43:30+00:00",
+  "dev": {
+    "naive": {
+      "merchant": 0.5833,
+      "date": 1.0,
+      "total": 0.0167,
+      "all_three": 0.0167,
+      "item_precision": 0.3425,
+      "item_recall": 0.8583,
+      "item_f1": 0.4896,
+      "group_accuracy": 0.4528,
+      "bills": 60
+    },
+    "rules": {
+      "merchant": 1.0,
+      "date": 1.0,
+      "total": 1.0,
+      "all_three": 1.0,
+      "item_precision": 0.9794,
+      "item_recall": 0.9636,
+      "item_f1": 0.9714,
+      "group_accuracy": 0.9958,
+      "bills": 60
+    }
+  },
+  "test": {
+    "naive": {
+      "merchant": 0.5,
+      "date": 1.0,
+      "total": 0.3125,
+      "all_three": 0.1875,
+      "item_precision": 0.4135,
+      "item_recall": 0.9483,
+      "item_f1": 0.5759,
+      "group_accuracy": 0.4727,
+      "bills": 16
+    },
+    "rules": {
+      "merchant": 1.0,
+      "date": 1.0,
+      "total": 0.9375,
+      "all_three": 0.9375,
+      "item_precision": 0.9464,
+      "item_recall": 0.9138,
+      "item_f1": 0.9298,
+      "group_accuracy": 0.9245,
+      "bills": 16
+    }
+  },
+  "test_failures": [
+    {
+      "id": "test-01",
+      "kind": "supermarket",
+      "wrong": [],
+      "got": {
+        "merchant": "Reliance Smart",
+        "date": "2026-10-12",
+        "total": 638.0
+      },
+      "want": {
+        "merchant": "Reliance Smart",
+        "date": "2026-10-12",
+        "total": 638.0
+      },
+      "items": "2 matched of 5 expected, 2 found",
+      "wrong_groups": []
+    },
+    {
+      "id": "test-02",
+      "kind": "supermarket",
+      "wrong": [],
+      "got": {
+        "merchant": "DMart",
+        "date": "2026-10-09",
+        "total": 1292.0
+      },
+      "want": {
+        "merchant": "DMart",
+        "date": "2026-10-09",
+        "total": 1292.0
+      },
+      "items": "6 matched of 6 expected, 6 found",
+      "wrong_groups": [
+        [
+          "CLGT MAXFRSH 150G",
+          "groceries",
+          "personal_care"
+        ]
+      ]
+    },
+    {
+      "id": "test-05",
+      "kind": "pharmacy",
+      "wrong": [
+        "total"
+      ],
+      "got": {
+        "merchant": "Apollo Pharmacy",
+        "date": "2026-10-16",
+        "total": 637.07
+      },
+      "want": {
+        "merchant": "Apollo Pharmacy",
+        "date": "2026-10-16",
+        "total": 637.0
+      },
+      "items": "4 matched of 4 expected, 4 found",
+      "wrong_groups": []
+    },
+    {
+      "id": "test-08",
+      "kind": "kirana",
+      "wrong": [],
+      "got": {
+        "merchant": "Shree Krishna Stores",
+        "date": "2026-10-13",
+        "total": 827.0
+      },
+      "want": {
+        "merchant": "Shree Krishna Stores",
+        "date": "2026-10-13",
+        "total": 827.0
+      },
+      "items": "4 matched of 5 expected, 4 found",
+      "wrong_groups": [
+        [
+          "Sabun",
+          "groceries",
+          "personal_care"
+        ]
+      ]
+    },
+    {
+      "id": "test-09",
+      "kind": "online_invoice",
+      "wrong": [],
+      "got": {
+        "merchant": "Amazon",
+        "date": "2026-10-08",
+        "total": 1199.0
+      },
+      "want": {
+        "merchant": "Amazon",
+        "date": "2026-10-08",
+        "total": 1199.0
+      },
+      "items": "0 matched of 1 expected, 0 found",
+      "wrong_groups": []
+    },
+    {
+      "id": "test-11",
+      "kind": "supermarket",
+      "wrong": [],
+      "got": {
+        "merchant": "More",
+        "date": "2026-10-07",
+        "total": 408.0
+      },
+      "want": {
+        "merchant": "More",
+        "date": "2026-10-07",
+        "total": 408.0
+      },
+      "items": "5 matched of 5 expected, 5 found",
+      "wrong_groups": [
+        [
+          "Head&Shoulders",
+          "groceries",
+          "personal_care"
+        ]
+      ]
+    },
+    {
+      "id": "test-12",
+      "kind": "electronics",
+      "wrong": [],
+      "got": {
+        "merchant": "Croma",
+        "date": "2026-10-03",
+        "total": 1048.0
+      },
+      "want": {
+        "merchant": "Croma",
+        "date": "2026-10-03",
+        "total": 1048.0
+      },
+      "items": "2 matched of 2 expected, 2 found",
+      "wrong_groups": [
+        [
+          "Sandisk Ultra 64GB Pen Drive",
+          "stationery",
+          "electronics"
+        ]
+      ]
+    },
+    {
+      "id": "test-16",
+      "kind": "utility",
+      "wrong": [],
+      "got": {
+        "merchant": "Torrent Power Limited",
+        "date": "2026-10-06",
+        "total": 1823.0
+      },
+      "want": {
+        "merchant": "Torrent Power Limited",
+        "date": "2026-10-06",
+        "total": 1823.0
+      },
+      "items": "0 matched of 0 expected, 3 found",
+      "wrong_groups": []
+    }
+  ],
+  "gate": {
+    "total >= 0.85 (got 0.938)": true,
+    "date >= 0.9 (got 1.000)": true,
+    "merchant >= 0.85 (got 1.000)": true,
+    "item_f1 >= 0.8 (got 0.930)": true,
+    "group_accuracy >= 0.8 (got 0.924)": true
+  }
+}

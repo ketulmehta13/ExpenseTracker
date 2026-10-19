@@ -1,10 +1,11 @@
 import React, { useState, useRef } from 'react';
-import { Sparkles, Loader2, X, Zap } from 'lucide-react';
+import { Sparkles, Loader2, X, Zap, ScanLine } from 'lucide-react';
 import { toast } from 'sonner';
 import { parseTransaction } from '../services/aiService';
 import { parseQuickAdd } from '../services/mlService';
 import { ML_ENABLED } from '../lib/features';
 import { todayISODate } from '../lib/dates';
+import { openReceiptScanner } from '../lib/receipts';
 
 /**
  * Parse with the ML service when it's configured (rules + the user's own categories),
@@ -143,6 +144,17 @@ const QuickAdd = ({ onParsed }) => {
                             </button>
                         )}
                     </div>
+                    {ML_ENABLED && (
+                        <button
+                            type="button"
+                            onClick={openReceiptScanner}
+                            aria-label="Scan a bill"
+                            title="Scan a bill"
+                            className="flex items-center justify-center rounded-xl border border-border px-3 text-muted-foreground hover:text-primary hover:border-primary/40 transition"
+                        >
+                            <ScanLine size={16} />
+                        </button>
+                    )}
                     <button
                         type="submit"
                         disabled={loading || !text.trim()}

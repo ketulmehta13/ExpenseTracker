@@ -23,6 +23,7 @@ import TransactionModal from '../components/TransactionModal';
 import PlanBadge from '../components/PlanBadge';
 import { useAutoLogout } from '../hooks/useAutoLogout';
 import AssistantPanel from '../components/AssistantPanel';
+import ReceiptScanModal from '../components/ReceiptScanModal';
 import { ML_ENABLED } from '../lib/features';
 
 const navItems = [
@@ -48,6 +49,13 @@ const MainLayout = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
     const [txModal, setTxModal] = useState({ open: false, type: 'EXPENSE', transaction: null });
+    // One bill scanner for the whole app: any page opens it with the 'open-receipt-scan' event
+    const [scanOpen, setScanOpen] = useState(false);
+    useEffect(() => {
+        const open = () => setScanOpen(true);
+        window.addEventListener('open-receipt-scan', open);
+        return () => window.removeEventListener('open-receipt-scan', open);
+    }, []);
     const dropdownRef = useRef(null);
     const triggerRef = useRef(null);
 
@@ -372,6 +380,7 @@ const MainLayout = () => {
 
             {/* ───── ASSISTANT (ML service) ───── */}
             {ML_ENABLED && <AssistantPanel />}
+            {ML_ENABLED && <ReceiptScanModal isOpen={scanOpen} onClose={() => setScanOpen(false)} />}
 
             {/* ───── TRANSACTION MODAL ───── */}
             <TransactionModal

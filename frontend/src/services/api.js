@@ -303,11 +303,78 @@ export const updateTransaction = async (id, transactionData) => {
  * Delete a transaction.
  */
 export const deleteTransaction = async (id) => {
-    const { error } = await supabase
+    const { data: deleted, error } = await supabase
         .from('transactions')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .select();
     if (error) throw error;
+    const path = deleted?.[0]?.receipt_path;
+    if (path) await removeReceiptIfUnused(path);
+};
+
+// ============================================================
+// SCANNED BILLS (private storage: receipts/<user id>/...)
+// ============================================================
+
+/**
+ * Store a scanned bill in the user's private folder.
+ * @returns {Promise<string>} its path, for transactions.receipt_path
+ */
+export const uploadReceipt = async (file) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const userId = session?.user?.id;
+    if (!userId) throw new Error('Not signed in');
+    const extension = { 'application/pdf': 'pdf', 'image/png': 'png', 'image/webp': 'webp' }[file.type] || 'jpg';
+    const path = `${userId}/${crypto.randomUUID()}.${extension}`;
+    const { error } = await supabase.storage
+        .from('receipts')
+        .upload(path, file, { contentType: file.type || 'image/jpeg', upsert: false });
+    if (error) throw error;
+    return path;
+};
+
+/** A link to a stored bill that works for one minute. */
+export const getReceiptUrl = async (path) => {
+    const { data, error } = await supabase.storage.from('receipts').createSignedUrl(path, 60);
+    if (error) throw error;
+    return data.signedUrl;
+};
+
+/** Delete a stored bill once no transaction points at it (a split bill is shared). Best effort. */
+const removeReceiptIfUnused = async (path) => {
+    try {
+        const { count, error } = await supabase
+            .from('transactions')
+            .select('id', { count: 'exact', head: true })
+            .eq('receipt_path', path);
+        if (!error && count === 0) await supabase.storage.from('receipts').remove([path]);
+    } catch {
+        // The transaction is already gone; a leftover file only costs a little storage
+    }
+};
+
+/**
+ * Insert several transactions at once (one bill split by category).
+ * Before the receipts migration is applied the database has no receipt_path column:
+ * the rows are then saved without the link, and `linked` says so.
+ * @returns {Promise<{ rows: object[], linked: boolean }>}
+ */
+export const createTransactions = async (userId, rows) => {
+    const insert = (list) => supabase.from('transactions').insert(list.map((row) => ({ ...row, user_id: userId }))).select();
+    let { data, error } = await insert(rows);
+    if (error && /receipt_path/.test(error.message || '')) {
+        const withoutLink = rows.map((row) => {
+            const copy = { ...row };
+            delete copy.receipt_path;
+            return copy;
+        });
+        ({ data, error } = await insert(withoutLink));
+        if (error) throw error;
+        return { rows: data, linked: false };
+    }
+    if (error) throw error;
+    return { rows: data, linked: true };
 };
 
 // ============================================================

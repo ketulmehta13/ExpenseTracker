@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, TrendingUp, TrendingDown, Loader2, Plus, Sparkles } from 'lucide-react';
+import { X, TrendingUp, TrendingDown, Loader2, Plus, Sparkles, ScanLine, Receipt } from 'lucide-react';
 import { toast } from 'sonner';
 import { createTransaction, updateTransaction, getCategories, createCategory, logSuggestionFeedback } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -8,6 +8,7 @@ import { todayISODate } from '../lib/dates';
 import { suggestCategory } from '../services/aiService';
 import { suggestCategoryML } from '../services/mlService';
 import { AI_ENABLED, ML_ENABLED } from '../lib/features';
+import { openReceipt, openReceiptScanner } from '../lib/receipts';
 
 const SUGGESTIONS_ENABLED = ML_ENABLED || AI_ENABLED;
 
@@ -321,13 +322,34 @@ const TransactionModal = ({
                         <h2 id="tx-modal-title" className="font-semibold text-foreground text-lg">
                             {isEdit ? 'Edit Transaction' : isIncome ? '+ Add Income' : '+ Add Expense'}
                         </h2>
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                        >
-                            <X size={18} />
-                        </button>
+                        <div className="flex items-center gap-1">
+                            {!isEdit && ML_ENABLED && (
+                                <button
+                                    type="button"
+                                    onClick={() => { onClose(); openReceiptScanner(); }}
+                                    className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-semibold text-primary hover:bg-primary/10 transition-colors"
+                                >
+                                    <ScanLine size={14} /> Scan a bill
+                                </button>
+                            )}
+                            {isEdit && transaction?.receipt_path && (
+                                <button
+                                    type="button"
+                                    onClick={() => openReceipt(transaction.receipt_path)}
+                                    className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-semibold text-primary hover:bg-primary/10 transition-colors"
+                                >
+                                    <Receipt size={14} /> View bill
+                                </button>
+                            )}
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                aria-label="Close"
+                                className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
                     </div>
 
                     {/* Type toggle */}

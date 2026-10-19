@@ -3,9 +3,11 @@ import {
     ResponsiveContainer, AreaChart, Area, XAxis, YAxis,
     Tooltip as RTooltip, PieChart, Pie, Cell, Legend
 } from 'recharts';
+import { subDays } from 'date-fns';
 import { getTransactions } from '../services/api';
+import { usePlan } from '../context/PlanContext';
 import { formatCurrency, formatDate } from '../lib/formatters';
-import { parseDate } from '../lib/dates';
+import { toISODate } from '../lib/dates';
 import { SkeletonChart } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/ui/EmptyState';
 import { BarChart3 } from 'lucide-react';
@@ -34,13 +36,15 @@ const CustomTooltip = ({ active, payload, label }) => {
 const Analytics = () => {
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
+    const { historyMonths } = usePlan();
 
     useEffect(() => {
-        getTransactions()
+        // Same history window as the Transactions page: the last 3 months on Free, everything on Pro
+        getTransactions('', historyMonths)
             .then(setTransactions)
             .catch(console.error)
             .finally(() => setLoading(false));
-    }, []);
+    }, [historyMonths]);
 
     if (loading) {
         return (
@@ -58,15 +62,25 @@ const Analytics = () => {
         );
     }
 
-    /* ── Daily data for area chart ── */
-    const dailyDataMap = {};
-    transactions.forEach((t) => {
-        const date = parseDate(t.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
-        if (!dailyDataMap[date]) dailyDataMap[date] = { date, Income: 0, Expense: 0 };
-        if (t.type === 'INCOME') dailyDataMap[date].Income += parseFloat(t.amount);
-        else dailyDataMap[date].Expense += parseFloat(t.amount);
+    /* ── Daily data for area chart: the last 30 days, one point per day (zero when empty) ── */
+    const today = new Date();
+    const dailyData = Array.from({ length: 30 }, (_, i) => {
+        const day = subDays(today, 29 - i);
+        return {
+            key: toISODate(day), // the full date, so the same day in different years never merges
+            date: day.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }),
+            Income: 0,
+            Expense: 0,
+        };
     });
-    const dailyData = Object.values(dailyDataMap).reverse().slice(-30); // last 30 data points
+    const dayBuckets = Object.fromEntries(dailyData.map((d) => [d.key, d]));
+    transactions.forEach((t) => {
+        const bucket = dayBuckets[String(t.date).slice(0, 10)];
+        if (!bucket) return;
+        if (t.type === 'INCOME') bucket.Income += parseFloat(t.amount);
+        else bucket.Expense += parseFloat(t.amount);
+    });
+    const hasRecentActivity = dailyData.some((d) => d.Income > 0 || d.Expense > 0);
 
     /* ── Category pie ── */
     const categoryMap = {};
@@ -112,6 +126,7 @@ const Analytics = () => {
                 <h1 className="font-display text-3xl font-bold text-foreground">Reports</h1>
                 <p className="mt-0.5 text-sm text-muted-foreground">
                     Deep dive into your expense trends and habits.
+                    {historyMonths ? ` Covers the last ${historyMonths} months on the Free plan.` : ''}
                 </p>
             </div>
 
@@ -120,7 +135,7 @@ const Analytics = () => {
                 {[
                     { label: 'Total Income', value: formatCurrency(totalIncome), color: 'text-income' },
                     { label: 'Total Expenses', value: formatCurrency(totalExpense), color: 'text-expense' },
-                    { label: 'Net Savings', value: formatCurrency(Math.abs(totalIncome - totalExpense)), color: totalIncome >= totalExpense ? 'text-income' : 'text-expense' },
+                    { label: 'Net Savings', value: formatCurrency(totalIncome - totalExpense), color: totalIncome >= totalExpense ? 'text-income' : 'text-expense' },
                 ].map((s) => (
                     <div key={s.label} className="rounded-2xl border border-border bg-card px-4 py-3.5 text-center">
                         <p className="text-xs text-muted-foreground mb-1">{s.label}</p>
@@ -132,8 +147,8 @@ const Analytics = () => {
             {/* Area chart */}
             <div className="rounded-2xl border border-border bg-card p-5">
                 <h3 className="font-semibold text-foreground mb-0.5">Spending Over Time</h3>
-                <p className="text-xs text-muted-foreground mb-4">Daily income vs expense (last 30 entries)</p>
-                {dailyData.length > 0 ? (
+                <p className="text-xs text-muted-foreground mb-4">Daily income vs expense (last 30 days)</p>
+                {hasRecentActivity ? (
                     <div style={{ height: 300 }}>
                         <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={dailyData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
@@ -147,7 +162,7 @@ const Analytics = () => {
                                         <stop offset="95%" stopColor="hsl(var(--expense))" stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
-                                <XAxis dataKey="date" fontSize={11} tickLine={false} axisLine={false} tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+                                <XAxis dataKey="date" interval={4} fontSize={11} tickLine={false} axisLine={false} tick={{ fill: 'hsl(var(--muted-foreground))' }} />
                                 <YAxis fontSize={11} tickLine={false} axisLine={false} tick={{ fill: 'hsl(var(--muted-foreground))' }} tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v} />
                                 <RTooltip content={<CustomTooltip />} />
                                 <Legend formatter={(v) => <span style={{ color: 'hsl(var(--muted-foreground))', fontSize: 11 }}>{v}</span>} />
@@ -157,7 +172,7 @@ const Analytics = () => {
                         </ResponsiveContainer>
                     </div>
                 ) : (
-                    <EmptyState title="No daily data" description="Add transactions with dates to see this chart." />
+                    <EmptyState title="Nothing in the last 30 days" description="Transactions from the last 30 days show up here." />
                 )}
             </div>
 

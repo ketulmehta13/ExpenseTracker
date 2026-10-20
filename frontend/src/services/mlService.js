@@ -7,7 +7,8 @@ import { ML_API_URL, ML_ENABLED } from '../lib/features';
  * throws: ML features are extras and must never block the rest of the app.
  */
 
-async function request(method, path, { body, signal, timeoutMs = 2000 } = {}) {
+// `raise`: throw an Error with a message to show the user, instead of quietly returning null
+async function request(method, path, { body, signal, timeoutMs = 2000, raise = false } = {}) {
     if (!ML_ENABLED) return null;
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
@@ -18,23 +19,34 @@ async function request(method, path, { body, signal, timeoutMs = 2000 } = {}) {
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     const abort = () => controller.abort();
     signal?.addEventListener('abort', abort);
+    const isForm = body instanceof FormData; // the browser sets the multipart boundary itself
     try {
         const response = await fetch(`${ML_API_URL}${path}`, {
             method,
             headers: {
                 Authorization: `Bearer ${token}`,
-                ...(body ? { 'Content-Type': 'application/json' } : {}),
+                ...(body && !isForm ? { 'Content-Type': 'application/json' } : {}),
             },
-            body: body ? JSON.stringify(body) : undefined,
+            body: isForm ? body : body ? JSON.stringify(body) : undefined,
             signal: controller.signal,
         });
         if (!response.ok) {
             console.warn(`[mlService] ${path} returned ${response.status}`);
+            if (raise) {
+                const detail = await response.json().then((json) => json.detail).catch(() => null);
+                throw new Error(typeof detail === 'string' ? detail : 'Something went wrong. Please try again.');
+            }
             return null;
         }
         return await response.json();
     } catch (err) {
         if (err.name !== 'AbortError') console.warn(`[mlService] ${path} failed:`, err);
+        if (raise) {
+            if (signal?.aborted) throw new Error('Cancelled.');
+            if (err.name === 'AbortError') throw new Error('That took too long. Please try again in a moment.');
+            if (err instanceof TypeError) throw new Error("Couldn't reach the server. Check your connection and try again.");
+            throw err;
+        }
         return null;
     } finally {
         clearTimeout(timer);
@@ -124,4 +136,24 @@ export async function confirmAssistantDraft(threadId, approve, today) {
         body: { thread_id: threadId, approve, today },
         timeoutMs: 10000,
     });
+}
+
+/**
+ * Read a bill (a photo or a PDF). Resolves to { merchant, date, total, items, groups,
+ * suggestion, warnings, lines, ... } for the user to review; nothing is saved. Throws an Error
+ * whose message can be shown to the user (unreadable file, no text found, too slow...).
+ * @param {File} file - from prepareReceiptFile()
+ * @param {string} today - the user's local date, YYYY-MM-DD
+ */
+export async function scanReceipt(file, today, signal) {
+    const form = new FormData();
+    form.append('file', file, file.name || 'bill');
+    form.append('today', today);
+    // Generous: reading a bill is the slowest thing the service does, more so after it wakes up
+    return request('POST', '/v1/receipts/scan', { body: form, signal, timeoutMs: 120000, raise: true });
+}
+
+/** Wake a sleeping free-plan server ahead of a slow request (fire and forget). */
+export function wakeMlService() {
+    if (ML_ENABLED) fetch(`${ML_API_URL}/health`).catch(() => {});
 }

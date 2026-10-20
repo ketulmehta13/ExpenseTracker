@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
     Plus, Pencil, Trash2, Filter, Download, FileText,
     Search, ChevronUp, ChevronDown, ChevronLeft, ChevronRight,
-    ReceiptText, X, Crown, Lock
+    ReceiptText, X, Crown, Lock, ScanLine, Receipt
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -21,6 +21,7 @@ import UnusualSpendingBadge from '../components/UnusualSpendingBadge';
 import { getInsights } from '../services/mlService';
 import { ML_ENABLED } from '../lib/features';
 import { todayISODate } from '../lib/dates';
+import { openReceipt, openReceiptScanner } from '../lib/receipts';
 
 // TODO: Replace with server-side pagination if the Supabase transactions table
 // grows beyond ~1000 rows and client-side filtering becomes slow.
@@ -234,6 +235,14 @@ const Transactions = () => {
                     >
                         <Plus size={14} /> Add Transaction
                     </button>
+                    {ML_ENABLED && (
+                        <button
+                            onClick={openReceiptScanner}
+                            className="flex items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/5 px-3 py-2 text-xs font-semibold text-primary hover:bg-primary/10 transition-colors"
+                        >
+                            <ScanLine size={13} /> Scan bill
+                        </button>
+                    )}
                     <button
                         onClick={handleExportCSV}
                         className="flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-semibold text-foreground hover:bg-muted transition-colors"
@@ -418,6 +427,16 @@ const Transactions = () => {
                                             <div className="flex items-center gap-2">
                                                 <div className={`h-2 w-2 rounded-full flex-shrink-0 ${t.type === 'INCOME' ? 'bg-income' : 'bg-expense'}`} />
                                                 <span className="font-medium text-foreground">{t.title}</span>
+                                                {t.receipt_path && (
+                                                    <button
+                                                        onClick={() => openReceipt(t.receipt_path)}
+                                                        className="text-muted-foreground hover:text-primary transition-colors"
+                                                        title="View the bill"
+                                                        aria-label={`View the bill for ${t.title}`}
+                                                    >
+                                                        <Receipt size={13} />
+                                                    </button>
+                                                )}
                                                 {unusualIds.has(String(t.id)) && <UnusualSpendingBadge />}
                                                 {t.is_recurring && (
                                                     <span className="rounded-full bg-blue-500/10 text-blue-400 px-2 py-0.5 text-[10px] font-medium">
@@ -490,6 +509,15 @@ const Transactions = () => {
                                     <span className={`text-sm font-bold ${t.type === 'INCOME' ? 'text-income' : 'text-expense'}`}>
                                         {t.type === 'INCOME' ? '+' : '−'}{formatCurrency(t.amount)}
                                     </span>
+                                    {t.receipt_path && (
+                                        <button
+                                            onClick={() => openReceipt(t.receipt_path)}
+                                            className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted"
+                                            aria-label={`View the bill for ${t.title}`}
+                                        >
+                                            <Receipt size={13} />
+                                        </button>
+                                    )}
                                     <button
                                         onClick={() => setTxModal({ open: true, transaction: t, type: t.type })}
                                         className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted"

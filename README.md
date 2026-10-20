@@ -26,7 +26,8 @@ A separate Python service ([`ml-service/`](ml-service/README.md)) adds these fea
 - natural-language quick add;
 - a monthly summary;
 - help-center search (RAG);
-- an assistant built with LangGraph.
+- an assistant built with LangGraph;
+- bill scanning: a photo or PDF of a bill becomes one transaction or several, split by category (OpenCV + OCR).
 
 Each feature is evaluated, and CI gates on the results. How each one works, how it was measured and the trade-offs are documented in [`docs/ai-ml/`](docs/ai-ml/README.md).
 

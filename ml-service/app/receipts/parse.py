@@ -38,6 +38,7 @@ _AMOUNT = re.compile(
     re.IGNORECASE,
 )
 MAX_AMOUNT = 1e7  # one crore: anything bigger is an id, not a bill
+_GLUED_LABEL = re.compile(r"(?i)\b(total|payable|amount|amt)(?=[₹\d])")
 
 
 def fix_digits(line: str) -> str:
@@ -374,7 +375,9 @@ def find_subtotal(lines: list[str]) -> float | None:
 
 
 def parse_receipt(raw_lines: list[str], today: date, own_merchants: list[str] = ()) -> ReceiptDraft:
-    lines = [fix_digits(" ".join(line.split())) for line in raw_lines if line and line.strip()]
+    # OCR can drop the gap between a label and its number: "Total703" -> "Total 703"
+    lines = [_GLUED_LABEL.sub(r"\1 ", fix_digits(" ".join(line.split())))
+             for line in raw_lines if line and line.strip()]
     total, guessed = find_total(lines)
     draft = ReceiptDraft(
         merchant=find_merchant(lines, own_merchants),

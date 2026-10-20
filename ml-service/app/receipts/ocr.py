@@ -63,6 +63,12 @@ def load_engine(threads: int = 1) -> Any:
     with _engine_lock:
         return RapidOCR(params={
             "Global.log_level": "critical",
+            # Bills are upright: skip the per-box rotation classifier
+            "Global.use_cls": False,
+            # By default detection runs on the full-size photo; capping it at 960 px made a bill
+            # about 2 s on one thread instead of far more, with the same accuracy on rendered bills
+            "Det.limit_type": "max",
+            "Det.limit_side_len": 960,
             "EngineConfig.onnxruntime.intra_op_num_threads": threads,
             "EngineConfig.onnxruntime.inter_op_num_threads": 1,
         })

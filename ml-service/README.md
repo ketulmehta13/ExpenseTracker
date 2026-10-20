@@ -18,6 +18,7 @@ Design notes and interview-style explanations live in [`docs/ai-ml/`](../docs/ai
 | POST | `/v1/help` | bearer token | Answers `{question}` from the help center (`knowledge/`), with citations; declines off-topic questions |
 | POST | `/v1/assistant/chat` | bearer token | The assistant: `{message, thread_id?, today}` to a reply, citations, or a draft transaction waiting for confirmation |
 | POST | `/v1/assistant/confirm` | bearer token | `{thread_id, approve}` saves (with the user's token) or discards the pending draft |
+| POST | `/v1/receipts/scan` | bearer token | A bill as a multipart `file` (JPEG/PNG/WebP photo or PDF, up to 8 MB) plus `today`: the merchant, date, total, items and category groups to review; nothing is saved |
 | GET | `/docs` | none | Interactive OpenAPI docs |
 
 ## Run locally
@@ -79,6 +80,16 @@ python -m training.evaluate_assistant --gate
 ```
 
 It scores intent routing, slots and follow-ups on hand-labelled messages and conversations, and writes [`reports/assistant/report.md`](reports/assistant/report.md). Details are in [docs/ai-ml/08-assistant.md](../docs/ai-ml/08-assistant.md).
+
+## Evaluate bill scanning
+
+```bash
+python -m training.evaluate_receipts --gate       # parsing on generated (dev) and hand-written (test) bills
+python -m training.evaluate_receipt_ocr --gate    # the whole pipeline on rendered photos (downloads the OCR models once)
+python -m training.evaluate_receipt_ocr --ablation  # ...with each OpenCV step switched off in turn
+```
+
+They write [`reports/receipts/report.md`](reports/receipts/report.md) and [`reports/receipt_ocr/report.md`](reports/receipt_ocr/report.md). Details are in [docs/ai-ml/10-bill-scanning.md](../docs/ai-ml/10-bill-scanning.md).
 
 ## Optional: an LLM
 
@@ -145,3 +156,4 @@ The build trains the categorizer inside the image, behind the same evaluation ga
 | `KNOWLEDGE_DIR` | `ml-service/knowledge` | The help articles |
 | `METRICS_TOKEN` | — | When set, `GET /metrics` requires `Authorization: Bearer <token>` |
 | `LOG_LEVEL` | `INFO` | The service's log level (logs are JSON lines) |
+| `OCR_THREADS` | `1` | CPU threads for bill scanning's OCR (1 suits a small shared server) |

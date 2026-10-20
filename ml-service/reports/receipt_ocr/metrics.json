@@ -1,0 +1,47 @@
+{
+  "generated_at": "2026-10-20T05:33:57+00:00",
+  "bills": 24,
+  "threads": 12,
+  "variants": {
+    "no preprocessing": {
+      "merchant": 1.0,
+      "date": 1.0,
+      "total": 1.0,
+      "item_f1": 1.0,
+      "seconds_per_bill": 2.23
+    },
+    "size": {
+      "merchant": 1.0,
+      "date": 1.0,
+      "total": 1.0,
+      "item_f1": 1.0,
+      "seconds_per_bill": 2.34
+    },
+    "+ perspective": {
+      "merchant": 1.0,
+      "date": 1.0,
+      "total": 1.0,
+      "item_f1": 1.0,
+      "seconds_per_bill": 10.18
+    },
+    "+ deskew": {
+      "merchant": 1.0,
+      "date": 1.0,
+      "total": 1.0,
+      "item_f1": 1.0,
+      "seconds_per_bill": 2.17
+    },
+    "full (+ contrast)": {
+      "merchant": 1.0,
+      "date": 1.0,
+      "total": 1.0,
+      "item_f1": 1.0,
+      "seconds_per_bill": 2.33
+    }
+  },
+  "gate": {
+    "total >= 0.8 (got 1.000)": true,
+    "date >= 0.8 (got 1.000)": true,
+    "merchant >= 0.8 (got 1.000)": true
+  }
+}

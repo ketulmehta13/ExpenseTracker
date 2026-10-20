@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import time
 from contextlib import asynccontextmanager
@@ -20,7 +21,7 @@ from app.llm.provider import build_chat_model
 from app.ml.categorizer import CategorizerModel
 from app.observability import Metrics, configure_logging
 from app.rag.embeddings import Embedder
-from app.routers import assistant, categorize, health, help, insights, parse
+from app.routers import assistant, categorize, health, help, insights, parse, receipts
 
 logger = logging.getLogger("ml_service")
 
@@ -62,6 +63,8 @@ def create_app(
     app.state.embedder = embedder
     app.state.help_index = None  # built on the first help question
     app.state.assistant_graph = build_graph()
+    app.state.ocr_engine = None  # loaded on the first bill scan
+    app.state.ocr_lock = asyncio.Lock()
 
     app.add_middleware(
         CORSMiddleware,
@@ -87,6 +90,7 @@ def create_app(
     app.include_router(parse.router)
     app.include_router(help.router)
     app.include_router(assistant.router)
+    app.include_router(receipts.router)
     return app
 
 

@@ -44,6 +44,11 @@ class UserHistory:
         self._by_title = dict(by_title)
         self._titles = list(by_title)
 
+    @property
+    def titles(self) -> list[str]:
+        """The user's distinct titles, most recent first."""
+        return self._titles
+
     def __len__(self) -> int:
         return len(self._titles)
 

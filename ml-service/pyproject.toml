@@ -10,7 +10,7 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 
 [tool.ruff.lint.flake8-bugbear]
 # FastAPI's dependency-injection style (`x = Depends(...)` as a default) is intended
-extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Body"]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Body", "fastapi.File", "fastapi.Form"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

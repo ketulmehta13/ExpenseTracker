@@ -47,6 +47,16 @@ await db.exec(`
   CREATE TABLE auth.users (id uuid PRIMARY KEY, email text, raw_user_meta_data jsonb DEFAULT '{}'::jsonb);
   CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE
     AS $$ SELECT NULLIF(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
+  CREATE SCHEMA storage;
+  CREATE TABLE storage.buckets (id text PRIMARY KEY, name text NOT NULL, public boolean DEFAULT false,
+                                file_size_limit bigint, allowed_mime_types text[]);
+  CREATE TABLE storage.objects (id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                                bucket_id text REFERENCES storage.buckets (id), name text NOT NULL);
+  CREATE FUNCTION storage.foldername(name text) RETURNS text[] LANGUAGE sql IMMUTABLE
+    AS $$ SELECT (string_to_array(name, '/'))[1:array_length(string_to_array(name, '/'), 1) - 1] $$;
+  ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+  GRANT USAGE ON SCHEMA storage TO anon, authenticated, service_role;
+  GRANT ALL ON storage.buckets, storage.objects TO anon, authenticated, service_role;
   GRANT USAGE ON SCHEMA public, auth TO anon, authenticated, service_role;
   ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated, service_role;
   ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO anon, authenticated, service_role;
@@ -226,6 +236,33 @@ await check('deleting a user removes all of their rows (delete-account)', async 
     const row = await one(`SELECT count(*)::int AS n FROM ${table} WHERE ${col} = $1`, [ALICE]);
     assert.equal(row.n, 0, `${table} still has rows`);
   }
+});
+
+// ── The ML migrations, in the order production gets them ──
+await db.exec(migration('20261018000000_ml_feedback.sql'));
+await db.exec(migration('20261019000000_receipts.sql'));
+await db.exec(migration('20261019000000_receipts.sql')); // must be re-runnable
+console.log('Production replica after ml_feedback -> receipts:');
+
+await check('a transaction on the live schema can point at its stored bill', async () => {
+  const row = await asRole('authenticated', BOB, () =>
+    one(
+      `INSERT INTO transactions (user_id, title, amount, type, date, receipt_path)
+       VALUES ($1, 'DMart · Groceries', 611.2, 'EXPENSE', '2026-10-14', $2) RETURNING receipt_path`,
+      [BOB, `${BOB}/bill.jpg`],
+    ),
+  );
+  assert.equal(row.receipt_path, `${BOB}/bill.jpg`);
+});
+
+await check('bills are stored only in the owner\'s folder', async () => {
+  await asRole('authenticated', BOB, async () => {
+    await db.query(`INSERT INTO storage.objects (bucket_id, name) VALUES ('receipts', $1)`, [`${BOB}/bill.jpg`]);
+    await assert.rejects(
+      db.query(`INSERT INTO storage.objects (bucket_id, name) VALUES ('receipts', $1)`, [`${ALICE}/bill.jpg`]),
+      /row-level security/,
+    );
+  });
 });
 
 console.log(`\n${passed} checks passed`);

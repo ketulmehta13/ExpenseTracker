@@ -1,7 +1,7 @@
 """The assistant as a LangGraph state machine.
 
     START -> understand -> one of: spending | breakdown | budget | subscriptions | unusual |
-                                   help | greeting | draft -> confirm (pauses for the user) -> END
+                                   help | greeting | about | draft -> confirm (pauses for the user) -> END
 
 A finance assistant should be predictable, so this is a workflow with explicit routing rather
 than a free-running agent loop: each message is understood once (rules first, an LLM only for
@@ -96,7 +96,9 @@ def _from_state(data: dict | None) -> Understanding | None:
 
 
 class _LLMIntent(BaseModel):
-    intent: Literal["spending", "breakdown", "budget", "subscriptions", "unusual", "add", "help", "greeting"]
+    intent: Literal[
+        "spending", "breakdown", "budget", "subscriptions", "unusual", "add", "help", "greeting", "about"
+    ]
 
 
 _INTENT_PROMPT = ChatPromptTemplate.from_messages([
@@ -106,7 +108,8 @@ _INTENT_PROMPT = ChatPromptTemplate.from_messages([
         "spending (how much was spent, for a period, category or merchant); breakdown (the biggest "
         "categories); budget (budget status or the month-end forecast); subscriptions (recurring payments "
         "and bills); unusual (unusual payments); add (record a new transaction); help (how to use the "
-        "app); greeting. Reply with JSON only.\n{format_instructions}",
+        "app); greeting; about (questions about the assistant itself, small talk, or anything unrelated to "
+        "personal finance or the app). Reply with JSON only.\n{format_instructions}",
     ),
     ("human", "{message}"),
 ])
@@ -167,6 +170,10 @@ async def greeting_node(state: AssistantState, config: RunnableConfig) -> Assist
     return {"reply": tools.greeting_reply(state["message"])}
 
 
+async def about_node(state: AssistantState, config: RunnableConfig) -> AssistantState:
+    return {"reply": tools.about_reply(state["message"])}
+
+
 async def help_node(state: AssistantState, config: RunnableConfig) -> AssistantState:
     ctx = _context(config)
     answer = await answer_question(ctx.help_index(), state["message"], ctx.llm, ctx.timeout)
@@ -214,7 +221,7 @@ def build_graph():
     handlers = {
         "spending": spending_node, "breakdown": breakdown_node, "budget": budget_node,
         "subscriptions": subscriptions_node, "unusual": unusual_node, "help": help_node,
-        "greeting": greeting_node, "add": draft_node,
+        "greeting": greeting_node, "about": about_node, "add": draft_node,
     }
     for intent, node in handlers.items():
         builder.add_node(intent, node)

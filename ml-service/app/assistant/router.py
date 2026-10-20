@@ -21,7 +21,7 @@ from app.ml.recurring import merchant_key
 from app.ml.taxonomy import CANONICAL_CATEGORIES, match_user_category
 from app.nlp.quickadd import amounts_in
 
-INTENTS = ("spending", "breakdown", "budget", "subscriptions", "unusual", "add", "help", "greeting")
+INTENTS = ("spending", "breakdown", "budget", "subscriptions", "unusual", "add", "help", "greeting", "about")
 DATA_INTENTS = {"spending", "breakdown"}  # the intents that take a period and filters
 
 _MONTHS = {
@@ -31,6 +31,20 @@ _MONTHS = {
 }
 
 _GREETING = re.compile(r"^(hi+|hello|hey|namaste|thanks|thank you|thx|good (morning|afternoon|evening))\b")
+# Questions about the assistant itself, small talk, and requests it can't do: answered directly,
+# never sent to help-center search (which would match "name" or "made" to some unrelated section)
+_ABOUT = re.compile(
+    r"\b(who|which company) (made|created|built|developed|designed|trained|owns|wrote) (you|this)\b"
+    r"|\byour (name|creator|developer|maker|owner|purpose)\b|\bwho (are|r) (you|u)\b|\bwhat are you\b"
+    r"|\bare (you|u) (a |an )?(bot|robot|human|ai|real|person|chatgpt|gpt|gemini|claude)\b"
+    r"|\bwhat (can|do) (you|u) do\b|\bhow can (you|u) help\b|\bwhat can i ask\b|^help( me)?$"
+    r"|\bhow are (you|u)\b|\bkaise ho\b|\bwhat'?s up\b|\bwho is behind\b"
+)
+_OFF_TOPIC = re.compile(
+    r"\bweather\b|\bjokes?\b|\bpoem\b|\bsongs?\b|\bstory\b|\bnews\b|\brecipe\b|\bcapital of\b"
+    r"|\bbook (a|me a|my) \b|\bmutual funds?\b|\bwhich (stock|share|fund)s?\b|\bcrypto|\bbitcoin\b"
+    r"|\bwho won\b|\btranslate\b|\bwrite (me )?(a|an) (essay|letter|code|program)\b"
+)
 _HELP = re.compile(
     r"\bhow (do|can|should) i\b|\bhow (is|are|does)\b|\bwhat (does|do) .*\bmean\b|\bwhat(?: is|'s) the\b"
     r"|\b(can|could) i\b|\bwhy (was|were|did|is|am|do|does|can't|cant|isn't)\b"
@@ -129,6 +143,8 @@ def classify(text: str) -> str | None:
     t = " ".join(text.lower().split())
     if _GREETING.search(t) and len(t.split()) <= 4:
         return "greeting"
+    if _ABOUT.search(t) or _OFF_TOPIC.search(t):
+        return "about"
     if _HELP.search(t):
         return "help"
     if _ADD.search(t) and amounts_in(t):

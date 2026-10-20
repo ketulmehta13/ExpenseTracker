@@ -93,10 +93,12 @@ def test_without_embeddings_search_falls_back_to_keywords(chunks):
     keyword_only = HelpIndex(chunks, embedder=None)
     hits = keyword_only.search("cancel pro subscription", k=3)
     assert all(hit.similarity is None for hit in hits)
-    # Keywords alone rank "Deleting your account" first: it literally says "cancels any Pro
-    # subscription". The right section is still in the top three; hybrid search exists for this.
     assert "plans-and-billing" in ranked_articles(hits)
-    assert keyword_only.in_scope("anything at all")
+    # Without embeddings, questions whose words the help center never uses are declined
+    assert keyword_only.in_scope("how do i export a pdf")
+    assert keyword_only.in_scope("export kaise kare")
+    assert not keyword_only.in_scope("what is the capital of australia")
+    assert not keyword_only.in_scope("explain inflation")
 
 
 @pytest.mark.parametrize("value", ["", "none", "None", " off "])
@@ -160,11 +162,11 @@ def test_a_failing_llm_falls_back(index):
 
 
 def test_numbers_must_come_from_the_cited_sources(index):
-    hits = index.search("how much does pro cost", k=3)
-    pricing = next(n for n, hit in enumerate(hits, 1) if hit.chunk.section == "Prices and the free trial")
+    hits = index.search("what is the 50/30/20 rule for saving", k=3)
+    rule = next(n for n, hit in enumerate(hits, 1) if hit.chunk.section == "A simple rule of thumb: 50/30/20")
     assert numbers_in("Pro is ₹2,499 a year") == {2499.0}
-    assert checked_llm_answer(f"Pro costs ₹299 a month or ₹2,499 a year [{pricing}].", hits) is not None
-    assert checked_llm_answer(f"Pro costs ₹199 a month [{pricing}].", hits) is None
+    assert checked_llm_answer(f"Spend about 50% on needs and save about 20% [{rule}].", hits) is not None
+    assert checked_llm_answer(f"Save about 25% of your income [{rule}].", hits) is None
 
 
 # ---------- evaluation helpers ----------

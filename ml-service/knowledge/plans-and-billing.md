@@ -1,13 +1,13 @@
 # Plans and billing
 
-## Free and Pro
-The Free plan includes unlimited transactions, the last 3 months of history, up to 5 custom categories and the dashboard. Pro adds your full history, unlimited categories, and CSV and PDF exports.
+## Everything is free
+The app is free right now, with no plans to choose. Every feature is included: unlimited transactions, your full history, unlimited custom categories, CSV and PDF exports, bill scanning and the assistant.
 
-## Prices and the free trial
-Pro costs ₹299 a month or ₹2,499 a year (about ₹208 a month). Both start with a 7-day free trial. Payments are handled by Razorpay, and the app never sees your card details.
+## Pro, prices and the free trial
+Pro, the paid plan, and its free trial are paused while everything is free, so there is no price to pay and nothing is charged. You don't need to upgrade to unlock anything.
 
 ## Cancelling
-You can cancel from Settings, in the billing section. You keep Pro until the end of the period you've paid for, and then your account moves to Free. Your data is kept.
+There is nothing to cancel and no subscription to stop paying for: no payments are taken while the app is free. Your data is kept as it is.
 
 ## Failed payments
-If a renewal fails, Razorpay retries it and the app shows a notice. Update your payment method to keep Pro.
+No payments are taken while the app is free, so there are no renewals or failed payments to fix.

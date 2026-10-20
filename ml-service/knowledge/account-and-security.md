@@ -13,4 +13,4 @@ After 15 minutes without activity you are signed out to protect your data on sha
 Your transactions, categories and budget are visible only to you: every request is checked against your own account by the database itself, so even a bug in the app can't show your data to another user.
 
 ## Deleting your account
-Open Settings and choose Delete account. This permanently deletes your transactions, categories and profile, cancels any Pro subscription, and removes your login. It can't be undone, so export your data first if you want a copy.
+Open Settings and choose Delete account. This permanently deletes your transactions, categories and profile, and removes your login. It can't be undone, so export your data first if you want a copy.

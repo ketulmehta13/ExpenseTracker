@@ -7,7 +7,7 @@ On the sign-in page choose "Forgot password", enter your email and open the link
 Open Settings and use the password section while you're signed in.
 
 ## Automatic sign-out
-After 15 minutes without activity you are signed out to protect your data on shared devices. You get a warning a minute before. Being active in another tab of the app keeps you signed in, and the automatic sign-out only affects the current device.
+After 15 minutes without activity, or 5 minutes with the app in the background (minimised, another app open or the phone locked), you are signed out to protect your data on shared devices. You get a warning a minute before an idle sign-out. Being active in another tab of the app keeps you signed in, and the automatic sign-out only affects the current device.
 
 ## Who can see your data
 Your transactions, categories and budget are visible only to you: every request is checked against your own account by the database itself, so even a bug in the app can't show your data to another user.

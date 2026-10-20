@@ -232,5 +232,29 @@ def test_an_llm_routes_what_the_rules_dont_recognise(supabase, auth_headers, mod
     assert body["intent"] == "subscriptions"
 
 
+@pytest.mark.parametrize(
+    ("message", "llm_reply", "expected"),
+    [
+        # Off-topic for the rules, but a money question: the LLM answers it
+        ("which mutual fund should i invest in", "A mutual fund pools money; this isn't financial advice.",
+         "pools money"),
+        # The LLM says it's off-topic: the rule-based decline is kept
+        ("tell me a joke", "OFF_TOPIC", "outside what I can help with"),
+        # Questions about the assistant never reach the LLM
+        ("who made you", "should not be used", "Ketul Mehta"),
+    ],
+)
+def test_an_llm_answers_general_money_questions(
+    supabase, auth_headers, model_dir, message, llm_reply, expected
+):
+    supabase.tables.update({"transactions": history(), "categories": CATEGORIES, "profiles": []})
+    settings = Settings(supabase_url=SUPABASE_URL, supabase_anon_key="anon-key", model_dir=model_dir)
+    model = FakeListChatModel(responses=[llm_reply])
+    app = create_app(settings, transport=httpx.MockTransport(supabase.handler), llm=model)
+    with TestClient(app) as client:
+        body = client.post("/v1/assistant/chat", json={"message": message}, headers=auth_headers).json()
+    assert body["intent"] == "about" and expected in body["reply"]
+
+
 def test_evaluation_script_passes_its_gate(tmp_path):
     assert evaluate_assistant.main(["--gate", "--report-dir", str(tmp_path)]) == 0

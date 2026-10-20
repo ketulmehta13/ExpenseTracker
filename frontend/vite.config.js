@@ -10,6 +10,23 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      // Without this the offline cache served the previous version's page until a later reload,
+      // so new features appeared and disappeared between refreshes. Now pages come from the
+      // network first (the cache is only the offline fallback), and a new version takes over at once.
+      workbox: {
+        globPatterns: ['**/*.{js,css,ico,png,svg,webp,woff2}'],
+        navigateFallback: null,
+        runtimeCaching: [
+          {
+            urlPattern: ({ request }) => request.mode === 'navigate',
+            handler: 'NetworkFirst',
+            options: { cacheName: 'pages', networkTimeoutSeconds: 4 },
+          },
+        ],
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true,
+      },
       includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
       manifest: {
         name: 'Ketul Expense Tracker',

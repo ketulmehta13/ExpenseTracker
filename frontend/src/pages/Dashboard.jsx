@@ -9,7 +9,7 @@ import {
 import { getTransactions, getProfile, computeSummary } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { formatCurrency, formatDate, getGreeting } from '../lib/formatters';
-import { parseDate, todayISODate } from '../lib/dates';
+import { PERIODS, inRange, parseDate, periodRange, todayISODate } from '../lib/dates';
 import { SkeletonDashboard } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/ui/EmptyState';
 import TransactionModal from '../components/TransactionModal';
@@ -25,12 +25,8 @@ const CAT_COLORS = [
 ];
 
 /* ── Date range options ── */
-const DATE_RANGES = [
-    { id: 'this_month', label: 'This month' },
-    { id: 'last_30', label: 'Last 30 days' },
-    { id: 'last_3m', label: 'Last 3 months' },
-    { id: 'all', label: 'All time' },
-];
+const DATE_RANGES = PERIODS.filter((p) =>
+    ['this_week', 'this_month', 'last_month', 'last_30', 'this_year', 'all'].includes(p.id));
 
 /* ── Month-over-month trend helpers ── */
 // Percent change, or null without a baseline. Tiny changes round to 0 so cards never show "-0.0%".
@@ -134,20 +130,8 @@ const Dashboard = () => {
 
     /* ── Filter transactions by date range ── */
     const filteredTransactions = React.useMemo(() => {
-        const now = new Date();
-        return allTransactions.filter((t) => {
-            const d = parseDate(t.date);
-            if (dateRange === 'this_month') {
-                return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-            }
-            if (dateRange === 'last_30') {
-                return (now - d) / 86400000 <= 30;
-            }
-            if (dateRange === 'last_3m') {
-                return (now - d) / 86400000 <= 90;
-            }
-            return true; // all
-        });
+        const range = periodRange(dateRange);
+        return allTransactions.filter((t) => inRange(t.date, range));
     }, [allTransactions, dateRange]);
 
     const summary = React.useMemo(

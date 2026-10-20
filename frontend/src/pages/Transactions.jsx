@@ -20,12 +20,15 @@ import ConfirmModal from '../components/ConfirmModal';
 import UnusualSpendingBadge from '../components/UnusualSpendingBadge';
 import { getInsights } from '../services/mlService';
 import { ML_ENABLED } from '../lib/features';
-import { todayISODate } from '../lib/dates';
+import { PERIODS, inRange, periodRange, todayISODate } from '../lib/dates';
 import { openReceipt, openReceiptScanner } from '../lib/receipts';
 
 // TODO: Replace with server-side pagination if the Supabase transactions table
 // grows beyond ~1000 rows and client-side filtering becomes slow.
 const PAGE_SIZE = 25;
+
+const QUICK_PERIODS = PERIODS.filter((p) =>
+    ['all', 'this_week', 'last_week', 'this_month', 'last_month', 'this_year'].includes(p.id));
 
 const SortIcon = ({ column, sortBy, sortDir }) => {
     if (sortBy !== column) return <span className="inline-block w-3.5 opacity-30">↕</span>;
@@ -116,8 +119,7 @@ const Transactions = () => {
         let list = transactions.filter((t) => {
             if (filterType && t.type !== filterType) return false;
             if (filterCategory && t.category_id !== filterCategory) return false;
-            if (filterDateFrom && t.date < filterDateFrom) return false;
-            if (filterDateTo && t.date > filterDateTo) return false;
+            if (!inRange(t.date, { from: filterDateFrom, to: filterDateTo })) return false;
             const amt = parseFloat(t.amount);
             if (filterAmtMin && amt < parseFloat(filterAmtMin)) return false;
             if (filterAmtMax && amt > parseFloat(filterAmtMax)) return false;
@@ -156,6 +158,23 @@ const Transactions = () => {
     };
 
     const hasActiveFilters = filterType || filterCategory || filterDateFrom || filterDateTo || filterAmtMin || filterAmtMax || search;
+
+    // A quick period just fills in the From/To dates, so it combines with the other filters
+    const applyPeriod = (id) => {
+        const { from, to } = periodRange(id);
+        setFilterDateFrom(from ?? '');
+        setFilterDateTo(to ?? '');
+        setPage(1);
+    };
+    const activePeriod = QUICK_PERIODS.find((p) => {
+        const { from, to } = periodRange(p.id);
+        return (from ?? '') === filterDateFrom && (to ?? '') === filterDateTo;
+    })?.id;
+
+    const totals = useMemo(() => filtered.reduce((sum, t) => {
+        sum[t.type === 'INCOME' ? 'income' : 'expense'] += parseFloat(t.amount) || 0;
+        return sum;
+    }, { income: 0, expense: 0 }), [filtered]);
 
     /* ── Delete ── */
     const handleDeleteConfirm = async () => {
@@ -299,6 +318,30 @@ const Transactions = () => {
                             Clear
                         </button>
                     )}
+                </div>
+
+                {/* ── Quick periods, and what was spent and earned in the filtered list ── */}
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex gap-1.5 overflow-x-auto pb-0.5 -mx-1 px-1">
+                        {QUICK_PERIODS.map((p) => (
+                            <button
+                                key={p.id}
+                                type="button"
+                                onClick={() => applyPeriod(p.id)}
+                                className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${activePeriod === p.id
+                                    ? 'bg-primary text-primary-foreground shadow-sm'
+                                    : 'bg-muted text-muted-foreground hover:text-foreground'
+                                    }`}
+                            >
+                                {p.label}
+                            </button>
+                        ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground whitespace-nowrap">
+                        Spent <span className="font-semibold text-red-600 dark:text-red-400">{formatCurrency(totals.expense)}</span>
+                        <span className="mx-1.5">·</span>
+                        Earned <span className="font-semibold text-emerald-600 dark:text-emerald-400">{formatCurrency(totals.income)}</span>
+                    </p>
                 </div>
 
                 {showFilters && (

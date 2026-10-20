@@ -37,6 +37,7 @@ from pydantic import BaseModel
 from app.assistant import tools
 from app.assistant.router import INTENTS, Period, Understanding, classify, understand
 from app.llm.extract import checked_fields, llm_draft, merge, needs_llm
+from app.llm.general import general_answer
 from app.llm.summary import money
 from app.nlp.quickadd import parse_quick_add
 from app.rag.answer import answer_question
@@ -171,12 +172,23 @@ async def greeting_node(state: AssistantState, config: RunnableConfig) -> Assist
 
 
 async def about_node(state: AssistantState, config: RunnableConfig) -> AssistantState:
-    return {"reply": tools.about_reply(state["message"])}
+    ctx, message = _context(config), state["message"]
+    if reply := tools.small_talk_reply(message):
+        return {"reply": reply}
+    # Not about the assistant: with an LLM, a general money question still gets an answer
+    general = await general_answer(ctx.llm, message, ctx.timeout) if ctx.llm is not None else None
+    return {"reply": general or tools.about_reply(message)}
 
 
 async def help_node(state: AssistantState, config: RunnableConfig) -> AssistantState:
     ctx = _context(config)
     answer = await answer_question(ctx.help_index(), state["message"], ctx.llm, ctx.timeout)
+    # Not in the help center: a general money question ("what is a SIP?") can still be answered
+    general = None
+    if answer.source == "not_found" and ctx.llm is not None:
+        general = await general_answer(ctx.llm, state["message"], ctx.timeout)
+    if general:
+        return {"reply": general, "citations": []}
     return {"reply": answer.text, "citations": [asdict(citation) for citation in answer.citations]}
 
 

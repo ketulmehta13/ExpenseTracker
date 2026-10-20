@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Bot, Loader2, RotateCcw, Send, X } from 'lucide-react';
-import { chatWithAssistant, confirmAssistantDraft } from '../services/mlService';
+import { chatWithAssistant, confirmAssistantDraft, wakeMlService } from '../services/mlService';
 import { formatCurrency, formatDate } from '../lib/formatters';
 import { todayISODate } from '../lib/dates';
 
@@ -87,11 +87,13 @@ const AssistantPanel = () => {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [busy, setBusy] = useState(false);
+    const [slow, setSlow] = useState(false); // a reply is taking long: the server is probably waking up
     const inputRef = useRef(null);
     const endRef = useRef(null);
 
     useEffect(() => {
         if (!open) return undefined;
+        wakeMlService(); // start waking a sleeping server while the user types
         setTimeout(() => inputRef.current?.focus(), 50);
         const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
         document.addEventListener('keydown', onKey);
@@ -99,6 +101,12 @@ const AssistantPanel = () => {
     }, [open]);
 
     useEffect(() => { endRef.current?.scrollIntoView({ block: 'end' }); }, [messages, busy]);
+
+    useEffect(() => {
+        if (!busy) return undefined;
+        const timer = setTimeout(() => setSlow(true), 6000);
+        return () => clearTimeout(timer);
+    }, [busy]);
 
     // Only the latest pending draft can still be confirmed
     const settlePending = (list) => list.map((m) => (m.awaiting ? { ...m, awaiting: false } : m));
@@ -109,8 +117,11 @@ const AssistantPanel = () => {
         setInput('');
         setMessages((list) => [...settlePending(list), { role: 'user', text: message }]);
         setBusy(true);
-        const result = await chatWithAssistant(message, threadId, todayISODate());
+        let result = await chatWithAssistant(message, threadId, todayISODate());
+        // One retry: a dropped connection while the server woke up shouldn't need the user to resend
+        if (!result) result = await chatWithAssistant(message, threadId, todayISODate());
         setBusy(false);
+        setSlow(false);
         setMessages((list) => [...list, result
             ? { role: 'assistant', text: result.reply, citations: result.citations, pending: result.pending, awaiting: Boolean(result.pending) }
             : { role: 'assistant', text: UNREACHABLE }]);
@@ -120,6 +131,7 @@ const AssistantPanel = () => {
         setBusy(true);
         const result = await confirmAssistantDraft(threadId, approve, todayISODate());
         setBusy(false);
+        setSlow(false);
         setMessages((list) => [...settlePending(list), { role: 'assistant', text: result?.reply ?? UNREACHABLE }]);
         if (result?.saved) window.dispatchEvent(new CustomEvent('transaction-updated'));
     };
@@ -190,7 +202,8 @@ const AssistantPanel = () => {
                             {messages.map((m, i) => <Message key={i} message={m} onConfirm={confirm} busy={busy} />)}
                             {busy && (
                                 <p className="flex items-center gap-2 text-xs text-muted-foreground">
-                                    <Loader2 size={13} className="animate-spin" /> Thinking…
+                                    <Loader2 size={13} className="animate-spin" />
+                                    {slow ? 'Waking up the assistant, this can take up to a minute the first time…' : 'Thinking…'}
                                 </p>
                             )}
                             <div ref={endRef} />

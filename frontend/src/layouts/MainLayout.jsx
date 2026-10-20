@@ -25,6 +25,7 @@ import { useAutoLogout } from '../hooks/useAutoLogout';
 import AssistantPanel from '../components/AssistantPanel';
 import ReceiptScanModal from '../components/ReceiptScanModal';
 import { ML_ENABLED } from '../lib/features';
+import { wakeMlService } from '../services/mlService';
 
 const navItems = [
     { path: '/dashboard', name: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -56,12 +57,17 @@ const MainLayout = () => {
         window.addEventListener('open-receipt-scan', open);
         return () => window.removeEventListener('open-receipt-scan', open);
     }, []);
+    // Wake the free-plan ML server now, so the assistant and the bill scanner answer quickly later
+    useEffect(() => { if (ML_ENABLED) wakeMlService(); }, []);
     const dropdownRef = useRef(null);
     const triggerRef = useRef(null);
 
-    // Auto logout on 15 minutes of inactivity with 60-second warning toast
+    // Auto logout after 15 minutes of inactivity (with a 60-second warning toast), or after
+    // 5 minutes with the app in the background: minimised, another app opened, the phone locked
     useAutoLogout({
         timeoutMinutes: 15,
+        hiddenTimeoutMinutes: 5,
+        signedInAt: user?.last_sign_in_at,
         warnBeforeMs: 60000,
         onWarn: () => {
             toast.warning("You'll be logged out soon due to inactivity", {

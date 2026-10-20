@@ -126,7 +126,8 @@ export async function chatWithAssistant(message, threadId, today, signal) {
     return request('POST', '/v1/assistant/chat', {
         body: { message: message.trim().slice(0, 300), thread_id: threadId, today },
         signal,
-        timeoutMs: 25000,
+        // The free server can take about a minute to wake up; answers are quick once it's awake
+        timeoutMs: 75000,
     });
 }
 

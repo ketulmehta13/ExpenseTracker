@@ -128,13 +128,13 @@ CAPABILITIES = (
 )
 
 
-def about_reply(text: str) -> str:
-    """Answers about the assistant itself and small talk; anything else unrelated is declined politely."""
+def small_talk_reply(text: str) -> str | None:
+    """A fixed answer about the assistant itself (who made it, its name, what it can do), or None."""
     t = " ".join(text.lower().split())
     if re.search(r"\b(made|created|built|developed|designed|trained|wrote|creator|developer|maker|owner)\b"
                  r"|\bbehind\b", t):
-        return ("I'm the Expense Tracker assistant, built by Ketul Mehta as part of this app. I run on the "
-                "app's own server with open-source models, so your data isn't sent to an outside AI service.")
+        return ("I'm the Expense Tracker assistant, built by Ketul Mehta as part of this app. I answer from "
+                "your own data in the app, and I never share your transactions with outside services.")
     if re.search(r"\b(name|who are|who r|what are you|bot|robot|human|ai|real|person)\b"
                  r"|\b(chatgpt|gpt|gemini|claude)\b", t):
         return ("I'm the Expense Tracker assistant, a helper for your money in this app. " + CAPABILITIES)
@@ -142,6 +142,14 @@ def about_reply(text: str) -> str:
         return "I'm doing well, thanks! What would you like to know about your money?"
     if re.search(r"\b(what|how) (can|do) (you|u) (do|help)\b|\bwhat can i ask\b|^help( me)?$", t):
         return CAPABILITIES
+    return None
+
+
+def about_reply(text: str) -> str:
+    """Answers about the assistant itself and small talk; anything else unrelated is declined politely."""
+    if reply := small_talk_reply(text):
+        return reply
+    t = " ".join(text.lower().split())
     if re.search(r"\bmutual funds?\b|\bstocks?\b|\bshares?\b|\bcrypto|\bbitcoin\b|\binvest", t):
         return ("I can't recommend investments; for that, talk to a registered financial adviser. "
                 "I can show you how much you spend and save each month, which helps you plan what to invest.")

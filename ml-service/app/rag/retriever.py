@@ -17,7 +17,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from app.rag.bm25 import BM25
+from app.rag.bm25 import BM25, tokenize
 from app.rag.embeddings import Embedder
 from app.rag.knowledge import Chunk
 
@@ -26,6 +26,9 @@ RRF_K = 60
 # bge-small-en-v1.5 on the dev questions (training/evaluate_rag.py): in-scope ones scored 0.63
 # or more, off-topic ones 0.57 or less. A different embedding model needs its own value.
 DECLINE_BELOW = 0.60
+# Without embeddings (the free server): decline when less than this share of the question's
+# words, weighted by rarity, appear anywhere in the help center. Chosen on the dev questions.
+KEYWORD_DECLINE_BELOW = 0.3
 
 
 @dataclass(frozen=True)
@@ -69,10 +72,22 @@ class HelpIndex:
             return None
         return float(np.max(self.vectors @ self.embedder.embed_query(query)))
 
+    def keyword_coverage(self, query: str) -> float:
+        """The share of the question's words found in the help center, each weighted by its idf;
+        a word the help center never uses counts as the rarest word."""
+        terms = tokenize(query)
+        if not terms or not self.bm25.idf:
+            return 0.0
+        rarest = max(self.bm25.idf.values())
+        weights = [(term in self.bm25.idf, self.bm25.idf.get(term, rarest)) for term in terms]
+        return sum(weight for known, weight in weights if known) / sum(weight for _, weight in weights)
+
     def in_scope(self, query: str) -> bool:
-        """Whether the help center is likely to answer it. Without embeddings, assume so."""
+        """Whether the help center is likely to answer it: by meaning, or by keywords without embeddings."""
         similarity = self.top_similarity(query)
-        return similarity is None or similarity >= self.decline_below
+        if similarity is None:
+            return self.keyword_coverage(query) >= KEYWORD_DECLINE_BELOW
+        return similarity >= self.decline_below
 
 
 def ranked_articles(hits: list[Hit]) -> list[str]:

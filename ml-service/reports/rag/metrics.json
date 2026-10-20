@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-10-18T13:18:26+00:00",
+  "generated_at": "2026-10-20T06:20:13+00:00",
   "embedding_model": "BAAI/bge-small-en-v1.5",
-  "articles": 12,
-  "chunks": 51,
-  "windows": 42,
+  "articles": 14,
+  "chunks": 60,
+  "windows": 51,
   "dev": {
     "sections": {
       "bm25": {
@@ -13,15 +13,15 @@
         "questions": 30
       },
       "dense": {
-        "hit@1": 0.9333,
+        "hit@1": 0.9667,
         "hit@3": 0.9667,
-        "mrr@5": 0.95,
+        "mrr@5": 0.9667,
         "questions": 30
       },
       "hybrid": {
-        "hit@1": 0.9667,
+        "hit@1": 1.0,
         "hit@3": 1.0,
-        "mrr@5": 0.9833,
+        "mrr@5": 1.0,
         "questions": 30
       }
     },
@@ -33,15 +33,15 @@
         "questions": 30
       },
       "dense": {
-        "hit@1": 0.8,
-        "hit@3": 0.9667,
-        "mrr@5": 0.8722,
+        "hit@1": 0.7667,
+        "hit@3": 0.9333,
+        "mrr@5": 0.8528,
         "questions": 30
       },
       "hybrid": {
-        "hit@1": 0.8667,
+        "hit@1": 0.8333,
         "hit@3": 0.9667,
-        "mrr@5": 0.9233,
+        "mrr@5": 0.9083,
         "questions": 30
       }
     }
@@ -49,57 +49,46 @@
   "test": {
     "sections": {
       "bm25": {
-        "hit@1": 0.7333,
-        "hit@3": 0.8667,
-        "mrr@5": 0.8167,
+        "hit@1": 0.8333,
+        "hit@3": 0.9667,
+        "mrr@5": 0.8944,
         "questions": 30
       },
       "dense": {
         "hit@1": 0.8667,
-        "hit@3": 0.9667,
-        "mrr@5": 0.9178,
+        "hit@3": 1.0,
+        "mrr@5": 0.9278,
         "questions": 30
       },
       "hybrid": {
-        "hit@1": 0.8333,
-        "hit@3": 0.9333,
-        "mrr@5": 0.8833,
+        "hit@1": 0.9,
+        "hit@3": 0.9667,
+        "mrr@5": 0.9278,
         "questions": 30
       }
     },
     "windows": {
       "bm25": {
-        "hit@1": 0.7333,
-        "hit@3": 0.8667,
-        "mrr@5": 0.8111,
+        "hit@1": 0.8,
+        "hit@3": 0.9667,
+        "mrr@5": 0.8778,
         "questions": 30
       },
       "dense": {
-        "hit@1": 0.8,
+        "hit@1": 0.8667,
         "hit@3": 0.9333,
-        "mrr@5": 0.8611,
+        "mrr@5": 0.8944,
         "questions": 30
       },
       "hybrid": {
-        "hit@1": 0.7667,
+        "hit@1": 0.8667,
         "hit@3": 0.9,
-        "mrr@5": 0.8417,
+        "mrr@5": 0.89,
         "questions": 30
       }
     }
   },
   "test_misses": [
-    {
-      "question": "I want to stop paying for pro",
-      "expected": [
-        "plans-and-billing"
-      ],
-      "got": [
-        "account-and-security",
-        "plans-and-billing",
-        "reports"
-      ]
-    },
     {
       "question": "how does the app predict my spending",
       "expected": [
@@ -107,8 +96,8 @@
       ],
       "got": [
         "insights",
-        "budget-and-forecast",
-        "quick-add"
+        "saving-money",
+        "budget-and-forecast"
       ]
     },
     {
@@ -124,40 +113,28 @@
       ]
     },
     {
-      "question": "older transactions are missing",
-      "expected": [
-        "reports",
-        "plans-and-billing"
-      ],
-      "got": [
-        "adding-transactions",
-        "quick-add",
-        "exporting"
-      ]
-    },
-    {
       "question": "can I use dollars instead of rupees",
       "expected": [
         "privacy-and-ai"
       ],
       "got": [
-        "insights",
+        "scanning-bills",
         "getting-started",
-        "adding-transactions"
+        "insights"
       ]
     }
   ],
   "dev_threshold_sweep": {
     "0.5": 0.9091,
     "0.55": 0.9697,
-    "0.6": 1.0,
+    "0.6": 0.9697,
     "0.65": 0.9394,
-    "0.7": 0.8788
+    "0.7": 0.8485
   },
-  "test_decline_accuracy": 0.9091,
+  "test_decline_accuracy": 0.9394,
   "gate": {
-    "hit@1 >= 0.8 (got 0.833)": true,
-    "hit@3 >= 0.9 (got 0.933)": true,
-    "decline_accuracy >= 0.85 (got 0.909)": true
+    "hit@1 >= 0.8 (got 0.900)": true,
+    "hit@3 >= 0.9 (got 0.967)": true,
+    "decline_accuracy >= 0.85 (got 0.939)": true
   }
 }

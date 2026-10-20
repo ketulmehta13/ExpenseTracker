@@ -41,11 +41,30 @@ def ask(*messages: str):
         ("what does unusual spending mean", "help"),  # a definition, despite the data words
         ("how is the forecast calculated", "help"),
         ("hello", "greeting"),
-        ("what's the weather today", "help"),  # unrecognised: the help center decides (and declines)
+        ("what's the weather today", "about"),  # off-topic: declined without searching the help center
+        ("who made you?", "about"),
+        ("What is your name", "about"),
+        ("what can you do", "about"),
+        ("which mutual fund should i invest in", "about"),
+        ("how do i save money", "help"),
     ],
 )
 def test_intents(message, intent):
     assert ask(message).intent == intent
+
+
+@pytest.mark.parametrize(
+    ("message", "expected"),
+    [
+        ("Who made you?", "Ketul Mehta"),
+        ("What is your name", "Expense Tracker assistant"),
+        ("what can you do", "how much you spent"),
+        ("tell me a joke", "outside what I can help with"),
+        ("which mutual fund should i invest in", "can't recommend investments"),
+    ],
+)
+def test_about_replies(message, expected):
+    assert expected in tools.about_reply(message)
 
 
 def test_periods():

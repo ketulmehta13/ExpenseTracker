@@ -18,6 +18,10 @@ STOPWORDS = {
     "a", "an", "the", "is", "are", "was", "be", "to", "of", "and", "or", "in", "on", "for", "with", "my",
     "i", "me", "you", "your", "it", "this", "that", "do", "does", "did", "can", "how", "what", "why", "when",
     "where", "which", "will", "would", "should", "there", "at", "by", "from", "as", "so", "if", "not",
+    "please", "pls", "want", "need", "am", "get", "got",
+    # Hinglish question words ("export kaise kare")
+    "kaise", "kare", "karu", "karna", "karo", "kya", "hai", "hain", "mera", "meri", "mere", "mujhe", "kab",
+    "kahan", "ka", "ki", "ke", "ko", "se",
 }
 _TOKEN = re.compile(r"[a-z0-9₹]+")
 

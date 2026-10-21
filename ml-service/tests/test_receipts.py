@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import UTC, date, datetime
 from types import SimpleNamespace
 
 import cv2
@@ -321,6 +321,10 @@ def _png():
     return encoded.tobytes()
 
 
+# The endpoint accepts "today" only within a day of the server's date
+SERVER_TODAY = datetime.now(UTC).date().isoformat()
+
+
 def test_scan_requires_a_token(client):
     response = client.post("/v1/receipts/scan", files={"file": ("bill.png", _png(), "image/png")})
     assert response.status_code == 401
@@ -339,7 +343,7 @@ def test_scan_returns_the_bill_and_its_groups(client, auth_headers, supabase):
     supabase.tables["categories"] = CATEGORIES
     client.app.state.ocr_engine = FakeEngine(DMART)
     response = client.post("/v1/receipts/scan", files={"file": ("bill.png", _png(), "image/png")},
-                           data={"today": "2026-10-19"}, headers=auth_headers)
+                           data={"today": SERVER_TODAY}, headers=auth_headers)
     assert response.status_code == 200
     body = response.json()
     fields = (body["merchant"], body["date"], body["total"], body["source"])
@@ -353,7 +357,7 @@ def test_scan_returns_the_bill_and_its_groups(client, auth_headers, supabase):
 def test_scan_reads_a_pdf_invoice(client, auth_headers, supabase):
     supabase.tables["categories"] = CATEGORIES
     upload = {"file": ("invoice.pdf", _text_pdf(DMART), "application/pdf")}
-    response = client.post("/v1/receipts/scan", files=upload, data={"today": "2026-10-19"},
+    response = client.post("/v1/receipts/scan", files=upload, data={"today": SERVER_TODAY},
                            headers=auth_headers)
     assert response.status_code == 200 and response.json()["source"] == "pdf_text"
 

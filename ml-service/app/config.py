@@ -9,6 +9,7 @@ from pathlib import Path
 DEFAULT_ORIGINS = "http://localhost:5173,https://ketul-expense-tracker.vercel.app"
 DEFAULT_MODEL_DIR = Path(__file__).resolve().parent.parent / "models"
 DEFAULT_KNOWLEDGE_DIR = Path(__file__).resolve().parent.parent / "knowledge"
+SECRET_FILES_DIR = Path("/etc/secrets")  # where Render mounts "secret files"
 
 
 def _csv(value: str) -> tuple[str, ...]:
@@ -20,6 +21,22 @@ def _model_name(value: str) -> str:
     some hosts drop environment variables whose value is empty)."""
     value = value.strip()
     return "" if value.lower() in {"", "none", "off"} else value
+
+
+def _secret(name: str, secrets_dir: Path = SECRET_FILES_DIR) -> str:
+    """An environment variable, or else a secret file of the same name (Render, Docker secrets).
+    A file may hold just the value or a NAME=value line."""
+    if value := os.environ.get(name, "").strip():
+        return value
+    try:
+        text = (secrets_dir / name).read_text(encoding="utf-8").strip()
+    except OSError:
+        return ""
+    for line in text.splitlines():
+        line = line.strip()
+        if line.startswith(f"{name}="):
+            return line.split("=", 1)[1].strip().strip("\"'")
+    return text.splitlines()[0].strip() if text else ""
 
 
 @dataclass(frozen=True)
@@ -62,7 +79,7 @@ class Settings:
             llm_provider=os.environ.get("LLM_PROVIDER", "none"),
             llm_model=os.environ.get("LLM_MODEL", "qwen2.5:3b"),
             llm_base_url=os.environ.get("LLM_BASE_URL", ""),
-            llm_api_key=os.environ.get("LLM_API_KEY", ""),
+            llm_api_key=_secret("LLM_API_KEY"),
             llm_timeout_seconds=float(os.environ.get("LLM_TIMEOUT_SECONDS", "20")),
             knowledge_dir=Path(os.environ.get("KNOWLEDGE_DIR", str(DEFAULT_KNOWLEDGE_DIR))),
             embedding_model=_model_name(os.environ.get("EMBEDDING_MODEL", "BAAI/bge-small-en-v1.5")),

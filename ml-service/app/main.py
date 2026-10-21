@@ -48,7 +48,13 @@ def create_app(
                 "Train one with: python -m training.train_categorizer",
                 settings.model_dir,
             )
-        app.state.llm = llm if llm is not None else build_chat_model(settings)
+        try:
+            app.state.llm = llm if llm is not None else build_chat_model(settings)
+        except Exception as err:
+            # A misconfigured LLM (e.g. a missing API key) must not take the whole service down:
+            # every LLM feature has a rule-based or template fallback
+            logger.error("LLM disabled, its configuration is invalid: %s", type(err).__name__)
+            app.state.llm = None
         logger.info("LLM provider: %s", settings.llm_provider if app.state.llm is not None else "none")
         yield
         await app.state.http.aclose()

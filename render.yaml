@@ -28,7 +28,15 @@ services:
         value: https://ketul-expense-tracker.vercel.app
       - key: EMBEDDING_MODEL
         value: none
+      # The LLM: Groq's free tier through its OpenAI-compatible API (about 1 s per answer). Put the
+      # key in the dashboard only; never commit it. LLM_PROVIDER=none switches every LLM feature off.
       - key: LLM_PROVIDER
-        value: none
+        value: openai
+      - key: LLM_BASE_URL
+        value: https://api.groq.com/openai/v1
+      - key: LLM_MODEL
+        value: openai/gpt-oss-120b
+      - key: LLM_API_KEY
+        sync: false
       - key: METRICS_TOKEN
         generateValue: true

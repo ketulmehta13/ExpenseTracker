@@ -59,11 +59,16 @@ def test_digits_inside_known_names_are_allowed():
 
 def test_money_uses_indian_digit_grouping():
     assert [money(v) for v in (999, 12345.4, 125000, 1234567, -500)] == [
-        "₹999", "₹12,345", "₹1,25,000", "₹12,34,567", "-₹500",
+        "₹999",
+        "₹12,345",
+        "₹1,25,000",
+        "₹12,34,567",
+        "-₹500",
     ]
 
 
 # ---------- provider switch ----------
+
 
 def test_provider_switch():
     assert build_chat_model(Settings()) is None
@@ -79,6 +84,7 @@ def test_api_key_is_not_printed():
 
 
 # ---------- quick-add fallback ----------
+
 
 def test_the_llm_is_only_asked_when_the_rules_look_unsure():
     assert not needs_llm(parse_quick_add("swiggy 450 yesterday", SUNDAY))
@@ -122,9 +128,17 @@ def test_checked_values_fill_only_the_gaps():
 # ---------- grounded summary ----------
 
 FACTS = MonthFacts(
-    month_name="October", day=18, spent=10421.7, spent_last_month_same_day=9200, projected=30418.29,
-    budget=40000, status="on_track", top_category=("Food", 4100), unusual=("Ola cab", 3141, 11.0),
-    subscriptions_monthly=13904.92, subscription_count=4,
+    month_name="October",
+    day=18,
+    spent=10421.7,
+    spent_last_month_same_day=9200,
+    projected=30418.29,
+    budget=40000,
+    status="on_track",
+    top_category=("Food", 4100),
+    unusual=("Ola cab", 3141, 11.0),
+    subscriptions_monthly=13904.92,
+    subscription_count=4,
 )
 
 
@@ -177,17 +191,19 @@ def test_the_check_accepts_every_honest_summary_and_rejects_every_planted_number
         sentences = honest.split(". ")
         at = rng.randrange(len(sentences))
         for planted in (f"{rng.randint(1, 99)}% more", f"₹{rng.randint(100, 99999)}", "[savings]"):
-            tampered = ". ".join([*sentences[:at], f"{sentences[at]}, {planted}", *sentences[at + 1:]])
+            tampered = ". ".join([*sentences[:at], f"{sentences[at]}, {planted}", *sentences[at + 1 :]])
             assert facts.fill(tampered) is None, tampered
 
 
 # ---------- endpoints with a fake LLM ----------
+
 
 @pytest.fixture
 def llm_client(supabase, model_dir):
     def make(model):
         settings = Settings(supabase_url=SUPABASE_URL, supabase_anon_key="anon-key", model_dir=model_dir)
         return TestClient(create_app(settings, transport=httpx.MockTransport(supabase.handler), llm=model))
+
     return make
 
 
@@ -236,3 +252,31 @@ def test_summary_endpoint_caches_llm_text_while_the_facts_are_unchanged(llm_clie
         second = client.get("/v1/insights/summary", headers=auth_headers).json()
     assert first == second == {"text": "You've spent ₹0 so far this month.", "source": "llm"}
     assert model.i == 1  # called once
+
+
+@pytest.mark.parametrize(
+    "content", ["gsk_test", "gsk_test\n", "LLM_API_KEY=gsk_test", 'LLM_API_KEY="gsk_test"\n']
+)
+def test_the_api_key_can_come_from_a_secret_file(monkeypatch, tmp_path, content):
+    from app.config import _secret
+
+    monkeypatch.delenv("LLM_API_KEY", raising=False)
+    assert _secret("LLM_API_KEY", tmp_path) == ""
+    (tmp_path / "LLM_API_KEY").write_text(content, encoding="utf-8")
+    assert _secret("LLM_API_KEY", tmp_path) == "gsk_test"
+    monkeypatch.setenv("LLM_API_KEY", "from-env")  # an environment variable wins
+    assert _secret("LLM_API_KEY", tmp_path) == "from-env"
+
+
+def test_a_misconfigured_llm_does_not_stop_the_service(monkeypatch, model_dir):
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    settings = Settings(
+        supabase_url=SUPABASE_URL,
+        supabase_anon_key="anon-key",
+        model_dir=model_dir,
+        llm_provider="openai",
+        llm_api_key="",
+    )
+    with TestClient(create_app(settings)) as client:
+        assert client.get("/health").status_code == 200
+        assert client.app.state.llm is None

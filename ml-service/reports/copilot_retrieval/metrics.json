@@ -1,0 +1,791 @@
+{
+  "generated_at": "2026-10-22T17:06:38+00:00",
+  "embedding_model": "Supabase/gte-small",
+  "documents": 21,
+  "questions": {
+    "dev": 61,
+    "test": 59
+  },
+  "dev": {
+    "sections (900/150)": {
+      "keyword": {
+        "hit@1": 0.8679,
+        "hit@3": 0.9623,
+        "mrr@5": 0.9204,
+        "decline_accuracy": 0.918,
+        "ms_per_question": 0.5,
+        "misses": [
+          {
+            "question": "how do i download my transactions as a pdf",
+            "expected": [
+              "exporting"
+            ],
+            "got": [
+              "troubleshooting",
+              "exporting",
+              "scanning-bills"
+            ]
+          },
+          {
+            "question": "why was my uber ride flagged",
+            "expected": [
+              "insights"
+            ],
+            "got": [
+              "saving-money",
+              "insights"
+            ]
+          },
+          {
+            "question": "where are my subscriptions listed",
+            "expected": [
+              "insights"
+            ],
+            "got": [
+              "saving-money",
+              "insights",
+              "finance/saving-strategies"
+            ]
+          },
+          {
+            "question": "category suggestion is not showing",
+            "expected": [
+              "troubleshooting",
+              "adding-transactions"
+            ],
+            "got": [
+              "categories",
+              "privacy-and-ai",
+              "troubleshooting"
+            ]
+          },
+          {
+            "question": "does the AI see all my transactions",
+            "expected": [
+              "privacy-and-ai"
+            ],
+            "got": [
+              "scanning-bills",
+              "privacy-and-ai",
+              "insights"
+            ]
+          },
+          {
+            "question": "how can I save more money every month",
+            "expected": [
+              "finance/saving-strategies",
+              "saving-money"
+            ],
+            "got": [
+              "finance/cash-flow",
+              "finance/budgeting-methods",
+              "finance/investing-basics"
+            ]
+          },
+          {
+            "question": "why did my spending go up this month",
+            "expected": [
+              "finance/cash-flow"
+            ],
+            "got": [
+              "saving-money",
+              "budget-and-forecast",
+              "finance/emergency-fund"
+            ]
+          }
+        ]
+      },
+      "dense": {
+        "hit@1": 0.9623,
+        "hit@3": 1.0,
+        "mrr@5": 0.978,
+        "decline_accuracy": 0.9836,
+        "ms_per_question": 11.1,
+        "misses": [
+          {
+            "question": "where are my subscriptions listed",
+            "expected": [
+              "insights"
+            ],
+            "got": [
+              "saving-money",
+              "categories",
+              "insights"
+            ]
+          },
+          {
+            "question": "how do I calculate my savings rate",
+            "expected": [
+              "finance/cash-flow"
+            ],
+            "got": [
+              "finance/saving-strategies",
+              "finance/cash-flow",
+              "saving-money"
+            ]
+          }
+        ]
+      },
+      "hybrid": {
+        "hit@1": 0.9434,
+        "hit@3": 1.0,
+        "mrr@5": 0.9686,
+        "decline_accuracy": 0.9836,
+        "ms_per_question": 11.8,
+        "misses": [
+          {
+            "question": "where are my subscriptions listed",
+            "expected": [
+              "insights"
+            ],
+            "got": [
+              "saving-money",
+              "insights",
+              "reports"
+            ]
+          },
+          {
+            "question": "how can I save more money every month",
+            "expected": [
+              "finance/saving-strategies",
+              "saving-money"
+            ],
+            "got": [
+              "finance/cash-flow",
+              "budget-and-forecast",
+              "saving-money"
+            ]
+          },
+          {
+            "question": "why did my spending go up this month",
+            "expected": [
+              "finance/cash-flow"
+            ],
+            "got": [
+              "saving-money",
+              "finance/cash-flow",
+              "budget-and-forecast"
+            ]
+          }
+        ]
+      }
+    },
+    "small (400/80)": {
+      "keyword": {
+        "hit@1": 0.8868,
+        "hit@3": 0.9811,
+        "mrr@5": 0.9314,
+        "decline_accuracy": 0.9016,
+        "ms_per_question": 0.4,
+        "misses": [
+          {
+            "question": "how do i download my transactions as a pdf",
+            "expected": [
+              "exporting"
+            ],
+            "got": [
+              "troubleshooting",
+              "exporting",
+              "scanning-bills"
+            ]
+          },
+          {
+            "question": "where are my subscriptions listed",
+            "expected": [
+              "insights"
+            ],
+            "got": [
+              "saving-money",
+              "insights",
+              "finance/saving-strategies"
+            ]
+          },
+          {
+            "question": "category suggestion is not showing",
+            "expected": [
+              "troubleshooting",
+              "adding-transactions"
+            ],
+            "got": [
+              "categories",
+              "privacy-and-ai",
+              "troubleshooting"
+            ]
+          },
+          {
+            "question": "does the AI see all my transactions",
+            "expected": [
+              "privacy-and-ai"
+            ],
+            "got": [
+              "scanning-bills",
+              "privacy-and-ai",
+              "insights"
+            ]
+          },
+          {
+            "question": "how can I save more money every month",
+            "expected": [
+              "finance/saving-strategies",
+              "saving-money"
+            ],
+            "got": [
+              "finance/cash-flow",
+              "finance/budgeting-methods",
+              "saving-money"
+            ]
+          },
+          {
+            "question": "why did my spending go up this month",
+            "expected": [
+              "finance/cash-flow"
+            ],
+            "got": [
+              "saving-money",
+              "budget-and-forecast",
+              "finance/emergency-fund"
+            ]
+          }
+        ]
+      },
+      "dense": {
+        "hit@1": 0.9623,
+        "hit@3": 1.0,
+        "mrr@5": 0.9811,
+        "decline_accuracy": 0.9836,
+        "ms_per_question": 11.3,
+        "misses": [
+          {
+            "question": "where are my subscriptions listed",
+            "expected": [
+              "insights"
+            ],
+            "got": [
+              "saving-money",
+              "insights",
+              "categories"
+            ]
+          },
+          {
+            "question": "how do I calculate my savings rate",
+            "expected": [
+              "finance/cash-flow"
+            ],
+            "got": [
+              "finance/saving-strategies",
+              "finance/cash-flow",
+              "saving-money"
+            ]
+          }
+        ]
+      },
+      "hybrid": {
+        "hit@1": 0.9434,
+        "hit@3": 1.0,
+        "mrr@5": 0.9686,
+        "decline_accuracy": 0.9836,
+        "ms_per_question": 9.2,
+        "misses": [
+          {
+            "question": "where are my subscriptions listed",
+            "expected": [
+              "insights"
+            ],
+            "got": [
+              "saving-money",
+              "insights",
+              "reports"
+            ]
+          },
+          {
+            "question": "how can I save more money every month",
+            "expected": [
+              "finance/saving-strategies",
+              "saving-money"
+            ],
+            "got": [
+              "finance/cash-flow",
+              "saving-money",
+              "budget-and-forecast"
+            ]
+          },
+          {
+            "question": "why did my spending go up this month",
+            "expected": [
+              "finance/cash-flow"
+            ],
+            "got": [
+              "saving-money",
+              "budget-and-forecast",
+              "finance/cash-flow"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "test": {
+    "sections (900/150)": {
+      "keyword": {
+        "hit@1": 0.8627,
+        "hit@3": 0.9608,
+        "mrr@5": 0.9052,
+        "decline_accuracy": 0.9153,
+        "ms_per_question": 0.4,
+        "misses": [
+          {
+            "question": "how does the app predict my spending",
+            "expected": [
+              "budget-and-forecast"
+            ],
+            "got": [
+              "finance/budgeting-methods",
+              "saving-money",
+              "insights"
+            ]
+          },
+          {
+            "question": "I got logged out while using the app",
+            "expected": [
+              "account-and-security",
+              "troubleshooting"
+            ],
+            "got": [
+              "saving-money",
+              "account-and-security",
+              "troubleshooting"
+            ]
+          },
+          {
+            "question": "is my data safe",
+            "expected": [
+              "account-and-security",
+              "privacy-and-ai"
+            ],
+            "got": [
+              "exporting",
+              "finance/emergency-fund",
+              "account-and-security"
+            ]
+          },
+          {
+            "question": "how do I record my salary",
+            "expected": [
+              "adding-transactions",
+              "quick-add"
+            ],
+            "got": [
+              "getting-started",
+              "quick-add",
+              "categories"
+            ]
+          },
+          {
+            "question": "can I use dollars instead of rupees",
+            "expected": [
+              "privacy-and-ai"
+            ],
+            "got": [
+              "finance/saving-strategies",
+              "finance/budgeting-methods",
+              "account-and-security"
+            ]
+          },
+          {
+            "question": "tips to cut down monthly expenses",
+            "expected": [
+              "finance/saving-strategies",
+              "saving-money"
+            ],
+            "got": [
+              "finance/expense-categories",
+              "finance/saving-strategies",
+              "quick-add"
+            ]
+          },
+          {
+            "question": "my salary went up but I am not saving more",
+            "expected": [
+              "finance/saving-strategies"
+            ],
+            "got": [
+              "categories",
+              "finance/budgeting-methods",
+              "finance/saving-strategies"
+            ]
+          }
+        ]
+      },
+      "dense": {
+        "hit@1": 0.902,
+        "hit@3": 0.9804,
+        "mrr@5": 0.9418,
+        "decline_accuracy": 0.9661,
+        "ms_per_question": 11.9,
+        "misses": [
+          {
+            "question": "export kaise kare",
+            "expected": [
+              "exporting"
+            ],
+            "got": [
+              "quick-add",
+              "exporting",
+              "finance/budgeting-methods"
+            ]
+          },
+          {
+            "question": "what's the price of the yearly plan",
+            "expected": [
+              "plans-and-billing"
+            ],
+            "got": [
+              "finance/cash-flow",
+              "finance/saving-strategies",
+              "finance/emergency-fund"
+            ]
+          },
+          {
+            "question": "how does the app predict my spending",
+            "expected": [
+              "budget-and-forecast"
+            ],
+            "got": [
+              "saving-money",
+              "insights",
+              "budget-and-forecast"
+            ]
+          },
+          {
+            "question": "how do I record my salary",
+            "expected": [
+              "adding-transactions",
+              "quick-add"
+            ],
+            "got": [
+              "getting-started",
+              "quick-add",
+              "adding-transactions"
+            ]
+          },
+          {
+            "question": "tips to cut down monthly expenses",
+            "expected": [
+              "finance/saving-strategies",
+              "saving-money"
+            ],
+            "got": [
+              "finance/cash-flow",
+              "finance/saving-strategies",
+              "finance/emergency-fund"
+            ]
+          }
+        ]
+      },
+      "hybrid": {
+        "hit@1": 0.902,
+        "hit@3": 0.9608,
+        "mrr@5": 0.9363,
+        "decline_accuracy": 0.9661,
+        "ms_per_question": 12.3,
+        "misses": [
+          {
+            "question": "what's the price of the yearly plan",
+            "expected": [
+              "plans-and-billing"
+            ],
+            "got": [
+              "finance/cash-flow",
+              "plans-and-billing",
+              "insights"
+            ]
+          },
+          {
+            "question": "how does the app predict my spending",
+            "expected": [
+              "budget-and-forecast"
+            ],
+            "got": [
+              "saving-money",
+              "insights",
+              "finance/budgeting-methods"
+            ]
+          },
+          {
+            "question": "how do I record my salary",
+            "expected": [
+              "adding-transactions",
+              "quick-add"
+            ],
+            "got": [
+              "getting-started",
+              "quick-add",
+              "finance/saving-strategies"
+            ]
+          },
+          {
+            "question": "can I use dollars instead of rupees",
+            "expected": [
+              "privacy-and-ai"
+            ],
+            "got": [
+              "finance/emergency-fund",
+              "getting-started",
+              "insights"
+            ]
+          },
+          {
+            "question": "is eating out a need or a want",
+            "expected": [
+              "finance/expense-categories"
+            ],
+            "got": [
+              "finance/budgeting-methods",
+              "finance/expense-categories",
+              "getting-started"
+            ]
+          }
+        ]
+      }
+    },
+    "small (400/80)": {
+      "keyword": {
+        "hit@1": 0.8627,
+        "hit@3": 0.9608,
+        "mrr@5": 0.9052,
+        "decline_accuracy": 0.9153,
+        "ms_per_question": 0.3,
+        "misses": [
+          {
+            "question": "how does the app predict my spending",
+            "expected": [
+              "budget-and-forecast"
+            ],
+            "got": [
+              "finance/budgeting-methods",
+              "saving-money",
+              "insights"
+            ]
+          },
+          {
+            "question": "I got logged out while using the app",
+            "expected": [
+              "account-and-security",
+              "troubleshooting"
+            ],
+            "got": [
+              "saving-money",
+              "account-and-security",
+              "troubleshooting"
+            ]
+          },
+          {
+            "question": "is my data safe",
+            "expected": [
+              "account-and-security",
+              "privacy-and-ai"
+            ],
+            "got": [
+              "exporting",
+              "finance/emergency-fund",
+              "account-and-security"
+            ]
+          },
+          {
+            "question": "how do I record my salary",
+            "expected": [
+              "adding-transactions",
+              "quick-add"
+            ],
+            "got": [
+              "getting-started",
+              "quick-add",
+              "categories"
+            ]
+          },
+          {
+            "question": "can I use dollars instead of rupees",
+            "expected": [
+              "privacy-and-ai"
+            ],
+            "got": [
+              "finance/saving-strategies",
+              "scanning-bills",
+              "finance/budgeting-methods"
+            ]
+          },
+          {
+            "question": "tips to cut down monthly expenses",
+            "expected": [
+              "finance/saving-strategies",
+              "saving-money"
+            ],
+            "got": [
+              "finance/expense-categories",
+              "finance/saving-strategies",
+              "quick-add"
+            ]
+          },
+          {
+            "question": "my salary went up but I am not saving more",
+            "expected": [
+              "finance/saving-strategies"
+            ],
+            "got": [
+              "categories",
+              "finance/budgeting-methods",
+              "finance/saving-strategies"
+            ]
+          }
+        ]
+      },
+      "dense": {
+        "hit@1": 0.902,
+        "hit@3": 0.9804,
+        "mrr@5": 0.9379,
+        "decline_accuracy": 0.9661,
+        "ms_per_question": 8.8,
+        "misses": [
+          {
+            "question": "export kaise kare",
+            "expected": [
+              "exporting"
+            ],
+            "got": [
+              "quick-add",
+              "exporting",
+              "finance/budgeting-methods"
+            ]
+          },
+          {
+            "question": "what's the price of the yearly plan",
+            "expected": [
+              "plans-and-billing"
+            ],
+            "got": [
+              "finance/cash-flow",
+              "finance/saving-strategies",
+              "finance/emergency-fund"
+            ]
+          },
+          {
+            "question": "how does the app predict my spending",
+            "expected": [
+              "budget-and-forecast"
+            ],
+            "got": [
+              "saving-money",
+              "insights",
+              "budget-and-forecast"
+            ]
+          },
+          {
+            "question": "how do I record my salary",
+            "expected": [
+              "adding-transactions",
+              "quick-add"
+            ],
+            "got": [
+              "getting-started",
+              "quick-add",
+              "adding-transactions"
+            ]
+          },
+          {
+            "question": "tips to cut down monthly expenses",
+            "expected": [
+              "finance/saving-strategies",
+              "saving-money"
+            ],
+            "got": [
+              "finance/cash-flow",
+              "finance/saving-strategies",
+              "finance/emergency-fund"
+            ]
+          }
+        ]
+      },
+      "hybrid": {
+        "hit@1": 0.902,
+        "hit@3": 0.9608,
+        "mrr@5": 0.9363,
+        "decline_accuracy": 0.9661,
+        "ms_per_question": 8.9,
+        "misses": [
+          {
+            "question": "what's the price of the yearly plan",
+            "expected": [
+              "plans-and-billing"
+            ],
+            "got": [
+              "finance/cash-flow",
+              "plans-and-billing",
+              "insights"
+            ]
+          },
+          {
+            "question": "how does the app predict my spending",
+            "expected": [
+              "budget-and-forecast"
+            ],
+            "got": [
+              "saving-money",
+              "insights",
+              "finance/budgeting-methods"
+            ]
+          },
+          {
+            "question": "how do I record my salary",
+            "expected": [
+              "adding-transactions",
+              "quick-add"
+            ],
+            "got": [
+              "getting-started",
+              "quick-add",
+              "finance/saving-strategies"
+            ]
+          },
+          {
+            "question": "can I use dollars instead of rupees",
+            "expected": [
+              "privacy-and-ai"
+            ],
+            "got": [
+              "scanning-bills",
+              "finance/emergency-fund",
+              "getting-started"
+            ]
+          },
+          {
+            "question": "is eating out a need or a want",
+            "expected": [
+              "finance/expense-categories"
+            ],
+            "got": [
+              "finance/budgeting-methods",
+              "finance/expense-categories",
+              "getting-started"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "threshold_sweep": {
+    "0.74": 0.8852,
+    "0.76": 0.918,
+    "0.78": 0.9836,
+    "0.8": 0.9836,
+    "0.82": 0.9836,
+    "0.84": 0.9344
+  },
+  "threshold": 0.8,
+  "chunks": 92,
+  "help_only_test_hit@1": 0.8667,
+  "gate": {
+    "hit@1 >= 0.8 (got 0.902)": true,
+    "hit@3 >= 0.9 (got 0.961)": true,
+    "decline_accuracy >= 0.85 (got 0.966)": true
+  }
+}

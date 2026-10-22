@@ -1,47 +1,47 @@
 {
-  "generated_at": "2026-10-20T06:20:13+00:00",
+  "generated_at": "2026-10-22T17:07:27+00:00",
   "embedding_model": "BAAI/bge-small-en-v1.5",
   "articles": 14,
   "chunks": 60,
-  "windows": 51,
+  "windows": 52,
   "dev": {
     "sections": {
       "bm25": {
-        "hit@1": 0.8667,
+        "hit@1": 0.8333,
         "hit@3": 1.0,
-        "mrr@5": 0.9222,
+        "mrr@5": 0.9056,
         "questions": 30
       },
       "dense": {
-        "hit@1": 0.9667,
+        "hit@1": 0.9333,
         "hit@3": 0.9667,
-        "mrr@5": 0.9667,
+        "mrr@5": 0.95,
         "questions": 30
       },
       "hybrid": {
-        "hit@1": 1.0,
+        "hit@1": 0.9667,
         "hit@3": 1.0,
-        "mrr@5": 1.0,
+        "mrr@5": 0.9833,
         "questions": 30
       }
     },
     "windows": {
       "bm25": {
-        "hit@1": 0.8,
-        "hit@3": 1.0,
-        "mrr@5": 0.8833,
+        "hit@1": 0.6667,
+        "hit@3": 0.9667,
+        "mrr@5": 0.8083,
         "questions": 30
       },
       "dense": {
-        "hit@1": 0.7667,
-        "hit@3": 0.9333,
-        "mrr@5": 0.8528,
+        "hit@1": 0.8333,
+        "hit@3": 0.9667,
+        "mrr@5": 0.8944,
         "questions": 30
       },
       "hybrid": {
-        "hit@1": 0.8333,
+        "hit@1": 0.8667,
         "hit@3": 0.9667,
-        "mrr@5": 0.9083,
+        "mrr@5": 0.9233,
         "questions": 30
       }
     }
@@ -49,29 +49,29 @@
   "test": {
     "sections": {
       "bm25": {
-        "hit@1": 0.8333,
+        "hit@1": 0.8667,
         "hit@3": 0.9667,
-        "mrr@5": 0.8944,
+        "mrr@5": 0.9111,
         "questions": 30
       },
       "dense": {
-        "hit@1": 0.8667,
+        "hit@1": 0.9,
         "hit@3": 1.0,
-        "mrr@5": 0.9278,
+        "mrr@5": 0.9444,
         "questions": 30
       },
       "hybrid": {
-        "hit@1": 0.9,
+        "hit@1": 0.8667,
         "hit@3": 0.9667,
-        "mrr@5": 0.9278,
+        "mrr@5": 0.9111,
         "questions": 30
       }
     },
     "windows": {
       "bm25": {
-        "hit@1": 0.8,
+        "hit@1": 0.8333,
         "hit@3": 0.9667,
-        "mrr@5": 0.8778,
+        "mrr@5": 0.8889,
         "questions": 30
       },
       "dense": {
@@ -81,9 +81,9 @@
         "questions": 30
       },
       "hybrid": {
-        "hit@1": 0.8667,
+        "hit@1": 0.8333,
         "hit@3": 0.9,
-        "mrr@5": 0.89,
+        "mrr@5": 0.8833,
         "questions": 30
       }
     }
@@ -95,9 +95,21 @@
         "budget-and-forecast"
       ],
       "got": [
-        "insights",
         "saving-money",
+        "insights",
         "budget-and-forecast"
+      ]
+    },
+    {
+      "question": "netflix is not showing in my subscriptions",
+      "expected": [
+        "insights",
+        "troubleshooting"
+      ],
+      "got": [
+        "saving-money",
+        "insights",
+        "plans-and-billing"
       ]
     },
     {
@@ -119,8 +131,8 @@
       ],
       "got": [
         "scanning-bills",
-        "getting-started",
-        "insights"
+        "insights",
+        "getting-started"
       ]
     }
   ],
@@ -133,7 +145,7 @@
   },
   "test_decline_accuracy": 0.9394,
   "gate": {
-    "hit@1 >= 0.8 (got 0.900)": true,
+    "hit@1 >= 0.8 (got 0.867)": true,
     "hit@3 >= 0.9 (got 0.967)": true,
     "decline_accuracy >= 0.85 (got 0.939)": true
   }

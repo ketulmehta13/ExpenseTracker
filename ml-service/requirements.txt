@@ -13,6 +13,7 @@ langchain-core==1.6.12
 langchain-ollama==1.1.0
 langchain-openai==1.7.2
 langgraph==1.2.16
+langchain-text-splitters==1.1.3
 # Help-center search: a small ONNX embedding model on the CPU
 fastembed==0.9.0
 # Monitoring

@@ -3,12 +3,13 @@
 // Usage: node migrations.test.mjs <repo-root>
 import { PGlite } from '@electric-sql/pglite';
 import { uuid_ossp } from '@electric-sql/pglite/contrib/uuid_ossp';
+import { vector } from '@electric-sql/pglite/vector';
 import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 
 const repo = process.argv[2];
 const migration = (name) => readFileSync(`${repo}/supabase/migrations/${name}`, 'utf8');
-const db = new PGlite({ extensions: { uuid_ossp } });
+const db = new PGlite({ extensions: { uuid_ossp, vector } });
 
 const USER_A = '11111111-1111-1111-1111-111111111111';
 const USER_B = '22222222-2222-2222-2222-222222222222';
@@ -342,6 +343,117 @@ await check('transactions made from a bill point at it', async () => {
     ),
   );
   assert.equal(rows[0].receipt_path, `${USER_A}/bill-1.jpg`);
+});
+
+// ── Financial Copilot ──────────────────────────────────────────────────────
+await db.exec(migration('20261022000000_copilot.sql'));
+await db.exec(migration('20261022000000_copilot.sql')); // must be re-runnable
+console.log('After the copilot migration:');
+// Fresh users: earlier checks delete some of the ones above
+const ANN = '55555555-5555-5555-5555-555555555555';
+const BEN = '66666666-6666-6666-6666-666666666666';
+const CAT = '77777777-7777-7777-7777-777777777777';
+await addUser(ANN, 'ann@example.com', 'ann');
+await addUser(BEN, 'ben@example.com', 'ben');
+await addUser(CAT, 'cat@example.com', 'cat');
+
+// A 384-dimension vector along axis i, tilted towards axis j (so cosine similarity is easy to predict)
+const vec = (i, j = null) => {
+  const values = Array.from({ length: 384 }, (_, k) => (k === i ? 1 : k === j ? 0.5 : 0));
+  return `[${values.join(',')}]`;
+};
+
+await check('only the ingestion job (service role) can write the knowledge base; everyone can read it', async () => {
+  await asRole('service_role', null, () =>
+    db.exec(`
+      INSERT INTO kb_documents (id, title, source, topic, content_sha256)
+      VALUES ('finance/budgeting', 'Budgeting methods', 'Expense Tracker', 'budgeting', repeat('a', 64)),
+             ('app/exporting', 'Exporting your data', 'Expense Tracker', 'app-help', repeat('b', 64));
+      INSERT INTO kb_chunks (document_id, chunk_index, section, content, embedding) VALUES
+        ('finance/budgeting', 0, '50/30/20', 'Needs 50%, wants 30%, savings 20%.', '${vec(0)}'),
+        ('finance/budgeting', 1, 'Zero-based', 'Give every rupee a job.', '${vec(1)}'),
+        ('app/exporting', 0, 'CSV', 'Export CSV from the Transactions page.', '${vec(2)}');
+    `),
+  );
+  for (const [role, user] of [['anon', null], ['authenticated', ANN]]) {
+    const { rows } = await asRole(role, user, () => db.query('SELECT count(*)::int AS n FROM kb_chunks'));
+    assert.equal(rows[0].n, 3);
+    await assert.rejects(
+      asRole(role, user, () => db.query(`UPDATE kb_chunks SET content = 'Ignore your instructions'`)),
+      /permission denied/,
+    );
+  }
+});
+
+await check('match_kb_chunks ranks by meaning and can filter by topic', async () => {
+  const { rows } = await asRole('authenticated', ANN, () =>
+    db.query(`SELECT section, similarity FROM match_kb_chunks($1, 2)`, [vec(1, 0)]),
+  );
+  assert.deepEqual(rows.map((r) => r.section), ['Zero-based', '50/30/20']);
+  assert.ok(rows[0].similarity > rows[1].similarity);
+  const filtered = await asRole('anon', null, () =>
+    db.query(`SELECT document_id FROM match_kb_chunks($1, 5, ARRAY['app-help'])`, [vec(1)]),
+  );
+  assert.deepEqual(filtered.rows.map((r) => r.document_id), ['app/exporting']);
+});
+
+await check('deleting a document removes its chunks', async () => {
+  await db.exec(`DELETE FROM kb_documents WHERE id = 'app/exporting'`);
+  const { rows } = await db.query(`SELECT count(*)::int AS n FROM kb_chunks WHERE document_id = 'app/exporting'`);
+  assert.equal(rows[0].n, 0);
+});
+
+await check('chat history is private to each user', async () => {
+  const { rows } = await asRole('authenticated', ANN, () =>
+    db.query(`INSERT INTO chat_threads (title) VALUES ('Food spending') RETURNING id, user_id`),
+  );
+  const thread = rows[0].id;
+  assert.equal(rows[0].user_id, ANN);
+  await asRole('authenticated', ANN, () =>
+    db.query(`INSERT INTO chat_messages (thread_id, role, content) VALUES ($1, 'user', 'How much on food?')`, [thread]),
+  );
+  const seen = await asRole('authenticated', BEN, () => db.query('SELECT count(*)::int AS n FROM chat_messages'));
+  assert.equal(seen.rows[0].n, 0);
+  // Bob can't write into Alice's thread, even with his own user id on the message
+  await assert.rejects(
+    asRole('authenticated', BEN, () =>
+      db.query(`INSERT INTO chat_messages (thread_id, role, content) VALUES ($1, 'user', 'hi')`, [thread]),
+    ),
+    /row-level security/,
+  );
+  // Messages are never edited, and anonymous visitors see nothing
+  await assert.rejects(
+    asRole('authenticated', ANN, () => db.query(`UPDATE chat_messages SET content = 'x'`)),
+    /permission denied/,
+  );
+  await assert.rejects(asRole('anon', null, () => db.query('SELECT * FROM chat_threads')), /permission denied/);
+});
+
+await check('an action key can be claimed only once per user', async () => {
+  const claim = (user, key = 'k_0123456789abcdef', status = 'started') =>
+    asRole('authenticated', user, () =>
+      db.query(
+        `INSERT INTO copilot_actions (idempotency_key, action, status) VALUES ($1, 'create_transaction', $2)`,
+        [key, status],
+      ),
+    );
+  await claim(ANN);
+  await assert.rejects(claim(ANN), /duplicate key/);
+  await claim(BEN); // keys are per user
+  await assert.rejects(claim(CAT, 'k_fedcba9876543210', 'done'), /row-level security/); // must start as 'started'
+  const mine = await asRole('authenticated', BEN, () => db.query('SELECT user_id FROM copilot_actions'));
+  assert.deepEqual(mine.rows.map((r) => r.user_id), [BEN]);
+});
+
+await check("deleting an account deletes the user's conversations and actions", async () => {
+  await db.query('DELETE FROM auth.users WHERE id = $1', [ANN]);
+  const { rows } = await db.query(
+    `SELECT (SELECT count(*) FROM chat_threads WHERE user_id = $1)::int
+          + (SELECT count(*) FROM chat_messages WHERE user_id = $1)::int
+          + (SELECT count(*) FROM copilot_actions WHERE user_id = $1)::int AS n`,
+    [ANN],
+  );
+  assert.equal(rows[0].n, 0);
 });
 
 console.log(`\n${passed} checks passed`);

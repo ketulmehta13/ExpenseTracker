@@ -5,12 +5,13 @@
 // Usage: node legacy-upgrade.test.mjs <repo-root>
 import { PGlite } from '@electric-sql/pglite';
 import { uuid_ossp } from '@electric-sql/pglite/contrib/uuid_ossp';
+import { vector } from '@electric-sql/pglite/vector';
 import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 
 const repo = process.argv[2];
 const migration = (name) => readFileSync(`${repo}/supabase/migrations/${name}`, 'utf8');
-const db = new PGlite({ extensions: { uuid_ossp } });
+const db = new PGlite({ extensions: { uuid_ossp, vector } });
 
 const USERS = [
   ['11111111-1111-1111-1111-111111111111', 'alice@example.com', 'alice'],
@@ -242,6 +243,8 @@ await check('deleting a user removes all of their rows (delete-account)', async 
 await db.exec(migration('20261018000000_ml_feedback.sql'));
 await db.exec(migration('20261019000000_receipts.sql'));
 await db.exec(migration('20261019000000_receipts.sql')); // must be re-runnable
+await db.exec(migration('20261022000000_copilot.sql'));
+await db.exec(migration('20261022000000_copilot.sql')); // must be re-runnable
 console.log('Production replica after ml_feedback -> receipts:');
 
 await check('a transaction on the live schema can point at its stored bill', async () => {

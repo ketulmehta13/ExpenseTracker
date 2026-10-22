@@ -134,7 +134,16 @@ MLflow does this, and much more, for teams. For one service a JSON-lines file pe
 1. Click [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/ketulmehta13/ExpenseTracker) (or choose **New → Blueprint** in the Render dashboard and pick this repository). Enter `SUPABASE_URL` and `SUPABASE_ANON_KEY`: the same public values as the frontend's `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
 2. The first build installs the dependencies, bakes the embedding model and trains the categorizer: about 5–10 minutes. When it's live, `https://<service>.onrender.com/health` returns `"status": "ok"`.
 3. On the free plan (512 MB) the blueprint sets `EMBEDDING_MODEL=none`, so help search runs on keywords alone. On test questions that's 0.73 hit@1 instead of 0.83. With 1 GB or more, delete that entry.
-4. Free services sleep after 15 minutes. The first request then takes about a minute, and the app simply shows no ML features until the service is awake. Opening `/health` wakes it.
+4. Free services sleep after 15 minutes, and waking one takes about a minute (measured: 52 s). Keep it awake with a ping from Supabase every 5 minutes. Run this once in the SQL editor:
+
+   ```sql
+   create extension if not exists pg_cron;
+   create extension if not exists pg_net with schema extensions;
+   select cron.schedule('keep-ml-warm', '*/5 * * * *',
+     $$select net.http_get('https://expense-ml-service-nsuf.onrender.com/health')$$);
+   ```
+
+   One always-on free service uses about 744 of Render's 750 free hours a month. The GitHub Actions workflow `keep-warm.yml` pings too, but GitHub delays scheduled runs to every few hours, so on its own it isn't enough. The app also wakes the service when it opens and waits up to 75 s for the assistant.
 5. In Vercel, set `VITE_ML_API_URL` to the service's URL (e.g. `https://expense-ml-service.onrender.com`, no trailing slash) and redeploy. Vite reads it at build time, so a redeploy is required.
 6. Apply the feedback migration to Supabase: paste `supabase/migrations/20261018000000_ml_feedback.sql` into the SQL editor and run it. It is re-runnable. Until then, everything works except the "Help improve category suggestions" setting, and no feedback is recorded.
 

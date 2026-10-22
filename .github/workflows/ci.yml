@@ -67,11 +67,12 @@ jobs:
 
       - run: pip install -r requirements-dev.txt
 
-      # The help-center embedding model (~70 MB), downloaded once and reused between runs
+      # The embedding models (bge-small for help search, gte-small for the copilot), downloaded
+      # once and reused between runs
       - uses: actions/cache@v4
         with:
           path: ml-service/models/embeddings
-          key: embeddings-bge-small-en-v1.5
+          key: embeddings-bge-small-en-v1.5-gte-small
 
       # The OCR models (~32 MB) live in the rapidocr package folder: cache them by version
       - name: Find the OCR model folder
@@ -100,6 +101,9 @@ jobs:
 
       - name: Evaluate help-center retrieval (evaluation gate)
         run: python -m training.evaluate_rag --gate
+
+      - name: Evaluate copilot knowledge retrieval (evaluation gate)
+        run: python -m training.evaluate_copilot_retrieval --gate
 
       - name: Evaluate assistant understanding (evaluation gate)
         run: python -m training.evaluate_assistant --gate

@@ -162,11 +162,12 @@ def test_a_failing_llm_falls_back(index):
 
 
 def test_numbers_must_come_from_the_cited_sources(index):
-    hits = index.search("what is the 50/30/20 rule for saving", k=3)
-    rule = next(n for n, hit in enumerate(hits, 1) if hit.chunk.section == "A simple rule of thumb: 50/30/20")
+    hits = index.search("why was I signed out of the app", k=3)
+    signed_out = next(n for n, hit in enumerate(hits, 1) if hit.chunk.section == "I was signed out")
     assert numbers_in("Pro is ₹2,499 a year") == {2499.0}
-    assert checked_llm_answer(f"Spend about 50% on needs and save about 20% [{rule}].", hits) is not None
-    assert checked_llm_answer(f"Save about 25% of your income [{rule}].", hits) is None
+    answer = f"You're signed out after 15 minutes idle, or 5 minutes in the background [{signed_out}]."
+    assert checked_llm_answer(answer, hits) is not None
+    assert checked_llm_answer(f"You're signed out after 30 minutes [{signed_out}].", hits) is None
 
 
 # ---------- evaluation helpers ----------

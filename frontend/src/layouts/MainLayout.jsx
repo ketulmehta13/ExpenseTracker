@@ -22,7 +22,7 @@ import { toast } from 'sonner';
 import TransactionModal from '../components/TransactionModal';
 import PlanBadge from '../components/PlanBadge';
 import { useAutoLogout } from '../hooks/useAutoLogout';
-import AssistantPanel from '../components/AssistantPanel';
+import CopilotPanel from '../components/copilot/CopilotPanel';
 import ReceiptScanModal from '../components/ReceiptScanModal';
 import { ML_ENABLED } from '../lib/features';
 import { wakeMlService } from '../services/mlService';
@@ -385,7 +385,7 @@ const MainLayout = () => {
             </div>
 
             {/* ───── ASSISTANT (ML service) ───── */}
-            {ML_ENABLED && <AssistantPanel />}
+            {ML_ENABLED && <CopilotPanel />}
             {ML_ENABLED && <ReceiptScanModal isOpen={scanOpen} onClose={() => setScanOpen(false)} />}
 
             {/* ───── TRANSACTION MODAL ───── */}

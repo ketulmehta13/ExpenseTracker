@@ -4,9 +4,12 @@ Usage (from ml-service/):
     python -m training.ingest_kb --dry-run     # show what would change, write nothing
     python -m training.ingest_kb               # add new and changed documents, delete removed ones
     python -m training.ingest_kb --no-prune    # ...but keep documents whose files are gone
+    python -m training.ingest_kb --snapshot models/kb_snapshot.npz   # a local snapshot, no Supabase
 
 Needs SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in the environment: only this job writes the
-knowledge base (the web service reads it with the public anon key). In CI the key is a GitHub
+knowledge base (the web service reads it with the public anon key). --snapshot needs neither:
+it writes the embedded knowledge base to a file that the Docker image bakes in, which the
+copilot falls back to while Supabase is unreachable or not yet ingested. In CI the key is a GitHub
 Actions secret (.github/workflows/ingest-kb.yml); never put it in a file.
 
 Ingestion is incremental: unchanged documents are skipped, so running it again is safe.
@@ -25,7 +28,7 @@ from app.rag.chunking import DEFAULT_CHUNK_SIZE, DEFAULT_OVERLAP
 from app.rag.documents import DocumentError, load_documents
 from app.rag.embeddings import GTE_SMALL, load_embedder
 from app.rag.ingest import ingest
-from app.rag.vectorstore import SupabaseVectorStore, VectorStoreError
+from app.rag.vectorstore import InMemoryVectorStore, SupabaseVectorStore, VectorStoreError, save_snapshot
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -35,11 +38,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--overlap", type=int, default=DEFAULT_OVERLAP)
     parser.add_argument("--dry-run", action="store_true", help="report changes without writing")
     parser.add_argument("--no-prune", action="store_true", help="keep documents whose files were deleted")
+    parser.add_argument("--snapshot", type=Path, help="write a local snapshot file instead of Supabase")
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(message)s")
 
     url, key = os.environ.get("SUPABASE_URL", "").rstrip("/"), os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
-    if not url or not key:
+    if not args.snapshot and (not url or not key):
         print("Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.", file=sys.stderr)
         return 2
     try:
@@ -51,6 +55,12 @@ def main(argv: list[str] | None = None) -> int:
     if embedder is None:
         print(f"Could not load {GTE_SMALL}.", file=sys.stderr)
         return 1
+    if args.snapshot:
+        store = InMemoryVectorStore()
+        report = ingest(documents, store, embedder, chunk_size=args.chunk_size, overlap=args.overlap)
+        save_snapshot(store, args.snapshot)
+        print(f"Snapshot {args.snapshot}: {report.summary()}")
+        return 0
     try:
         report = ingest(
             documents,

@@ -19,6 +19,7 @@ React (Vercel) ──Supabase JWT──► ml-service (FastAPI, Python)
                                    ├─ /v1/insights/summary  facts in code → LLM wording with placeholders
                                    ├─ /v1/help         hybrid search (BM25 + embeddings) → cited, checked answer
                                    ├─ /v1/assistant    LangGraph workflow: routing · tools · RAG · memory · human-in-the-loop
+                                   ├─ /v1/copilot      routing → tools (exact) + RAG (gte-small + BM25, pgvector) → grounded, cited answers
                                    ├─ /v1/receipts/scan  PDF text or OpenCV + OCR (PP-OCR, ONNX) → bill parsing → items by category
                                    └─ reads data through Supabase REST with the user's JWT (RLS applies)
 ```
@@ -37,5 +38,6 @@ React (Vercel) ──Supabase JWT──► ml-service (FastAPI, Python)
 | 8 | [The assistant (LangGraph)](08-assistant.md) | LangGraph state graphs, routing, tools, checkpointed memory, human-in-the-loop with interrupt/resume, per-user isolation | done |
 | 9 | [MLOps](09-mlops.md) | Prometheus metrics, structured logs, a feedback loop with consent, champion/challenger retraining with a paired gate, an experiment log, free deployment | done |
 | 10 | [Bill scanning](10-bill-scanning.md) | OpenCV preprocessing (perspective, deskew, CLAHE), deep-learning OCR (PP-OCR on ONNX Runtime), rebuilding rows from tilted boxes, rule-based receipt parsing, product grouping with fuzzy matching, two-level evaluation with an ablation, private storage with per-user policies | done |
+| 11 | [Financial Copilot](11-copilot.md) | RAG with pgvector and hybrid search, incremental ingestion, deterministic routing (knowledge / data / combined), typed analytics tools, grounding by placeholders and citations, streaming, idempotent confirmed actions, per-user isolation, layered evaluation | done |
 
 Every step is done. Each page explains one step: the problem, the technique, how it was evaluated (with the numbers), the trade-offs, and the interview questions it answers.

@@ -62,6 +62,21 @@ class SupabaseData:
             rows.extend(page)
         return rows[:limit]
 
+    async def request(
+        self,
+        method: str,
+        table: str,
+        *,
+        params: dict[str, str] | None = None,
+        json: Any = None,
+        prefer: str | None = None,
+    ) -> httpx.Response:
+        """A raw PostgREST request as the user, for callers that handle the status themselves
+        (a unique-key conflict, a table that doesn't exist yet)."""
+        headers = {**self._headers, **({"Prefer": prefer} if prefer else {})}
+        return await self._http.request(
+            method, f"{self._rest_url}/{table}", params=params or {}, json=json, headers=headers
+        )
 
     async def insert(self, table: str, row: dict[str, Any]) -> dict[str, Any]:
         """Insert one row as the user (row level security applies) and return it as stored."""

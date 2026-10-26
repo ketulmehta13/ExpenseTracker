@@ -19,6 +19,9 @@ Design notes and interview-style explanations live in [`docs/ai-ml/`](../docs/ai
 | POST | `/v1/assistant/chat` | bearer token | The assistant: `{message, thread_id?, today}` to a reply, citations, or a draft transaction waiting for confirmation |
 | POST | `/v1/assistant/confirm` | bearer token | `{thread_id, approve}` saves (with the user's token) or discards the pending draft |
 | POST | `/v1/receipts/scan` | bearer token | A bill as a multipart `file` (JPEG/PNG/WebP photo or PDF, up to 8 MB) plus `today`: the merchant, date, total, items and category groups to review; nothing is saved |
+| POST | `/v1/copilot/chat` (`/chat/stream` for SSE) | bearer token | The Financial Copilot: `{message, thread_id?, today}` to a reply with typed blocks (citations, charts, data, actions) |
+| POST | `/v1/copilot/actions/confirm` | bearer token | Runs a confirmed action once (idempotency key) |
+| GET/DELETE | `/v1/copilot/threads[/{id}]` | bearer token | The user's saved conversations |
 | GET | `/docs` | none | Interactive OpenAPI docs |
 
 ## Run locally
@@ -91,6 +94,16 @@ python -m training.evaluate_receipt_ocr --ablation  # ...with each OpenCV step s
 
 They write [`reports/receipts/report.md`](reports/receipts/report.md) and [`reports/receipt_ocr/report.md`](reports/receipt_ocr/report.md). Details are in [docs/ai-ml/10-bill-scanning.md](../docs/ai-ml/10-bill-scanning.md).
 
+## The Financial Copilot
+
+```bash
+python -m training.evaluate_copilot_retrieval --gate   # knowledge retrieval: keyword vs dense vs hybrid
+python -m training.evaluate_copilot --gate             # routing, exact figures, grounding checks (add --llm to answer end to end)
+python -m training.ingest_kb --dry-run                 # what ingestion would change in Supabase (needs SUPABASE_SERVICE_ROLE_KEY)
+```
+
+Architecture, API, security, results and deployment: [docs/ai-ml/11-copilot.md](../docs/ai-ml/11-copilot.md).
+
 ## Optional: an LLM
 
 Everything works without one. To let an LLM help with quick add and write the monthly summary, run a free local model with [Ollama](https://ollama.com):
@@ -157,3 +170,5 @@ The build trains the categorizer inside the image, behind the same evaluation ga
 | `METRICS_TOKEN` | — | When set, `GET /metrics` requires `Authorization: Bearer <token>` |
 | `LOG_LEVEL` | `INFO` | The service's log level (logs are JSON lines) |
 | `OCR_THREADS` | `1` | CPU threads for bill scanning's OCR (1 suits a small shared server) |
+| `COPILOT_EMBEDDING_MODEL` | `Supabase/gte-small` | The copilot's knowledge-base embeddings; `none` for keyword search only |
+| `COPILOT_PER_MINUTE` / `COPILOT_PER_DAY` | `20` / `300` | Copilot messages allowed per user |

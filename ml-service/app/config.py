@@ -66,6 +66,10 @@ class Settings:
     log_level: str = "INFO"
     # Bill scanning: CPU threads for OCR (1 suits a small shared server)
     ocr_threads: int = 1
+    # Financial Copilot: knowledge-base embeddings ("" = keyword search only) and per-user limits
+    copilot_embedding_model: str = "Supabase/gte-small"
+    copilot_per_minute: int = 20
+    copilot_per_day: int = 300
 
     @classmethod
     def from_env(cls) -> Settings:
@@ -89,4 +93,9 @@ class Settings:
             metrics_token=os.environ.get("METRICS_TOKEN", ""),
             log_level=os.environ.get("LOG_LEVEL", "INFO"),
             ocr_threads=int(os.environ.get("OCR_THREADS", "1")),
+            copilot_embedding_model=_model_name(
+                os.environ.get("COPILOT_EMBEDDING_MODEL", "Supabase/gte-small")
+            ),
+            copilot_per_minute=int(os.environ.get("COPILOT_PER_MINUTE", "20")),
+            copilot_per_day=int(os.environ.get("COPILOT_PER_DAY", "300")),
         )

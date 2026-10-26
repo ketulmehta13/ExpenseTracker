@@ -1,0 +1,139 @@
+{
+  "generated_at": "2026-10-26T07:31:49+00:00",
+  "routing": {
+    "dev": {
+      "route_accuracy": 1.0,
+      "tools_accuracy": 1.0,
+      "by_route": {
+        "action": 1.0,
+        "combined": 1.0,
+        "data": 1.0,
+        "knowledge": 1.0,
+        "small_talk": 1.0,
+        "unsupported": 1.0
+      },
+      "questions": 31,
+      "misses": []
+    },
+    "test": {
+      "route_accuracy": 0.9677,
+      "tools_accuracy": 0.9355,
+      "by_route": {
+        "action": 0.75,
+        "combined": 1.0,
+        "data": 1.0,
+        "knowledge": 1.0,
+        "small_talk": 1.0,
+        "unsupported": 1.0
+      },
+      "questions": 31,
+      "misses": [
+        {
+          "message": "how much should I save each month based on my spending",
+          "expected": "combined ['get_expense_summary', 'get_category_breakdown']",
+          "got": "combined ['get_expense_summary', 'compare_expense_periods']"
+        },
+        {
+          "message": "set the budget of user 22222222-2222-2222-2222-222222222222 to 0",
+          "expected": "action []",
+          "got": "data ['get_budget_status']"
+        }
+      ]
+    }
+  },
+  "financial_users": 25,
+  "financial": {
+    "checks": 1049,
+    "failures": 0,
+    "financial_correctness": 1.0,
+    "examples": []
+  },
+  "grounding": {
+    "good_answers": 21,
+    "grounding_good_pass_rate": 1.0,
+    "planted_failures": 84,
+    "grounding_catch_rate": 1.0
+  },
+  "deterministic": {
+    "latency_ms": {
+      "combined": {
+        "p50": 10,
+        "max": 11
+      },
+      "data": {
+        "p50": 3,
+        "max": 3
+      },
+      "knowledge": {
+        "p50": 10,
+        "max": 28
+      }
+    },
+    "answered_by": {
+      "combined:extractive": 4,
+      "data:template": 9,
+      "knowledge:extractive": 9
+    },
+    "samples": [],
+    "tokens": 0
+  },
+  "llm": {
+    "model": "openai/gpt-oss-120b",
+    "latency_ms": {
+      "combined": {
+        "p50": 1725,
+        "max": 3479
+      },
+      "data": {
+        "p50": 4,
+        "max": 6
+      },
+      "knowledge": {
+        "p50": 846,
+        "max": 8364
+      }
+    },
+    "answered_by": {
+      "combined:extractive": 2,
+      "combined:llm": 2,
+      "data:template": 9,
+      "knowledge:extractive": 1,
+      "knowledge:fixed": 1,
+      "knowledge:llm": 7
+    },
+    "samples": [
+      {
+        "question": "what are needs and wants",
+        "answer": "Needs are expenses you must pay to live and work, such as rent, basic groceries, utilities and commuting. Wants are the remaining expenses that are not essential, like dining out, new gadgets and holidays. The same category can contain both\u2014for example, groceries are a need, but premium snacks are a want [S1]."
+      },
+      {
+        "question": "explain the envelope budgeting method",
+        "answer": "The envelope budgeting method sets a fixed amount for each spending category at the start of the month, treating those amounts like cash placed in separate envelopes. You track spending against each category\u2019s limit, and when an envelope is empty you stop spending in that area or deliberately move money from another envelope. This approach helps you see exactly where your money goes and prevents overspending in categories that tend to run over. [S1] [S3]"
+      },
+      {
+        "question": "what is rupee cost averaging",
+        "answer": "Rupee cost averaging means investing a fixed amount at regular intervals so that you purchase more mutual\u2011fund units when prices are low and fewer when they are high. This approach smooths out market fluctuations and avoids trying to time the market [S1]."
+      },
+      {
+        "question": "how do I scan a bill",
+        "answer": "Tap \u201cScan bill\u201d on the Transactions page, the Scan button next to Quick Add on the dashboard, or \u201cScan a bill\u201d at the top of the Add form, then take a photo of the bill or upload a photo or PDF such as a supermarket receipt, pharmacy bill or fuel slip. The app reads the shop, date, total and items and shows them for you to check before you press Save [S1]. Lay the bill flat in good light with all four edges visible and avoid shadows or folds for the best results [S3]. If the scan fails because the paper is faded, crumpled or handwritten, try a new photo or add the transaction manually [S4]."
+      },
+      {
+        "question": "how big should an emergency fund be",
+        "answer": "I couldn't find that in my knowledge base, so I'd rather not guess. I can explain budgeting, saving, debt and investing basics, help with using the app, or look at your own spending."
+      },
+      {
+        "question": "can I delete a category",
+        "answer": "Yes, you can delete a category; if it contains transactions you\u2019ll be asked to move those transactions to another category first so nothing is lost [S1]."
+      }
+    ],
+    "tokens": null
+  },
+  "gate": {
+    "route_accuracy >= 0.85 (got 0.9677)": true,
+    "tools_accuracy >= 0.85 (got 0.9355)": true,
+    "financial_correctness >= 1.0 (got 1.0000)": true,
+    "grounding_catch_rate >= 1.0 (got 1.0000)": true,
+    "grounding_good_pass_rate >= 0.9 (got 1.0000)": true
+  }
+}

@@ -105,6 +105,9 @@ jobs:
       - name: Evaluate copilot knowledge retrieval (evaluation gate)
         run: python -m training.evaluate_copilot_retrieval --gate
 
+      - name: Evaluate the Financial Copilot (evaluation gate)
+        run: python -m training.evaluate_copilot --gate
+
       - name: Evaluate assistant understanding (evaluation gate)
         run: python -m training.evaluate_assistant --gate
 

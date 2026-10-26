@@ -217,3 +217,102 @@ class SupabaseVectorStore:
                 )
             )
         return result
+
+
+def save_snapshot(store: InMemoryVectorStore, path) -> None:
+    """Write an in-memory store to one .npz file (embeddings + chunk metadata as JSON)."""
+    import json
+    from pathlib import Path
+
+    docs, rows, vectors = [], [], []
+    for doc_id, (doc, chunks, embeddings) in store._docs.items():
+        docs.append(
+            {
+                "id": doc_id,
+                "sha": store._shas[doc_id],
+                "title": doc.title,
+                "topic": doc.topic,
+                "source": doc.source,
+                "source_url": doc.source_url,
+                "version": doc.version,
+            }
+        )
+        for chunk, vector in zip(chunks, embeddings, strict=True):
+            rows.append(
+                {
+                    "document_id": chunk.document_id,
+                    "index": chunk.index,
+                    "section": chunk.section,
+                    "content": chunk.content,
+                    "metadata": chunk.metadata,
+                }
+            )
+            vectors.append(vector)
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    np.savez_compressed(
+        path,
+        vectors=np.array(vectors, dtype=np.float32),
+        meta=np.array(json.dumps({"documents": docs, "chunks": rows})),
+    )
+
+
+def load_snapshot(path) -> InMemoryVectorStore:
+    import json
+
+    with np.load(path) as archive:
+        vectors, meta = archive["vectors"], json.loads(str(archive["meta"]))
+    store = InMemoryVectorStore()
+    by_doc: dict[str, list[tuple[KbChunk, np.ndarray]]] = {}
+    for row, vector in zip(meta["chunks"], vectors, strict=True):
+        chunk = KbChunk(row["document_id"], row["index"], row["section"], row["content"], row["metadata"])
+        by_doc.setdefault(row["document_id"], []).append((chunk, vector))
+    for d in meta["documents"]:
+        doc = Document(
+            id=d["id"],
+            title=d["title"],
+            text="",
+            topic=d["topic"],
+            source=d["source"],
+            source_url=d["source_url"],
+            version=d["version"],
+        )
+        pairs = by_doc.get(d["id"], [])
+        store.replace_document(doc, [c for c, _ in pairs], np.array([v for _, v in pairs]), d["sha"])
+    return store
+
+
+class FallbackVectorStore:
+    """Reads from the primary store (pgvector); if it fails or is empty, from the fallback (the
+    snapshot baked into the image). Read-only: ingestion writes to a concrete store."""
+
+    def __init__(self, primary: VectorStore, fallback: VectorStore):
+        self.primary, self.fallback = primary, fallback
+        self.using_fallback = False
+
+    def _pick(self) -> VectorStore:
+        return self.fallback if self.using_fallback else self.primary
+
+    def chunks(self) -> list[tuple[KbChunk, str | None]]:
+        try:
+            rows = self.primary.chunks()
+            self.using_fallback = not rows
+        except VectorStoreError:
+            self.using_fallback = True
+        return self.fallback.chunks() if self.using_fallback else rows
+
+    def search(self, query: np.ndarray, k: int, topics: list[str] | None = None) -> list[ScoredChunk]:
+        if not self.using_fallback:
+            try:
+                return self.primary.search(query, k, topics)
+            except VectorStoreError:
+                self.using_fallback = True
+        return self.fallback.search(query, k, topics)
+
+    def documents(self) -> dict[str, StoredDocument]:
+        return self._pick().documents()
+
+    def replace_document(self, *args) -> None:
+        raise NotImplementedError("read-only")
+
+    def delete_document(self, document_id: str) -> None:
+        raise NotImplementedError("read-only")

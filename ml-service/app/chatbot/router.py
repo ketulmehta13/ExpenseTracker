@@ -189,6 +189,9 @@ def route_from_call(name: str, args: dict, message: str, today: date) -> Route |
         return Route("knowledge", query=parsed.query)
     period, assumed = period_from_name(getattr(parsed, "period", None), today)
     advice = getattr(parsed, "advice_query", None)
+    # The model doesn't always set it, so code checks too: a "why" must not get only the figures
+    if not advice and data_answers.wants_advice(message):
+        advice = message
     subject = getattr(parsed, "subject", None)
     question = DataQuestion(
         kind=_DATA_TOOLS[tool],
@@ -211,7 +214,7 @@ def rules_route(message: str, today: date) -> Route:
 
 
 async def decide(
-    llm: BaseChatModel | None, message: str, history: list[dict], today: date, timeout: float = 10.0
+    llm: BaseChatModel | None, message: str, history: list[dict], today: date, timeout: float = 15.0
 ) -> Route:
     if llm is None:
         return rules_route(message, today)

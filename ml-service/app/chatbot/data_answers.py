@@ -182,6 +182,11 @@ def month_period(month: int, today: date) -> Period:
     )
 
 
+def wants_advice(question: str) -> bool:
+    """Whether the question also asks why, or what to do about it."""
+    return bool(_ADVICE.search(" ".join(question.lower().split())))
+
+
 def classify(question: str, today: date) -> DataQuestion | None:
     """The backup router: a question about the user's own money, or None if it's one for RAG."""
     t = " ".join(question.lower().split())

@@ -232,6 +232,15 @@ def test_a_failed_model_falls_back_to_the_rules(calls):
     assert route.by == "rules" and route.data_question.kind == "spending"
 
 
+def test_a_why_question_gets_advice_even_if_the_model_forgets_to_ask():
+    route = route_from_call(
+        "compare_spending", {}, "My food spending increased, why and what should I do", TODAY
+    )
+    assert route.data_question.wants_advice and "why" in route.data_question.advice_query
+    plain = route_from_call("get_spending", {}, "how much did I spend", TODAY)
+    assert not plain.data_question.wants_advice
+
+
 def test_named_periods():
     assert period_from_name("last_30_days", TODAY)[0].start == TODAY - timedelta(days=29)
     assert period_from_name("all_time", TODAY)[0].label == "in total"

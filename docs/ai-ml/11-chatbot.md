@@ -66,18 +66,19 @@ From [`reports/chatbot/report.md`](../../ml-service/reports/chatbot/report.md). 
 
 Going from k = 3 to 4 to 6 changed nothing at 500, so k stays at 4.
 
-| On the held-out test questions | Result |
+| On the test questions | Result |
 |---|---|
-| Right article first / retrieved (51 questions) | 0.922 / 0.961 |
-| Routing to calculators (27 messages) | 0.963 |
+| Right article first / retrieved (51 questions) | 0.902 / 0.941 |
+| Routing with Groq (37 cases: real questions that failed, typos, Hindi-English) | 37 of 37 |
+| The same cases with the backup rules alone | 27 of 37 (0.730) |
 | Calculator figures against an independent sum | 400 of 400 exact |
-| With Groq, answerable questions answered | 42 of 51 (2 said "I don't know", 3 rejected by the number check, 4 rate limited) |
+| With Groq, answered from the articles | 45 of 51 (2 said "I don't know", 2 rejected by the number check, 2 rate limited) |
 | With Groq, off-topic questions declined | 8 of 8 |
-| Median time per answer with Groq | 0.94 s |
+| Median time per answer with Groq | 2.05 s |
 
-Results with Groq vary between runs: an earlier run answered 46 of 51 with 1 rate limited. The rate limits came from asking 59 questions in a few minutes on Groq's free tier, and a busy day on the real site could hit them too. The user then sees "I can't reach the AI service right now".
+Results with Groq vary between runs, and the free tier sometimes rate-limits: in this project's runs, between 1 and 4 of the 59 questions were limited. The user then sees "I can't reach the AI service right now". In the app, questions the articles can't answer now also get a labelled general answer, which these counts don't include.
 
-The test questions were written by the same person as the rules, and the knowledge base is small (22 documents), so real users will find phrasings these sets miss. The reported "answered" counts mean the model gave an answer that passed the number check, not that a person verified each one.
+The test questions were written by the same person as the rules and the knowledge base is small (22 documents), so real users will find phrasings these sets miss. Several of the 37 routing cases are the exact questions the router was built to fix, so 37 of 37 shows those are fixed, not that every phrasing will work. "Answered" means the model's answer passed the number check, not that a person verified each one.
 
 ## Limits
 

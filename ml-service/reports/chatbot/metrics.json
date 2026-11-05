@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-05T12:56:23+00:00",
+  "generated_at": "2026-11-05T16:13:23+00:00",
   "documents": 22,
   "chosen": {
     "chunk_size": 500,
@@ -550,6 +550,44 @@
       }
     ],
     "answered_by_model": 0
+  },
+  "regression_model": {
+    "accuracy": 1.0,
+    "cases": 37,
+    "misses": [],
+    "answered_by_model": 31
+  },
+  "llm": {
+    "model": "openai/gpt-oss-120b",
+    "answered": 45,
+    "said_dont_know": 2,
+    "off_topic_declined": 8,
+    "off_topic_answered": 0,
+    "number_check_rejected": 2,
+    "failed": 2,
+    "median_seconds": 2.05,
+    "problems": [
+      {
+        "question": "how do I record my salary",
+        "answer": "Tap the Add button at the bottom, enter \u201cSalary\u201d as the title, put the amount and the date, then tap Save. You can also type it in the Quick Add bar, for example \u201csalary 50k today\u201d, and the app will pre\u2011fill the fields. Using a word like salary ensures it\u2019s recorded as income.",
+        "note": "number check rejected"
+      },
+      {
+        "question": "can I use dollars instead of rupees",
+        "answer": "I don't know",
+        "note": "answerable but declined"
+      },
+      {
+        "question": "what percentage of income am I saving if I earn 60000 and spend 48000",
+        "answer": "Your savings rate is (60,000\u202f\u2212\u202f48,000) \u00f7 60,000\u202f=\u202f0.20, which is 20\u202f% of your income.",
+        "note": "number check rejected"
+      },
+      {
+        "question": "income minus expenses meaning",
+        "answer": "I don't know",
+        "note": "answerable but declined"
+      }
+    ]
   },
   "gate": {
     "hit@k >= 0.9 (got 0.941)": true,

@@ -59,12 +59,14 @@ Going from k = 3 to 4 to 6 changed nothing at 500, so k stays at 4.
 
 | On the held-out test questions | Result |
 |---|---|
-| Right article first / retrieved (51 questions) | 0.902 / 0.941 |
+| Right article first / retrieved (51 questions) | 0.922 / 0.961 |
 | Routing to calculators (27 messages) | 0.963 |
 | Calculator figures against an independent sum | 400 of 400 exact |
-| With Groq, answerable questions answered | 46 of 51 (2 said "I don't know", 2 rejected by the number check, 1 rate limited) |
+| With Groq, answerable questions answered | 42 of 51 (2 said "I don't know", 3 rejected by the number check, 4 rate limited) |
 | With Groq, off-topic questions declined | 8 of 8 |
-| Median time per answer with Groq | 1.64 s |
+| Median time per answer with Groq | 0.94 s |
+
+Results with Groq vary between runs: an earlier run answered 46 of 51 with 1 rate limited. The rate limits came from asking 59 questions in a few minutes on Groq's free tier, and a busy day on the real site could hit them too. The user then sees "I can't reach the AI service right now".
 
 The test questions were written by the same person as the rules, and the knowledge base is small (22 documents), so real users will find phrasings these sets miss. The reported "answered" counts mean the model gave an answer that passed the number check, not that a person verified each one.
 

@@ -17,7 +17,7 @@ React (Vercel) ──Supabase JWT──► ml-service (FastAPI, Python)
                                    ├─ /v1/insights     unusual spending · recurring payments · month-end forecast
                                    ├─ /v1/parse        rule-based slot filling → checked LLM fallback (LangChain)
                                    ├─ /v1/insights/summary  facts in code → LLM wording with placeholders
-                                   ├─ /chat            follow-up rewrite → your data: exact calculators · documents: FAISS → ChatGroq
+                                   ├─ /chat            guardrails → tool calling → your data: exact calculators · documents: FAISS → ChatGroq
                                    ├─ /v1/receipts/scan  PDF text or OpenCV + OCR (PP-OCR, ONNX) → bill parsing → items by category
                                    └─ reads data through Supabase REST with the user's JWT (RLS applies)
 ```

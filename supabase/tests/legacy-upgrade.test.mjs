@@ -246,6 +246,8 @@ await db.exec(migration('20261019000000_receipts.sql')); // must be re-runnable
 // Production may never have run the copilot migration: this one must work without it
 await db.exec(migration('20261105000000_rag_chatbot.sql'));
 await db.exec(migration('20261105000000_rag_chatbot.sql')); // must be re-runnable
+await db.exec(migration('20261106000000_chat_feedback.sql'));
+await db.exec(migration('20261106000000_chat_feedback.sql')); // must be re-runnable
 console.log('Production replica after ml_feedback -> receipts:');
 
 await check('a transaction on the live schema can point at its stored bill', async () => {

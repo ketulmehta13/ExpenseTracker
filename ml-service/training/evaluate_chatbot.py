@@ -26,6 +26,7 @@ from pathlib import Path
 
 from app.chatbot import data_answers
 from app.chatbot.chain import answer_chain, check_answer, format_docs, is_dont_know
+from app.chatbot.guardrails import fixed_reply, profile_field
 from app.chatbot.index import (
     CHUNK_OVERLAP,
     CHUNK_SIZE,
@@ -34,6 +35,7 @@ from app.chatbot.index import (
     load_source_documents,
     split_documents,
 )
+from app.chatbot.router import decide, rules_route
 from app.config import DEFAULT_KNOWLEDGE_DIR, DEFAULT_MODEL_DIR, Settings
 from training.runs import record_run
 from training.simulate_history import CATEGORY_IDS, simulate_users
@@ -88,6 +90,43 @@ def retrieval(store, rows: list[dict], k: int) -> dict:
     }
 
 
+def _route_name(route) -> str:
+    return route.data_question.kind if route.kind == "data" else route.kind
+
+
+def regression_cases(llm=None) -> dict:
+    """The real questions that once failed, plus typos and Hindi-English phrasing."""
+    with open(DATA_DIR / "chatbot_router_cases.jsonl", encoding="utf-8") as lines:
+        rows = [json.loads(line) for line in lines if line.strip()]
+
+    async def run() -> dict:
+        misses, by_model = [], 0
+        for row in rows:
+            message = row["message"]
+            if fixed_reply(message) is not None:
+                got = "guard"
+            elif profile_field(message):
+                got = "profile"
+            else:
+                if llm is not None:
+                    await asyncio.sleep(2.2)  # stay inside the free tier's per-minute limit
+                    route = await decide(llm, message, [], TODAY)
+                    by_model += route.by == "model"
+                else:
+                    route = rules_route(message, TODAY)
+                got = _route_name(route)
+            if got != row["expected"]:
+                misses.append({"message": message, "expected": row["expected"], "got": got})
+        return {
+            "accuracy": round(1 - len(misses) / len(rows), 4),
+            "cases": len(rows),
+            "misses": misses,
+            "answered_by_model": by_model,
+        }
+
+    return asyncio.run(run())
+
+
 def routing() -> dict:
     with open(DATA_DIR / "chatbot_routing_test.jsonl", encoding="utf-8") as lines:
         rows = [json.loads(line) for line in lines if line.strip()]
@@ -140,7 +179,7 @@ def figures(users: int = 25) -> dict:
     def expect(reply: str, paise: int) -> None:
         nonlocal checks, wrong
         checks += 1
-        wrong += data_answers._money(data_answers.Decimal(paise) / 100) not in reply
+        wrong += data_answers.money(data_answers.Decimal(paise) / 100) not in reply
 
     async def run() -> None:
         for user in simulate_users(users, TODAY, seed=101):
@@ -249,6 +288,16 @@ def report(m: dict) -> str:
         if route["misses"]
         else "None."
     )
+    cases = m["regression_rules"]
+    regressions = f"Backup rules alone: **{cases['accuracy']:.3f}** of {cases['cases']} cases."
+    if m.get("regression_model"):
+        model_cases = m["regression_model"]
+        regressions += f" With the model choosing the tool: **{model_cases['accuracy']:.3f}**."
+    misses = (m.get("regression_model") or cases)["misses"]
+    if misses:
+        regressions += "\n\n" + _table(
+            ["Message", "Expected", "Got"], [[x["message"], x["expected"], x["got"]] for x in misses]
+        )
     llm = "Not run in this report (`--llm` needs `GROQ_API_KEY`)."
     if m.get("llm"):
         e = m["llm"]
@@ -289,6 +338,10 @@ Not retrieved:
 {route["questions"]} messages: accuracy **{route["routing_accuracy"]:.3f}**.
 
 {route_misses}
+
+## Real questions that once failed, plus typos and Hindi-English
+
+{regressions}
 
 ## Exact figures
 
@@ -336,8 +389,13 @@ def main(argv: list[str] | None = None) -> int:
         "test": retrieval(chosen_store, test, CHOSEN_K),
         "routing": routing(),
         "figures": figures(),
+        "regression_rules": regression_cases(),
     }
     if args.llm:
+        from app.chatbot.chain import build_llm
+
+        metrics["regression_model"] = regression_cases(build_llm(Settings.from_env()))
+        print("model routing:", metrics["regression_model"])
         metrics["llm"] = asyncio.run(with_groq(chosen_store, CHOSEN_K))
         print({k: v for k, v in metrics["llm"].items() if k != "problems"})
     values = {

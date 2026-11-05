@@ -7,7 +7,7 @@ Category suggestions, insights and Quick Add run on the app's own service. They 
 Some wording, such as the monthly summary or help with a hard-to-read Quick Add line, may come from an AI language model. It receives only what it needs: the line you typed, or monthly totals and category names, never your full transaction list. Every number it shows is calculated by the app.
 
 ## The chatbot
-The chatbot sends your question and the help passages that match it to Groq, the AI service that writes the answers. Your transactions are not sent: answers about your own money are calculated by the app.
+The chatbot sends your question, your recent messages in that conversation and the help passages that match to Groq, the AI service that chooses how to answer and writes the explanations. Your transactions are not sent: answers about your own money are calculated by the app.
 
 ## Turning suggestions off
 Suggestions never change anything by themselves: a category suggestion is only applied when you tap it, and Quick Add only fills in a form for you to check. If you don't want them, simply ignore them.

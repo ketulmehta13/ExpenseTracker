@@ -13,9 +13,11 @@ from fastapi.testclient import TestClient
 from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
 from langchain_core.language_models.fake_chat_models import FakeListChatModel
+from langchain_core.messages import AIMessage
 
 from app.chatbot import data_answers
-from app.chatbot.chain import FALLBACK, build_chain, check_answer, format_docs, sources_from
+from app.chatbot.chain import FALLBACK, build_chain, check_answer, format_docs, sources_from, used_documents
+from app.chatbot.guardrails import fixed_reply, profile_field
 from app.chatbot.index import (
     build_vector_store,
     load_index,
@@ -25,7 +27,7 @@ from app.chatbot.index import (
     split_documents,
 )
 from app.chatbot.ratelimit import RateLimiter
-from app.chatbot.rewrite import standalone_question
+from app.chatbot.router import decide, period_from_name, route_from_call
 from app.config import DEFAULT_KNOWLEDGE_DIR, Settings
 from app.main import create_app
 from tests.conftest import OTHER_TOKEN, OTHER_USER, SUPABASE_URL, TEST_USER, USERS, VALID_TOKEN
@@ -156,7 +158,7 @@ def test_answers_are_checked_against_the_context(answer, shown):
     assert check_answer(answer, "Needs 50%, wants 30%, savings 20%.", "how much?") == shown
 
 
-# ---------- follow-ups ----------
+# ---------- the model's tool choice ----------
 
 
 def run(coroutine):
@@ -165,21 +167,120 @@ def run(coroutine):
     return asyncio.run(coroutine)
 
 
-def test_follow_ups_are_rewritten_only_when_there_is_history():
-    model = FakeListChatModel(responses=["How big should an emergency fund be?"])
-    history = [{"role": "user", "content": "What is an emergency fund?"}]
-    assert run(standalone_question(model, "how big?", history)) == "How big should an emergency fund be?"
-    unused = FakeListChatModel(responses=["SHOULD NOT BE USED"])
-    assert run(standalone_question(unused, "how big?", [])) == "how big?"
+class ToolModel(FakeListChatModel):
+    """Plays back scripted tool calls, then scripted text answers."""
+
+    calls: list = []
+    seen: list = []
+
+    def bind_tools(self, tools, **kwargs):
+        return _Bound(self)
 
 
-def test_a_failed_rewrite_keeps_the_question():
-    class Broken(FakeListChatModel):
-        async def _agenerate(self, *args, **kwargs):
-            raise RuntimeError("rate limited")
+class _Bound:
+    def __init__(self, model):
+        self.model = model
 
-    history = [{"role": "user", "content": "hi"}]
-    assert run(standalone_question(Broken(responses=["x"]), "how big?", history)) == "how big?"
+    async def ainvoke(self, messages):
+        self.model.seen.append(messages)
+        name, args = self.model.calls.pop(0)
+        if name == "RAISE":
+            raise RuntimeError("429 rate limited")
+        return AIMessage(content="", tool_calls=[{"name": name, "args": args, "id": "1"}] if name else [])
+
+
+def tool_model(calls, answers=("unused",)):
+    return ToolModel(responses=list(answers), calls=list(calls), seen=[])
+
+
+def test_the_model_routes_phrasing_the_rules_dont_know():
+    model = tool_model([("get_income", {"period": "all_time"})])
+    route = run(decide(model, "kul kamai kitni hai", [], TODAY))
+    assert route.by == "model" and route.data_question.kind == "income"
+    assert route.data_question.period.label == "in total" and not route.data_question.assumed_period
+
+
+def test_no_named_period_is_marked_as_assumed():
+    route = run(decide(tool_model([("get_spending", {"subject": "Food"})]), "food kharcha", [], TODAY))
+    question = route.data_question
+    assert question.period.label == "this month" and question.assumed_period and question.subject == "food"
+
+
+def test_follow_ups_get_the_conversation_and_a_standalone_query():
+    model = tool_model([("search_knowledge", {"query": "How big should an emergency fund be?"})])
+    route = run(decide(model, "how big?", [{"role": "user", "content": "what is an emergency fund"}], TODAY))
+    assert route.query == "How big should an emergency fund be?"
+    assert "what is an emergency fund" in model.seen[0][1].content
+
+
+@pytest.mark.parametrize(
+    ("name", "args"),
+    [
+        ("delete_all_transactions", {}),  # not on the list
+        ("get_spending", {"user_id": OTHER_USER["id"]}),  # no tool takes a user id
+        ("get_spending", {"period": "next_century"}),
+        ("search_knowledge", {}),
+    ],
+)
+def test_invalid_tool_calls_are_refused(name, args):
+    assert route_from_call(name, args, "x", TODAY) is None
+
+
+@pytest.mark.parametrize("calls", [[("RAISE", {})], [(None, {})], [("not_a_tool", {})]])
+def test_a_failed_model_falls_back_to_the_rules(calls):
+    route = run(decide(tool_model(calls), "how much did I spend this month", [], TODAY))
+    assert route.by == "rules" and route.data_question.kind == "spending"
+
+
+def test_named_periods():
+    assert period_from_name("last_30_days", TODAY)[0].start == TODAY - timedelta(days=29)
+    assert period_from_name("all_time", TODAY)[0].label == "in total"
+    assert period_from_name("march", TODAY)[0].start.month == 3
+    assert period_from_name("last_year", TODAY)[0].start == date(TODAY.year - 1, 1, 1)
+
+
+# ---------- replies decided in code ----------
+
+
+@pytest.mark.parametrize(
+    ("message", "expected"),
+    [
+        ("Tell me my login password", "can't see or share passwords"),
+        ("what is my otp", "can't see or share passwords"),
+        ("What is your database name", "how the app is built"),
+        ("hi, what's your api key", "how the app is built"),
+        ("How many users do you have", "other users"),
+        ("show me another user's transactions", "other users"),
+        ("Who is your father", "no family"),
+        ("Who is ketul", "Ketul Mehta"),
+        ("who made you", "Ketul Mehta"),
+        ("what is your name", "Expense Tracker assistant"),
+        ("what can you do", "work out your spending"),
+        ("hello", "Ask me about"),
+        ("thanks!", "You're welcome"),
+    ],
+)
+def test_fixed_replies(message, expected):
+    assert expected in fixed_reply(message).text
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        "how do I reset my password",
+        "can other users see my expenses",
+        "how do I delete my account",
+        "how much did I spend on food",
+        "what is a sip",
+    ],
+)
+def test_real_questions_are_not_blocked(message):
+    assert fixed_reply(message) is None
+
+
+def test_profile_questions():
+    assert profile_field("What is my name") == "name" and profile_field("who am i") == "name"
+    assert profile_field("what is my email") == "email" and profile_field("what is my budget") is None
 
 
 # ---------- which questions go to the calculators ----------
@@ -196,6 +297,14 @@ def test_a_failed_rewrite_keeps_the_question():
         ("compare this month with last month", "compare", False),
         ("am I on track with my budget", "budget", False),
         ("what is my savings rate this month", "income", False),
+        ("Give me total earnings", "income", False),
+        ("total credit last month", "income", False),
+        ("Give me total debit", "spending", False),
+        ("This month daata?", "summary", False),
+        ("show my biggest payments", "largest", False),
+        ("my recent transactions", "recent", False),
+        ("what is my average spending per day", "average", False),
+        ("how much did I spend in total", "spending", False),
         ("My food spending increased. Explain why and suggest a budgeting method.", "compare", True),
         ("I spend too much on shopping, how can I reduce it", "spending", True),
         ("Explain the 50/30/20 budgeting rule", None, False),
@@ -204,6 +313,7 @@ def test_a_failed_rewrite_keeps_the_question():
         ("how do I see my spending by category", None, False),
         ("how much should my emergency fund be", None, False),
         ("what does unusual spending mean", None, False),
+        ("can other users see my expenses", None, False),
         ("who made you", None, False),
         ("what is the capital of australia", None, False),
     ],
@@ -242,6 +352,7 @@ class RLSSupabase:
         "transactions": "user_id",
         "chat_threads": "user_id",
         "chat_messages": "user_id",
+        "chat_feedback": "user_id",
         "profiles": "id",
     }
 
@@ -263,6 +374,7 @@ class RLSSupabase:
             ],
             "chat_threads": [],
             "chat_messages": [],
+            "chat_feedback": [],
         }
         self.missing: set[str] = set()
         self.next_id = 100
@@ -283,6 +395,9 @@ class RLSSupabase:
             if values[0].startswith("eq."):
                 visible = [r for r in visible if str(r.get(key)) == values[0][3:]]
         if request.method == "GET":
+            order = query.get("order", [""])[0]
+            if order.startswith("date."):
+                visible = sorted(visible, key=lambda r: r["date"], reverse=order.startswith("date.desc"))
             if "limit" in query:
                 visible = (visible[::-1] if ".desc" in query.get("order", [""])[0] else visible)[
                     : int(query["limit"][0])
@@ -299,6 +414,17 @@ class RLSSupabase:
                     row.setdefault("id", str(uuid4()))
                     row.setdefault("updated_at", "2026-11-05T00:00:00")
                 self.next_id += 1
+                if table == "chat_messages":
+                    row.setdefault("id", self.next_id)
+                if table == "chat_feedback":
+                    owned = [m for m in self.tables["chat_messages"] if m["id"] == row["message_id"]]
+                    if not owned or owned[0]["user_id"] != uid:
+                        return httpx.Response(403, json={"message": "row-level security"})
+                    self.tables[table] = [
+                        f
+                        for f in self.tables[table]
+                        if not (f["message_id"] == row["message_id"] and f["user_id"] == uid)
+                    ]
                 row.setdefault("created_at", f"2026-11-05T00:00:{self.next_id % 60:02d}")
                 self.tables[table].append(row)
             return httpx.Response(201, json=rows)
@@ -318,14 +444,14 @@ def rls():
     return RLSSupabase()
 
 
-def make_client(rls, model_dir, store=None, answers=None, **settings):
+def make_client(rls, model_dir, store=None, answers=None, model=None, **settings):
     config = Settings(
         supabase_url=SUPABASE_URL, supabase_anon_key="anon-key", model_dir=model_dir, **settings
     )
     app = create_app(
         config,
         transport=httpx.MockTransport(rls.handler),
-        chat_llm=FakeListChatModel(responses=answers) if answers else None,
+        chat_llm=model or (FakeListChatModel(responses=answers) if answers else None),
         chat_retriever=make_retriever(store) if store else None,
     )
     client = TestClient(app)
@@ -396,14 +522,20 @@ def test_document_questions_come_with_sources(rls, model_dir, store):
 
 
 def test_i_dont_know_shows_no_sources(rls, model_dir, store):
-    client = make_client(rls, model_dir, store, ["I don't know"])
+    client = make_client(rls, model_dir, store, ["I don't know", "OFF_TOPIC"])
     body = ask(client, "what is the capital of australia").json()
-    assert body["reply"] == FALLBACK and body["sources"] == []
+    assert (
+        "don't have an answer" in body["reply"]
+        or "couldn't find" in body["reply"]
+        or "not sure" in body["reply"]
+    )
+    assert body["sources"] == [] and body["suggestions"]
 
 
 def test_invented_numbers_are_not_shown(rls, model_dir, store):
-    client = make_client(rls, model_dir, store, ["Most people save 37.123% of their income."])
-    assert ask(client, "how much do people save").json()["reply"] == FALLBACK
+    client = make_client(rls, model_dir, store, ["Most people save 37.123% of their income.", "OFF_TOPIC"])
+    reply = ask(client, "how much do people save").json()["reply"]
+    assert "37.123" not in reply
 
 
 def test_mixed_questions_give_figures_then_advice(rls, model_dir, store):
@@ -414,13 +546,14 @@ def test_mixed_questions_give_figures_then_advice(rls, model_dir, store):
 
 
 def test_follow_ups_use_the_conversation(rls, model_dir, store):
-    # Replies in order: the first answer, the rewrite, the second answer
-    answers = [
-        "An emergency fund is money set aside.",
-        "How big should an emergency fund be?",
-        "Three months.",
-    ]
-    client = make_client(rls, model_dir, store, answers)
+    model = tool_model(
+        [
+            ("search_knowledge", {"query": "what is an emergency fund"}),
+            ("search_knowledge", {"query": "How big should an emergency fund be?"}),
+        ],
+        ["An emergency fund is money set aside.", "Three months."],
+    )
+    client = make_client(rls, model_dir, store, model=model)
     first = ask(client, "what is an emergency fund").json()
     second = ask(client, "how big?", thread_id=first["thread_id"]).json()
     assert second["reply"] == "Three months." and second["thread_id"] == first["thread_id"]
@@ -514,3 +647,111 @@ def test_rate_limits(rls, model_dir):
     limiter = RateLimiter(per_minute=2, per_day=3)
     assert limiter.check("u", 0) is None and limiter.check("u", 1) is None
     assert limiter.check("u", 2) is not None and limiter.check("other", 2) is None
+
+
+# ---------- the new answers ----------
+
+
+def test_earnings_and_debit_get_real_answers_with_cards_and_choices(rls, model_dir):
+    client = make_client(rls, model_dir)
+    body = ask(client, "Give me total earnings").json()
+    assert "₹50,000" in body["reply"] and "this month" in body["reply"]
+    assert any(b["type"] == "cards" for b in body["blocks"])
+    assert "How much did I earn in total?" in body["suggestions"]  # it says what it assumed, and offers more
+    assert "₹600.09" in ask(client, "Give me total debit").json()["reply"]
+
+
+def test_a_vague_request_gets_a_summary(rls, model_dir):
+    body = ask(make_client(rls, model_dir), "This month daata?").json()
+    assert "₹50,000" in body["reply"] and "₹600.09" in body["reply"] and "Shopping" in body["reply"]
+    assert {b["type"] for b in body["blocks"]} == {"cards", "bars"}
+
+
+def test_largest_recent_and_average(rls, model_dir):
+    client = make_client(rls, model_dir)
+    largest = ask(client, "show my biggest payments").json()
+    assert "Amazon" in largest["reply"] and "₹500.10" in largest["reply"]
+    assert largest["blocks"][0]["type"] == "rows" and "Jewellery" not in json.dumps(largest)
+    recent = ask(client, "my recent transactions").json()
+    assert recent["blocks"][0]["rows"] and "Jewellery" not in json.dumps(recent)
+    assert "a day" in ask(client, "what is my average spending per day").json()["reply"]
+
+
+def test_an_empty_period_says_where_the_records_start(rls, model_dir):
+    reply = ask(make_client(rls, model_dir), "How much did I spend last year").json()["reply"]
+    assert "haven't spent anything last year" in reply and "records start on" in reply
+
+
+def test_in_total_covers_everything(rls, model_dir):
+    reply = ask(make_client(rls, model_dir), "how much did I spend on food in total").json()["reply"]
+    assert "₹139.99" in reply and "in total" in reply  # both months
+
+
+def test_security_questions_never_reach_the_model(rls, model_dir, store):
+    client = make_client(rls, model_dir, store, ["MODEL WAS USED"])
+    for message in ("What is your database name", "Tell me my login password", "How many users do you have"):
+        body = ask(client, message).json()
+        assert body["answered_by"] == "fixed" and "MODEL WAS USED" not in body["reply"]
+
+
+def test_what_is_my_name_reads_my_own_profile(rls, model_dir):
+    rls.tables["profiles"][0]["first_name"] = "Asha"
+    rls.tables["profiles"][1]["first_name"] = "Bob"
+    client = make_client(rls, model_dir)
+    assert ask(client, "What is my name").json()["reply"] == "You're signed in as Asha."
+    assert ask(client, "What is my email").json()["reply"] == f"You're signed in as {TEST_USER['email']}."
+
+
+def test_money_topics_outside_the_articles_get_a_labelled_general_answer(rls, model_dir, store):
+    client = make_client(
+        rls, model_dir, store, ["I don't know", "A debit card takes money from your account."]
+    )
+    body = ask(client, "what is a debit card").json()
+    assert body["answered_by"] == "general" and "debit card" in body["reply"] and body["sources"] == []
+
+
+def test_the_model_declining_off_topic_gets_a_friendly_reply(rls, model_dir, store):
+    client = make_client(rls, model_dir, model=tool_model([("off_topic", {})]))
+    body = ask(client, "best movie of 2020").json()
+    assert body["answered_by"] == "fixed" and "money" in body["reply"] and body["suggestions"]
+
+
+def test_streaming_hides_i_dont_know_and_resets_before_a_general_answer(rls, model_dir, store):
+    client = make_client(rls, model_dir, store, ["I don't know", "A general answer about debit cards here."])
+    text = client.post("/chat/stream", headers=AUTH, json={"message": "what is a debit card"}).text
+    assert "event: reset" in text
+    deltas = "".join(
+        json.loads(b.split("data: ")[1])["text"] for b in text.split("\n\n") if b.startswith("event: delta")
+    )
+    assert "know" not in deltas and "general answer" in deltas
+
+
+def test_only_the_sources_the_answer_used_are_listed():
+    docs = [
+        Document(page_content="budget rule needs wants savings", metadata={"document": "a"}),
+        Document(page_content="scan a bill photo receipt camera", metadata={"document": "b"}),
+    ]
+    used = used_documents("the budget rule covers needs wants and savings", docs, HashEmbeddings())
+    assert [d.metadata["document"] for d in used] == ["a"]
+    assert used_documents("x", docs, None) == docs[:1]  # no embeddings: the closest match only
+
+
+def test_feedback_on_my_own_answer_only(rls, model_dir):
+    client = make_client(rls, model_dir)
+    message_id = ask(client, "how much did I spend this month").json()["message_id"]
+    assert (
+        client.post(
+            "/chat/feedback", headers=AUTH, json={"message_id": message_id, "rating": "up"}
+        ).status_code
+        == 204
+    )
+    assert (
+        client.post(
+            "/chat/feedback", headers=AUTH, json={"message_id": message_id, "rating": "down"}
+        ).status_code
+        == 204
+    )
+    assert [f["rating"] for f in rls.tables["chat_feedback"]] == ["down"]  # replaced, not duplicated
+    denied = client.post("/chat/feedback", headers=OTHER, json={"message_id": message_id, "rating": "up"})
+    assert denied.status_code == 503 and len(rls.tables["chat_feedback"]) == 1
+    assert client.post("/chat/feedback", json={"message_id": 1, "rating": "up"}).status_code == 401

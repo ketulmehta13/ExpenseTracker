@@ -58,8 +58,9 @@ async def recent_messages(data: SupabaseData, thread_id: UUID, limit: int = RECE
 
 
 async def save_turn(
-    data: SupabaseData, thread_id: UUID, question: str, answer: str, sources: list[dict], user_id: str
-) -> None:
+    data: SupabaseData, thread_id: UUID, question: str, answer: str, blocks: list[dict], user_id: str
+) -> int | None:
+    """Saves both messages and returns the answer's id, which feedback refers to."""
     rows = [
         {"thread_id": str(thread_id), "user_id": user_id, "role": "user", "content": question, "blocks": []},
         {
@@ -67,14 +68,15 @@ async def save_turn(
             "user_id": user_id,
             "role": "assistant",
             "content": answer[:8000],
-            "blocks": [{"type": "sources", "items": sources}] if sources else [],
+            "blocks": blocks,
         },
     ]
-    await _call(data, "POST", "chat_messages", json=rows, prefer="return=minimal")
+    saved = await _call(data, "POST", "chat_messages", json=rows, prefer="return=representation")
     params = {"id": f"eq.{thread_id}"}
     await _call(
         data, "PATCH", "chat_threads", params=params, json={"updated_at": "now"}, prefer="return=minimal"
     )
+    return next((row.get("id") for row in saved.json() if row.get("role") == "assistant"), None)
 
 
 async def list_threads(data: SupabaseData, limit: int = 30) -> list[dict]:
@@ -85,7 +87,7 @@ async def list_threads(data: SupabaseData, limit: int = 30) -> list[dict]:
 async def thread_messages(data: SupabaseData, thread_id: UUID, limit: int = 100) -> list[dict]:
     await open_thread(data, thread_id, "")
     params = {
-        "select": "role,content,blocks,created_at",
+        "select": "id,role,content,blocks,created_at",
         "thread_id": f"eq.{thread_id}",
         "order": "created_at.asc,id.asc",
         "limit": str(limit),
@@ -96,3 +98,15 @@ async def thread_messages(data: SupabaseData, thread_id: UUID, limit: int = 100)
 async def delete_thread(data: SupabaseData, thread_id: UUID) -> None:
     await open_thread(data, thread_id, "")
     await _call(data, "DELETE", "chat_threads", params={"id": f"eq.{thread_id}"})
+
+
+async def save_feedback(data: SupabaseData, message_id: int, rating: str, user_id: str) -> None:
+    """A thumbs up or down on one of the user's own answers; a later one replaces the earlier one."""
+    await _call(
+        data,
+        "POST",
+        "chat_feedback",
+        params={"on_conflict": "user_id,message_id"},
+        json={"message_id": message_id, "rating": rating, "user_id": user_id},
+        prefer="resolution=merge-duplicates,return=minimal",
+    )

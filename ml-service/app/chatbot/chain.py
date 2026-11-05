@@ -9,6 +9,7 @@ context or the question.
 
 from __future__ import annotations
 
+import numpy as np
 from langchain_core.documents import Document
 from langchain_core.language_models import BaseChatModel
 from langchain_core.output_parsers import StrOutputParser
@@ -20,6 +21,7 @@ from app.config import Settings
 from app.llm.verify import numbers_in
 
 I_DONT_KNOW = "I don't know"
+SOURCE_MARGIN = 0.08  # how far behind the closest passage another one may be and still be listed
 FALLBACK = (
     "I don't know. I can help with budgeting, saving, debt and investing basics, using this app, "
     "and your own spending."
@@ -37,6 +39,27 @@ PROMPT = ChatPromptTemplate.from_messages(
             "Never recommend a specific fund, stock, card or product, and don't give tax or legal advice.\n"
             "Write plain text only, with no headings, lists or markdown.\n\n"
             "Context:\n{context}",
+        ),
+        ("human", "{question}"),
+    ]
+)
+
+
+# For money topics the articles don't cover. These answers can't be checked against a source, so the
+# panel labels them as general information. Off-topic questions are still declined.
+OFF_TOPIC = "OFF_TOPIC"
+GENERAL_PROMPT = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            "You are the assistant inside Expense Tracker, a personal finance app for people in India.\n"
+            "Answer general questions about personal finance, budgeting, saving, banking, loans and money "
+            "terms in two to four short, plain sentences, using ₹ for money.\n"
+            "Never recommend a specific fund, stock, card or product. For investing or tax, explain the idea "
+            "and say it isn't financial advice.\n"
+            "You can't see the user's transactions, so never state or guess their figures.\n"
+            "Write plain text only, with no headings, lists or markdown.\n"
+            f"If the question isn't about money, reply exactly: {OFF_TOPIC}",
         ),
         ("human", "{question}"),
     ]
@@ -66,6 +89,11 @@ def format_docs(docs: list[Document]) -> str:
 def answer_chain(llm: BaseChatModel) -> Runnable:
     """{context, question} -> answer text."""
     return PROMPT | llm | StrOutputParser()
+
+
+def general_chain(llm: BaseChatModel) -> Runnable:
+    """{question} -> an answer from the model's own knowledge, or OFF_TOPIC."""
+    return GENERAL_PROMPT | llm | StrOutputParser()
 
 
 def build_chain(retriever: BaseRetriever, llm: BaseChatModel) -> Runnable:
@@ -110,3 +138,19 @@ def sources_from(docs: list[Document]) -> list[dict]:
             }
         )
     return sources
+
+
+def used_documents(answer: str, docs: list[Document], embeddings) -> list[Document]:
+    """The retrieved passages that the answer actually resembles, so the sources list doesn't show
+    everything the search returned. Always keeps the closest one, and at most three."""
+    if not docs:
+        return []
+    try:
+        vectors = np.array(embeddings.embed_documents([doc.page_content for doc in docs]))
+        target = np.array(embeddings.embed_query(answer))
+    except Exception:
+        return docs[:1]
+    similarity = vectors @ target / np.maximum(np.linalg.norm(vectors, axis=1) * np.linalg.norm(target), 1e-9)
+    best = float(similarity.max())
+    order = np.argsort(-similarity)
+    return [docs[i] for i in order[:3] if similarity[i] >= best - SOURCE_MARGIN]

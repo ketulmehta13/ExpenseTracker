@@ -66,9 +66,9 @@ async function call(method, path) {
 
 /**
  * Ask a question, streaming the answer.
- * @returns {Promise<object>} { thread_id, reply, sources, answered_by, history_saved }
+ * @returns {Promise<object>} { thread_id, reply, sources, blocks, suggestions, answered_by, message_id, history_saved }
  */
-export function streamChat({ message, threadId, today, signal, onDelta }) {
+export function streamChat({ message, threadId, today, signal, onDelta, onReset }) {
     return withTimeout(STREAM_TIMEOUT_MS, signal, async (abortSignal) => {
         const response = await fetch(`${ML_API_URL}/chat/stream`, {
             method: 'POST',
@@ -93,6 +93,7 @@ export function streamChat({ message, threadId, today, signal, onDelta }) {
                 if (!event || !data) continue;
                 const payload = JSON.parse(data);
                 if (event === 'delta') onDelta?.(payload.text);
+                else if (event === 'reset') onReset?.();
                 else if (event === 'final') final = payload;
                 else if (event === 'error') throw new ChatError(payload.message);
             }
@@ -101,6 +102,17 @@ export function streamChat({ message, threadId, today, signal, onDelta }) {
         return final;
     });
 }
+
+/** A thumbs up or down on one of the user's own answers. */
+export const sendFeedback = (messageId, rating) => withTimeout(CALL_TIMEOUT_MS, null, async (signal) => {
+    const response = await fetch(`${ML_API_URL}/chat/feedback`, {
+        method: 'POST',
+        headers: { ...(await authHeader()), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message_id: messageId, rating }),
+        signal,
+    });
+    if (!response.ok) throw await errorFrom(response);
+});
 
 export const listThreads = () => call('GET', '/chat/threads');
 export const getThread = (id) => call('GET', `/chat/threads/${encodeURIComponent(id)}`);

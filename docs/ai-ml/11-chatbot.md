@@ -1,18 +1,22 @@
 # 11. The RAG chatbot
 
-A retrieval-augmented chatbot built with LangChain, FAISS and Groq. It answers from the app's help and finance articles and shows its sources. Questions about your own money are worked out by code from your transactions.
+A retrieval-augmented chatbot built with LangChain, FAISS and Groq. It answers from the app's help and finance articles and shows the sources it used. Questions about your own money are worked out by code from your transactions, and the model chooses which calculator to run through tool calling.
 
 ## How a message flows
 
 ```
 React panel ──POST /chat/stream (Supabase token)──► FastAPI
   1. verify the token, apply the per-user rate limit
-  2. a follow-up?  history + Groq ─► a standalone question
-  3. about your own money?  calculators, reading with your token (RLS) ─► exact figures
-     (figures only: done. Figures + "why" or "what should I do": continue, and put the figures first)
-  4. FAISS: the 4 closest chunks ─► joined into {context}
-  5. prompt ─► ChatGroq ─► StrOutputParser, streamed to the panel
-  6. number check, sources, conversation saved in Supabase (RLS)
+  2. secrets, other users' data, small talk: a reply decided in code, no model involved
+  3. Groq chooses ONE tool, using the recent conversation (it sees no transactions):
+       a calculator ─► code reads your rows with your token (RLS) and works out exact figures
+       search_knowledge(standalone query) ─► step 4
+       off_topic ─► a friendly reply
+     If Groq fails or returns something invalid, backup rules decide instead
+  4. FAISS: the 4 closest chunks ─► {context} ─► prompt ─► ChatGroq ─► StrOutputParser, streamed
+     Figures + "why" or "what should I do": the figures come first, then this
+  5. number check. Not in the articles, or it failed? ─► a general answer, labelled as such
+  6. list only the sources the answer resembles, save the conversation (RLS)
 ```
 
 ## The chain
@@ -29,11 +33,12 @@ The prompt says to answer only from the context and to say "I don't know" otherw
 | Split with `RecursiveCharacterTextSplitter` | `app/chatbot/index.py` |
 | Embed with MiniLM, store in FAISS, save and reload | `app/chatbot/index.py`, `training/build_index.py` |
 | Prompt, `ChatGroq`, `format_docs`, the chain, the number check | `app/chatbot/chain.py` |
-| Rewrite follow-ups into standalone questions | `app/chatbot/rewrite.py` |
-| Calculators for your own money | `app/chatbot/data_answers.py` |
+| Choose a tool with LangChain tool calling; follow-ups become standalone queries | `app/chatbot/router.py` |
+| Replies decided in code: security, profile, small talk | `app/chatbot/guardrails.py` |
+| Nine calculators for your own money, and the backup rules | `app/chatbot/data_answers.py` |
 | Saved conversations | `app/chatbot/history.py` |
-| API, streaming | `app/routers/chat.py` |
-| Panel | `frontend/src/components/ChatbotPanel.jsx`, `services/chatService.js` |
+| API, streaming, feedback | `app/routers/chat.py` |
+| Panel | `frontend/src/components/ChatbotPanel.jsx`, `ChatBlocks.jsx`, `services/chatService.js` |
 
 ## Design decisions
 
@@ -41,6 +46,10 @@ The prompt says to answer only from the context and to say "I don't know" otherw
 - **The index ships inside the Docker image.** Render's free disk is wiped on restart, so the build runs `training/build_index.py`. Changing a knowledge file means pushing and redeploying.
 - **`openai/gpt-oss-120b`, not Llama 3.3.** Llama 3.3 wasn't available to this project's Groq key. `GROQ_MODEL` changes the model.
 - **Transactions never go into FAISS.** Everyone shares the index. Calculators read your rows with your own token, so row level security applies, and sum them with `Decimal`, so figures are exact.
+- **Tool calling instead of word lists.** The first version matched fixed words, so "earnings" and "debit" failed. The model now picks a tool, which handles typos and Hindi-English. Tools come from a fixed list, arguments are validated, none takes a user id, and the model never sees transactions. It costs one extra Groq call per message, and the rules remain as a backup.
+- **Security replies in code.** Questions about passwords, system details and other users are answered before any model runs, so a clever prompt can't change the reply.
+- **Labelled general answers.** Money topics the articles don't cover get an answer from the model's own knowledge, marked as general information. These can't be checked against a source.
+- **Only the sources used.** Each retrieved passage is compared with the finished answer by embedding similarity. The closest is always listed, plus any close behind it, up to three.
 - **The number check.** A prompt doesn't stop a model inventing a figure, so an answer with a number that isn't in the context or the question is replaced with "I don't know". This also rejects some correct answers that calculate a new number.
 
 ## Results
@@ -74,12 +83,13 @@ The test questions were written by the same person as the rules, and the knowled
 
 - The chatbot can't add or change anything: use the forms, Quick Add or Scan bill.
 - Vector search alone, with no keyword search, can miss exact terms.
-- Answers about your own money cover spending, income, categories, comparisons and the budget. Other questions go to the documents, and usually get "I don't know".
-- Off-topic questions rely on the model following the prompt. The number check catches invented figures, not invented words.
+- General answers aren't grounded in any source. They're labelled, but they can be wrong.
+- Without Groq, the backup rules can't handle typos or Hindi-English (see the report).
+- The number check catches invented figures, not invented words.
 
 ## Deployment
 
-1. **Supabase:** run `supabase/migrations/20261105000000_rag_chatbot.sql` in the SQL editor. It's safe to re-run. It removes the old knowledge and action tables and creates the chat history tables. Until then the chatbot answers but doesn't save conversations.
+1. **Supabase:** run `supabase/migrations/20261105000000_rag_chatbot.sql` (chat history), then `20261106000000_chat_feedback.sql` (thumbs up or down), in the SQL editor. Both are safe to re-run. Without the second one, ratings just aren't saved.
 2. **Render:** add `GROQ_API_KEY` as an environment variable. Until then it uses `LLM_API_KEY`, if `LLM_BASE_URL` points at Groq.
 3. **Vercel:** nothing new, the panel uses `VITE_ML_API_URL`.
 

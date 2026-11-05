@@ -481,4 +481,35 @@ await check('the old knowledge and action tables are gone; history stays private
   await assert.rejects(asRole('anon', null, () => db.query('SELECT * FROM chat_messages')), /permission denied/);
 });
 
+await db.exec(migration('20261106000000_chat_feedback.sql'));
+await db.exec(migration('20261106000000_chat_feedback.sql')); // must be re-runnable
+
+await check('users can rate only their own answers, once each', async () => {
+  const thread = await asRole('authenticated', BEN, () =>
+    db.query(`INSERT INTO chat_threads (title) VALUES ('Rated') RETURNING id`),
+  );
+  const message = await asRole('authenticated', BEN, () =>
+    db.query(`INSERT INTO chat_messages (thread_id, role, content) VALUES ($1, 'assistant', 'hi') RETURNING id`, [
+      thread.rows[0].id,
+    ]),
+  );
+  const id = message.rows[0].id;
+  const rate = (user, rating) =>
+    asRole('authenticated', user, () =>
+      db.query(
+        `INSERT INTO chat_feedback (message_id, rating) VALUES ($1, $2)
+         ON CONFLICT (user_id, message_id) DO UPDATE SET rating = EXCLUDED.rating`,
+        [id, rating],
+      ),
+    );
+  await rate(BEN, 'up');
+  await rate(BEN, 'down');
+  const rows = await db.query('SELECT rating FROM chat_feedback WHERE message_id = $1', [id]);
+  assert.deepEqual(rows.rows.map((r) => r.rating), ['down']);
+  await assert.rejects(rate(CAT, 'up'), /row-level security/);
+  await db.query('DELETE FROM chat_messages WHERE id = $1', [id]);
+  const left = await db.query('SELECT count(*)::int AS n FROM chat_feedback WHERE message_id = $1', [id]);
+  assert.equal(left.rows[0].n, 0);
+});
+
 console.log(`\n${passed} checks passed`);

@@ -56,20 +56,23 @@ class Settings:
     llm_base_url: str = ""
     llm_api_key: str = field(default="", repr=False)  # never printed in logs or tracebacks
     llm_timeout_seconds: float = 20.0
-    # Help-center search: articles, and the embedding model ("" = keyword search only, which
-    # EMBEDDING_MODEL=none selects)
-    knowledge_dir: Path = DEFAULT_KNOWLEDGE_DIR
-    embedding_model: str = "BAAI/bge-small-en-v1.5"
-    embedding_cache_dir: Path = DEFAULT_MODEL_DIR / "embeddings"
     # Monitoring: GET /metrics requires this bearer token when set
     metrics_token: str = field(default="", repr=False)
     log_level: str = "INFO"
     # Bill scanning: CPU threads for OCR (1 suits a small shared server)
     ocr_threads: int = 1
-    # Financial Copilot: knowledge-base embeddings ("" = keyword search only) and per-user limits
-    copilot_embedding_model: str = "Supabase/gte-small"
-    copilot_per_minute: int = 20
-    copilot_per_day: int = 300
+    # The RAG chatbot: the Groq key is server-side only. Chunking and k were chosen by
+    # training/evaluate_chatbot.py
+    groq_api_key: str = field(default="", repr=False)
+    groq_model: str = "openai/gpt-oss-120b"
+    chat_temperature: float = 0.2
+    chat_timeout_seconds: float = 30.0
+    chat_per_minute: int = 20
+    chat_per_day: int = 300
+    chat_k: int = 4
+    knowledge_dir: Path = DEFAULT_KNOWLEDGE_DIR
+    faiss_dir: Path = DEFAULT_MODEL_DIR / "faiss"
+    embedding_cache_dir: Path = DEFAULT_MODEL_DIR / "embeddings"
 
     @classmethod
     def from_env(cls) -> Settings:
@@ -85,17 +88,21 @@ class Settings:
             llm_base_url=os.environ.get("LLM_BASE_URL", ""),
             llm_api_key=_secret("LLM_API_KEY"),
             llm_timeout_seconds=float(os.environ.get("LLM_TIMEOUT_SECONDS", "20")),
-            knowledge_dir=Path(os.environ.get("KNOWLEDGE_DIR", str(DEFAULT_KNOWLEDGE_DIR))),
-            embedding_model=_model_name(os.environ.get("EMBEDDING_MODEL", "BAAI/bge-small-en-v1.5")),
-            embedding_cache_dir=Path(
-                os.environ.get("EMBEDDING_CACHE_DIR", str(DEFAULT_MODEL_DIR / "embeddings"))
-            ),
             metrics_token=os.environ.get("METRICS_TOKEN", ""),
             log_level=os.environ.get("LOG_LEVEL", "INFO"),
             ocr_threads=int(os.environ.get("OCR_THREADS", "1")),
-            copilot_embedding_model=_model_name(
-                os.environ.get("COPILOT_EMBEDDING_MODEL", "Supabase/gte-small")
+            # The LLM_API_KEY fallback keeps existing Groq deployments working without a new setting
+            groq_api_key=_secret("GROQ_API_KEY")
+            or (_secret("LLM_API_KEY") if "groq.com" in os.environ.get("LLM_BASE_URL", "") else ""),
+            groq_model=os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b"),
+            chat_temperature=float(os.environ.get("CHAT_TEMPERATURE", "0.2")),
+            chat_timeout_seconds=float(os.environ.get("CHAT_TIMEOUT_SECONDS", "30")),
+            chat_per_minute=int(os.environ.get("CHAT_PER_MINUTE", "20")),
+            chat_per_day=int(os.environ.get("CHAT_PER_DAY", "300")),
+            chat_k=int(os.environ.get("CHAT_K", "4")),
+            knowledge_dir=Path(os.environ.get("KNOWLEDGE_DIR", str(DEFAULT_KNOWLEDGE_DIR))),
+            faiss_dir=Path(os.environ.get("FAISS_DIR", str(DEFAULT_MODEL_DIR / "faiss"))),
+            embedding_cache_dir=Path(
+                os.environ.get("EMBEDDING_CACHE_DIR", str(DEFAULT_MODEL_DIR / "embeddings"))
             ),
-            copilot_per_minute=int(os.environ.get("COPILOT_PER_MINUTE", "20")),
-            copilot_per_day=int(os.environ.get("COPILOT_PER_DAY", "300")),
         )

@@ -15,13 +15,9 @@ Design notes and interview-style explanations live in [`docs/ai-ml/`](../docs/ai
 | GET | `/v1/insights?today=YYYY-MM-DD` | bearer token | Unusual spending, recurring payments and the month-end forecast |
 | POST | `/v1/parse` | bearer token | One line of text (`{text, today}`) to a transaction draft with a category suggestion; `llm_filled` lists fields the LLM fallback filled |
 | GET | `/v1/insights/summary?today=YYYY-MM-DD` | bearer token | The month in two or three sentences (`source`: `llm` or `template`) |
-| POST | `/v1/help` | bearer token | Answers `{question}` from the help center (`knowledge/`), with citations; declines off-topic questions |
-| POST | `/v1/assistant/chat` | bearer token | The assistant: `{message, thread_id?, today}` to a reply, citations, or a draft transaction waiting for confirmation |
-| POST | `/v1/assistant/confirm` | bearer token | `{thread_id, approve}` saves (with the user's token) or discards the pending draft |
 | POST | `/v1/receipts/scan` | bearer token | A bill as a multipart `file` (JPEG/PNG/WebP photo or PDF, up to 8 MB) plus `today`: the merchant, date, total, items and category groups to review; nothing is saved |
-| POST | `/v1/copilot/chat` (`/chat/stream` for SSE) | bearer token | The Financial Copilot: `{message, thread_id?, today}` to a reply with typed blocks (citations, charts, data, actions) |
-| POST | `/v1/copilot/actions/confirm` | bearer token | Runs a confirmed action once (idempotency key) |
-| GET/DELETE | `/v1/copilot/threads[/{id}]` | bearer token | The user's saved conversations |
+| POST | `/chat` (`/chat/stream` for SSE) | bearer token | The chatbot: `{message, thread_id?, today}` to `{reply, sources, answered_by, thread_id, history_saved}` |
+| GET/DELETE | `/chat/threads[/{id}]` | bearer token | The user's saved conversations |
 | GET | `/docs` | none | Interactive OpenAPI docs |
 
 ## Run locally
@@ -68,22 +64,6 @@ python -m training.evaluate_quickadd --gate
 
 It scores every field on hand-labelled dev and test sentences against a naive baseline, and lists every test failure in [`reports/quickadd/report.md`](reports/quickadd/report.md). Details are in [docs/ai-ml/05-quickadd.md](../docs/ai-ml/05-quickadd.md).
 
-## Evaluate help-center search
-
-```bash
-python -m training.evaluate_rag --gate   # downloads the ~70 MB embedding model on first run
-```
-
-It compares keyword, embedding and hybrid search on two chunkings, using hand-labelled dev and test questions, and writes [`reports/rag/report.md`](reports/rag/report.md). Details are in [docs/ai-ml/07-rag.md](../docs/ai-ml/07-rag.md).
-
-## Evaluate the assistant
-
-```bash
-python -m training.evaluate_assistant --gate
-```
-
-It scores intent routing, slots and follow-ups on hand-labelled messages and conversations, and writes [`reports/assistant/report.md`](reports/assistant/report.md). Details are in [docs/ai-ml/08-assistant.md](../docs/ai-ml/08-assistant.md).
-
 ## Evaluate bill scanning
 
 ```bash
@@ -94,15 +74,14 @@ python -m training.evaluate_receipt_ocr --ablation  # ...with each OpenCV step s
 
 They write [`reports/receipts/report.md`](reports/receipts/report.md) and [`reports/receipt_ocr/report.md`](reports/receipt_ocr/report.md). Details are in [docs/ai-ml/10-bill-scanning.md](../docs/ai-ml/10-bill-scanning.md).
 
-## The Financial Copilot
+## The chatbot
 
 ```bash
-python -m training.evaluate_copilot_retrieval --gate   # knowledge retrieval: keyword vs dense vs hybrid
-python -m training.evaluate_copilot --gate             # routing, exact figures, grounding checks (add --llm to answer end to end)
-python -m training.ingest_kb --dry-run                 # what ingestion would change in Supabase (needs SUPABASE_SERVICE_ROLE_KEY)
+python -m training.build_index              # rebuild the FAISS index after changing a file in knowledge/
+python -m training.evaluate_chatbot --gate  # retrieval, routing, exact figures (add --llm for real answers)
 ```
 
-Architecture, API, security, results and deployment: [docs/ai-ml/11-copilot.md](../docs/ai-ml/11-copilot.md).
+Set `GROQ_API_KEY` in `.env`. Architecture, results and deployment: [docs/ai-ml/11-chatbot.md](../docs/ai-ml/11-chatbot.md).
 
 ## Optional: an LLM
 
@@ -164,11 +143,13 @@ The build trains the categorizer inside the image, behind the same evaluation ga
 | `LLM_BASE_URL` | Ollama's default | Endpoint URL (for `openai`, the `/v1` base) |
 | `LLM_API_KEY` | — | Only for hosted endpoints; never commit it |
 | `LLM_TIMEOUT_SECONDS` | `20` | After this, the rules or the template are used |
-| `EMBEDDING_MODEL` | `BAAI/bge-small-en-v1.5` | Help-center embeddings; `none` for keyword search only |
 | `EMBEDDING_CACHE_DIR` | `ml-service/models/embeddings` | Where the embedding model is stored |
 | `KNOWLEDGE_DIR` | `ml-service/knowledge` | The help articles |
 | `METRICS_TOKEN` | — | When set, `GET /metrics` requires `Authorization: Bearer <token>` |
 | `LOG_LEVEL` | `INFO` | The service's log level (logs are JSON lines) |
 | `OCR_THREADS` | `1` | CPU threads for bill scanning's OCR (1 suits a small shared server) |
-| `COPILOT_EMBEDDING_MODEL` | `Supabase/gte-small` | The copilot's knowledge-base embeddings; `none` for keyword search only |
-| `COPILOT_PER_MINUTE` / `COPILOT_PER_DAY` | `20` / `300` | Copilot messages allowed per user |
+| `GROQ_API_KEY` | — | The chatbot's key, server-side only (an environment variable or a secret file of that name). Without it, `LLM_API_KEY` is used if `LLM_BASE_URL` is Groq |
+| `GROQ_MODEL` | `openai/gpt-oss-120b` | The chatbot's model |
+| `CHAT_K` | `4` | Passages retrieved per question |
+| `CHAT_PER_MINUTE` / `CHAT_PER_DAY` | `20` / `300` | Chatbot messages allowed per user |
+| `FAISS_DIR` | `ml-service/models/faiss` | Where the saved index is read from |

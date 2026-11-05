@@ -116,30 +116,6 @@ export async function getInsights(today, signal) {
 }
 
 /**
- * Send a message to the assistant. Replies: { thread_id, intent, reply, citations,
- * pending: draft transaction waiting for confirmation | null, saved: row | null }.
- * @param {string} message
- * @param {string} threadId - the conversation, so follow-ups like "and last month?" work
- * @param {string} today - the user's local date, YYYY-MM-DD
- */
-export async function chatWithAssistant(message, threadId, today, signal) {
-    return request('POST', '/v1/assistant/chat', {
-        body: { message: message.trim().slice(0, 300), thread_id: threadId, today },
-        signal,
-        // The free server can take about a minute to wake up; answers are quick once it's awake
-        timeoutMs: 75000,
-    });
-}
-
-/** Answer the assistant's "Should I add this?": approve = true saves the pending transaction. */
-export async function confirmAssistantDraft(threadId, approve, today) {
-    return request('POST', '/v1/assistant/confirm', {
-        body: { thread_id: threadId, approve, today },
-        timeoutMs: 10000,
-    });
-}
-
-/**
  * Read a bill (a photo or a PDF). Resolves to { merchant, date, total, items, groups,
  * suggestion, warnings, lines, ... } for the user to review; nothing is saved. Throws an Error
  * whose message can be shown to the user (unreadable file, no text found, too slow...).

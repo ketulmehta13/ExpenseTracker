@@ -25,8 +25,7 @@ A separate Python service ([`ml-service/`](ml-service/README.md)) adds these fea
 - spending insights (forecast, subscriptions, unusual payments);
 - natural-language quick add;
 - a monthly summary;
-- help-center search (RAG);
-- an assistant built with LangGraph;
+- a RAG chatbot (LangChain, FAISS, Groq) that answers from the help and finance articles with sources, and works out figures from your own transactions;
 - bill scanning: a photo or PDF of a bill becomes one transaction or several, split by category (OpenCV + OCR).
 
 Each feature is evaluated, and CI gates on the results. How each one works, how it was measured and the trade-offs are documented in [`docs/ai-ml/`](docs/ai-ml/README.md).

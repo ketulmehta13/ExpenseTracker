@@ -67,12 +67,11 @@ jobs:
 
       - run: pip install -r requirements-dev.txt
 
-      # The embedding models (bge-small for help search, gte-small for the copilot), downloaded
-      # once and reused between runs
+      # The chatbot's embedding model, downloaded once and reused between runs
       - uses: actions/cache@v4
         with:
           path: ml-service/models/embeddings
-          key: embeddings-bge-small-en-v1.5-gte-small
+          key: embeddings-all-minilm-l6-v2
 
       # The OCR models (~32 MB) live in the rapidocr package folder: cache them by version
       - name: Find the OCR model folder
@@ -99,17 +98,8 @@ jobs:
       - name: Evaluate quick-add parser (evaluation gate)
         run: python -m training.evaluate_quickadd --gate
 
-      - name: Evaluate help-center retrieval (evaluation gate)
-        run: python -m training.evaluate_rag --gate
-
-      - name: Evaluate copilot knowledge retrieval (evaluation gate)
-        run: python -m training.evaluate_copilot_retrieval --gate
-
-      - name: Evaluate the Financial Copilot (evaluation gate)
-        run: python -m training.evaluate_copilot --gate
-
-      - name: Evaluate assistant understanding (evaluation gate)
-        run: python -m training.evaluate_assistant --gate
+      - name: Evaluate the chatbot (evaluation gate)
+        run: python -m training.evaluate_chatbot --gate
 
       - name: Evaluate bill parsing (evaluation gate)
         run: python -m training.evaluate_receipts --gate

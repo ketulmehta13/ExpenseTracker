@@ -1,0 +1,537 @@
+{
+  "generated_at": "2026-11-05T07:58:01+00:00",
+  "documents": 22,
+  "chosen": {
+    "chunk_size": 500,
+    "overlap": 100,
+    "k": 4
+  },
+  "sweep": [
+    {
+      "chunking": "500 / 100",
+      "k": 3,
+      "chunks": 80,
+      "hit@1": 0.9245,
+      "hit@k": 1.0,
+      "mrr": 0.9591,
+      "context_chars": 1096,
+      "questions": 53,
+      "misses": []
+    },
+    {
+      "chunking": "500 / 100",
+      "k": 4,
+      "chunks": 80,
+      "hit@1": 0.9245,
+      "hit@k": 1.0,
+      "mrr": 0.9591,
+      "context_chars": 1459,
+      "questions": 53,
+      "misses": []
+    },
+    {
+      "chunking": "500 / 100",
+      "k": 6,
+      "chunks": 80,
+      "hit@1": 0.9245,
+      "hit@k": 1.0,
+      "mrr": 0.9591,
+      "context_chars": 2178,
+      "questions": 53,
+      "misses": []
+    },
+    {
+      "chunking": "500 / 200",
+      "k": 3,
+      "chunks": 80,
+      "hit@1": 0.9245,
+      "hit@k": 1.0,
+      "mrr": 0.9591,
+      "context_chars": 1102,
+      "questions": 53,
+      "misses": []
+    },
+    {
+      "chunking": "500 / 200",
+      "k": 4,
+      "chunks": 80,
+      "hit@1": 0.9245,
+      "hit@k": 1.0,
+      "mrr": 0.9591,
+      "context_chars": 1465,
+      "questions": 53,
+      "misses": []
+    },
+    {
+      "chunking": "500 / 200",
+      "k": 6,
+      "chunks": 80,
+      "hit@1": 0.9245,
+      "hit@k": 1.0,
+      "mrr": 0.9591,
+      "context_chars": 2203,
+      "questions": 53,
+      "misses": []
+    },
+    {
+      "chunking": "1000 / 100",
+      "k": 3,
+      "chunks": 42,
+      "hit@1": 0.7736,
+      "hit@k": 0.9434,
+      "mrr": 0.8522,
+      "context_chars": 1994,
+      "questions": 53,
+      "misses": [
+        {
+          "question": "can other users see my expenses",
+          "expected": [
+            "account-and-security"
+          ],
+          "got": [
+            "about-the-chatbot",
+            "scanning-bills",
+            "getting-started"
+          ]
+        },
+        {
+          "question": "how to mark rent as recurring",
+          "expected": [
+            "adding-transactions"
+          ],
+          "got": [
+            "insights",
+            "finance/cash-flow",
+            "finance/debt-and-emis"
+          ]
+        },
+        {
+          "question": "where are my subscriptions listed",
+          "expected": [
+            "insights"
+          ],
+          "got": [
+            "plans-and-billing",
+            "getting-started",
+            "saving-money"
+          ]
+        }
+      ]
+    },
+    {
+      "chunking": "1000 / 100",
+      "k": 4,
+      "chunks": 42,
+      "hit@1": 0.7736,
+      "hit@k": 0.9623,
+      "mrr": 0.8569,
+      "context_chars": 2652,
+      "questions": 53,
+      "misses": [
+        {
+          "question": "can other users see my expenses",
+          "expected": [
+            "account-and-security"
+          ],
+          "got": [
+            "about-the-chatbot",
+            "scanning-bills",
+            "getting-started"
+          ]
+        },
+        {
+          "question": "how to mark rent as recurring",
+          "expected": [
+            "adding-transactions"
+          ],
+          "got": [
+            "insights",
+            "finance/cash-flow",
+            "finance/debt-and-emis"
+          ]
+        }
+      ]
+    },
+    {
+      "chunking": "1000 / 100",
+      "k": 6,
+      "chunks": 42,
+      "hit@1": 0.7736,
+      "hit@k": 0.9623,
+      "mrr": 0.8569,
+      "context_chars": 3852,
+      "questions": 53,
+      "misses": [
+        {
+          "question": "can other users see my expenses",
+          "expected": [
+            "account-and-security"
+          ],
+          "got": [
+            "about-the-chatbot",
+            "scanning-bills",
+            "getting-started"
+          ]
+        },
+        {
+          "question": "how to mark rent as recurring",
+          "expected": [
+            "adding-transactions"
+          ],
+          "got": [
+            "insights",
+            "finance/cash-flow",
+            "finance/debt-and-emis"
+          ]
+        }
+      ]
+    },
+    {
+      "chunking": "1000 / 200",
+      "k": 3,
+      "chunks": 42,
+      "hit@1": 0.7736,
+      "hit@k": 0.9434,
+      "mrr": 0.8522,
+      "context_chars": 2004,
+      "questions": 53,
+      "misses": [
+        {
+          "question": "can other users see my expenses",
+          "expected": [
+            "account-and-security"
+          ],
+          "got": [
+            "about-the-chatbot",
+            "scanning-bills",
+            "getting-started"
+          ]
+        },
+        {
+          "question": "how to mark rent as recurring",
+          "expected": [
+            "adding-transactions"
+          ],
+          "got": [
+            "insights",
+            "finance/cash-flow",
+            "finance/debt-and-emis"
+          ]
+        },
+        {
+          "question": "where are my subscriptions listed",
+          "expected": [
+            "insights"
+          ],
+          "got": [
+            "plans-and-billing",
+            "getting-started",
+            "saving-money"
+          ]
+        }
+      ]
+    },
+    {
+      "chunking": "1000 / 200",
+      "k": 4,
+      "chunks": 42,
+      "hit@1": 0.7736,
+      "hit@k": 0.9623,
+      "mrr": 0.8569,
+      "context_chars": 2667,
+      "questions": 53,
+      "misses": [
+        {
+          "question": "can other users see my expenses",
+          "expected": [
+            "account-and-security"
+          ],
+          "got": [
+            "about-the-chatbot",
+            "scanning-bills",
+            "getting-started"
+          ]
+        },
+        {
+          "question": "how to mark rent as recurring",
+          "expected": [
+            "adding-transactions"
+          ],
+          "got": [
+            "insights",
+            "finance/cash-flow",
+            "finance/debt-and-emis"
+          ]
+        }
+      ]
+    },
+    {
+      "chunking": "1000 / 200",
+      "k": 6,
+      "chunks": 42,
+      "hit@1": 0.7736,
+      "hit@k": 0.9623,
+      "mrr": 0.8569,
+      "context_chars": 3858,
+      "questions": 53,
+      "misses": [
+        {
+          "question": "can other users see my expenses",
+          "expected": [
+            "account-and-security"
+          ],
+          "got": [
+            "about-the-chatbot",
+            "scanning-bills",
+            "getting-started"
+          ]
+        },
+        {
+          "question": "how to mark rent as recurring",
+          "expected": [
+            "adding-transactions"
+          ],
+          "got": [
+            "insights",
+            "finance/cash-flow",
+            "finance/debt-and-emis"
+          ]
+        }
+      ]
+    },
+    {
+      "chunking": "1500 / 200",
+      "k": 3,
+      "chunks": 25,
+      "hit@1": 0.7547,
+      "hit@k": 0.9245,
+      "mrr": 0.8396,
+      "context_chars": 3293,
+      "questions": 53,
+      "misses": [
+        {
+          "question": "can other users see my expenses",
+          "expected": [
+            "account-and-security"
+          ],
+          "got": [
+            "about-the-chatbot",
+            "getting-started",
+            "saving-money"
+          ]
+        },
+        {
+          "question": "will my currency setting convert amounts",
+          "expected": [
+            "privacy-and-ai"
+          ],
+          "got": [
+            "exporting",
+            "quick-add",
+            "finance/budgeting-methods"
+          ]
+        },
+        {
+          "question": "what is lifestyle creep",
+          "expected": [
+            "finance/saving-strategies"
+          ],
+          "got": [
+            "finance/expense-categories",
+            "budget-and-forecast",
+            "insights"
+          ]
+        },
+        {
+          "question": "how much of my salary can go to EMIs",
+          "expected": [
+            "finance/debt-and-emis"
+          ],
+          "got": [
+            "quick-add",
+            "exporting",
+            "finance/saving-strategies"
+          ]
+        }
+      ]
+    },
+    {
+      "chunking": "1500 / 200",
+      "k": 4,
+      "chunks": 25,
+      "hit@1": 0.7547,
+      "hit@k": 0.9434,
+      "mrr": 0.8443,
+      "context_chars": 4404,
+      "questions": 53,
+      "misses": [
+        {
+          "question": "can other users see my expenses",
+          "expected": [
+            "account-and-security"
+          ],
+          "got": [
+            "about-the-chatbot",
+            "getting-started",
+            "saving-money"
+          ]
+        },
+        {
+          "question": "will my currency setting convert amounts",
+          "expected": [
+            "privacy-and-ai"
+          ],
+          "got": [
+            "exporting",
+            "quick-add",
+            "finance/budgeting-methods"
+          ]
+        },
+        {
+          "question": "what is lifestyle creep",
+          "expected": [
+            "finance/saving-strategies"
+          ],
+          "got": [
+            "finance/expense-categories",
+            "budget-and-forecast",
+            "insights"
+          ]
+        }
+      ]
+    },
+    {
+      "chunking": "1500 / 200",
+      "k": 6,
+      "chunks": 25,
+      "hit@1": 0.7547,
+      "hit@k": 0.9434,
+      "mrr": 0.8443,
+      "context_chars": 6651,
+      "questions": 53,
+      "misses": [
+        {
+          "question": "can other users see my expenses",
+          "expected": [
+            "account-and-security"
+          ],
+          "got": [
+            "about-the-chatbot",
+            "getting-started",
+            "saving-money"
+          ]
+        },
+        {
+          "question": "will my currency setting convert amounts",
+          "expected": [
+            "privacy-and-ai"
+          ],
+          "got": [
+            "exporting",
+            "quick-add",
+            "finance/budgeting-methods"
+          ]
+        },
+        {
+          "question": "what is lifestyle creep",
+          "expected": [
+            "finance/saving-strategies"
+          ],
+          "got": [
+            "finance/expense-categories",
+            "budget-and-forecast",
+            "insights"
+          ]
+        }
+      ]
+    }
+  ],
+  "test": {
+    "hit@1": 0.9216,
+    "hit@k": 0.9608,
+    "mrr": 0.9412,
+    "context_chars": 1471,
+    "questions": 51,
+    "misses": [
+      {
+        "question": "how does the app predict my spending",
+        "expected": [
+          "budget-and-forecast"
+        ],
+        "got": [
+          "saving-money",
+          "insights"
+        ]
+      },
+      {
+        "question": "income minus expenses meaning",
+        "expected": [
+          "finance/cash-flow"
+        ],
+        "got": [
+          "quick-add",
+          "finance/expense-categories"
+        ]
+      }
+    ]
+  },
+  "routing": {
+    "routing_accuracy": 0.963,
+    "questions": 27,
+    "misses": [
+      {
+        "message": "how much budget do I have left",
+        "expected": "budget",
+        "got": null
+      }
+    ]
+  },
+  "figures": {
+    "checks": 400,
+    "wrong": 0,
+    "figures_correct": 1.0
+  },
+  "llm": {
+    "model": "openai/gpt-oss-120b",
+    "answered": 42,
+    "said_dont_know": 2,
+    "off_topic_declined": 8,
+    "off_topic_answered": 0,
+    "number_check_rejected": 3,
+    "failed": 4,
+    "median_seconds": 0.94,
+    "problems": [
+      {
+        "question": "the excel file shows weird characters for rupee",
+        "answer": "The CSV export is saved so that Excel shows the \u20b9 sign and Indian\u2011language text correctly. If you\u2019re seeing odd symbols, open the exported CSV file directly and ensure Excel is using the proper encoding (UTF\u20118). This should display the rupee symbol without issues.",
+        "note": "number check rejected"
+      },
+      {
+        "question": "am I going to go over budget this month",
+        "answer": "I don't know.",
+        "note": "answerable but declined"
+      },
+      {
+        "question": "tips to cut down monthly expenses",
+        "answer": "Start by reviewing the biggest spending categories over the past three months, such as food delivery, shopping and unused subscriptions, and cut the ones you don\u2019t need. Canceling a \u20b9499 monthly subscription can save about \u20b96,\u202f000 a year. Treat small EMIs and buy\u2011now\u2011pay\u2011later plans as fixed monthly expenses so you see their impact before adding more.",
+        "note": "number check rejected"
+      },
+      {
+        "question": "what percentage of income am I saving if I earn 60000 and spend 48000",
+        "answer": "Your savings rate is 20\u202f%. This is calculated as (\u20b960,000\u202f\u2212\u202f\u20b948,000) \u00f7 \u20b960,000\u202f=\u202f0.20, or 20\u202f% of your income.",
+        "note": "number check rejected"
+      },
+      {
+        "question": "income minus expenses meaning",
+        "answer": "I don't know",
+        "note": "answerable but declined"
+      }
+    ]
+  },
+  "gate": {
+    "hit@k >= 0.9 (got 0.961)": true,
+    "hit@1 >= 0.7 (got 0.922)": true,
+    "routing_accuracy >= 0.85 (got 0.963)": true,
+    "figures_correct >= 1.0 (got 1.000)": true
+  }
+}

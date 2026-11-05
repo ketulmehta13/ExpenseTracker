@@ -3,9 +3,8 @@
 # (or New > Blueprint in the Render dashboard), then fill in the two Supabase values it asks
 # for. See docs/ai-ml/09-mlops.md for the full steps.
 #
-# The free plan has 512 MB of memory. The service needs about 200 MB, but the help-center
-# embedding model adds about 370 MB, so on the free plan help search runs on keywords alone
-# (EMBEDDING_MODEL is none). With 1 GB or more, delete that entry for hybrid search.
+# The free plan has 512 MB of memory. The service with the chatbot's MiniLM model and FAISS index
+# uses about 350 MB, plus about 60 MB once a bill has been scanned.
 # Free services also sleep after 15 minutes without traffic; the first request then takes
 # about a minute, which the app tolerates (ML features just don't show until it's awake).
 services:
@@ -26,8 +25,6 @@ services:
         sync: false
       - key: ALLOWED_ORIGINS
         value: https://ketul-expense-tracker.vercel.app
-      - key: EMBEDDING_MODEL
-        value: none
       # The LLM: Groq's free tier through its OpenAI-compatible API (about 1 s per answer). Put the
       # key in the dashboard only; never commit it. LLM_PROVIDER=none switches every LLM feature off.
       - key: LLM_PROVIDER
@@ -37,6 +34,9 @@ services:
       - key: LLM_MODEL
         value: openai/gpt-oss-120b
       - key: LLM_API_KEY
+        sync: false
+      # The chatbot's ChatGroq key: dashboard only. Without it, it falls back to LLM_API_KEY above
+      - key: GROQ_API_KEY
         sync: false
       - key: METRICS_TOKEN
         generateValue: true

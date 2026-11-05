@@ -11,31 +11,45 @@ import httpx
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from langchain_core.language_models import BaseChatModel
+from langchain_core.retrievers import BaseRetriever
 
 from app import __version__
-from app.assistant.graph import build_graph
 from app.auth import TokenCache
 from app.cache import TTLCache
+from app.chatbot.chain import build_llm
+from app.chatbot.ratelimit import RateLimiter
 from app.config import Settings
-from app.copilot.pipeline import build_copilot_graph
-from app.copilot.ratelimit import RateLimiter
 from app.llm.provider import build_chat_model
 from app.ml.categorizer import CategorizerModel
 from app.observability import Metrics, configure_logging
-from app.rag.embeddings import Embedder
-from app.routers import assistant, categorize, copilot, health, help, insights, parse, receipts
+from app.routers import categorize, chat, health, insights, parse, receipts
 
 logger = logging.getLogger("ml_service")
+
+
+def load_retriever(settings: Settings) -> BaseRetriever | None:
+    """The saved FAISS index, loaded once at startup. Without it the chatbot still answers
+    questions about the user's own money, so a bad index mustn't stop the service."""
+    from app.chatbot.index import load_embeddings, load_index, make_retriever
+
+    try:
+        store = load_index(settings.faiss_dir, load_embeddings(settings.embedding_cache_dir))
+    except Exception as err:
+        logger.error("Chatbot index not loaded from %s: %s", settings.faiss_dir, type(err).__name__)
+        return None
+    logger.info("Chatbot index loaded: %d chunks", store.index.ntotal)
+    return make_retriever(store, settings.chat_k)
 
 
 def create_app(
     settings: Settings | None = None,
     transport: httpx.AsyncBaseTransport | None = None,
     llm: BaseChatModel | None = None,
-    embedder: Embedder | None = None,
+    chat_llm: BaseChatModel | None = None,
+    chat_retriever: BaseRetriever | None = None,
 ) -> FastAPI:
     """Build the app. Tests pass their own settings, an httpx transport that fakes Supabase,
-    and optionally a fake chat model and embedder."""
+    and optionally fake chat models and a fake retriever."""
     settings = settings or Settings.from_env()
     configure_logging(settings.log_level)
 
@@ -58,6 +72,10 @@ def create_app(
             logger.error("LLM disabled, its configuration is invalid: %s", type(err).__name__)
             app.state.llm = None
         logger.info("LLM provider: %s", settings.llm_provider if app.state.llm is not None else "none")
+        app.state.chat_llm = chat_llm if chat_llm is not None else build_llm(settings)
+        app.state.chat_retriever = chat_retriever
+        if chat_retriever is None and app.state.chat_llm is not None:
+            app.state.chat_retriever = load_retriever(settings)
         yield
         await app.state.http.aclose()
 
@@ -68,19 +86,14 @@ def create_app(
     app.state.user_context_cache = TTLCache(settings.user_context_cache_seconds)
     app.state.insights_cache = TTLCache(settings.user_context_cache_seconds)
     app.state.summary_cache = TTLCache(600)  # LLM summaries are slow; reused while their facts are unchanged
-    app.state.embedder = embedder
-    app.state.help_index = None  # built on the first help question
-    app.state.assistant_graph = build_graph()
     app.state.ocr_engine = None  # loaded on the first bill scan
-    app.state.copilot_graph = build_copilot_graph()
-    app.state.kb_retriever = None  # built on the first copilot question
-    app.state.copilot_limiter = RateLimiter(settings.copilot_per_minute, settings.copilot_per_day)
     app.state.ocr_lock = asyncio.Lock()
+    app.state.chat_limiter = RateLimiter(settings.chat_per_minute, settings.chat_per_day)
 
     app.add_middleware(
         CORSMiddleware,
         allow_origins=list(settings.allowed_origins),
-        allow_methods=["GET", "POST"],
+        allow_methods=["GET", "POST", "DELETE"],
         allow_headers=["Authorization", "Content-Type"],
     )
 
@@ -99,10 +112,8 @@ def create_app(
     app.include_router(categorize.router)
     app.include_router(insights.router)
     app.include_router(parse.router)
-    app.include_router(help.router)
-    app.include_router(assistant.router)
     app.include_router(receipts.router)
-    app.include_router(copilot.router)
+    app.include_router(chat.router)
     return app
 
 

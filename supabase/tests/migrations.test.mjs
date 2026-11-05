@@ -456,4 +456,29 @@ await check("deleting an account deletes the user's conversations and actions", 
   assert.equal(rows[0].n, 0);
 });
 
+// ── The RAG chatbot replaces the copilot ───────────────────────────────────
+await db.exec(migration('20261105000000_rag_chatbot.sql'));
+await db.exec(migration('20261105000000_rag_chatbot.sql')); // must be re-runnable
+console.log('After the RAG chatbot migration:');
+
+await check('the old knowledge and action tables are gone; history stays private', async () => {
+  const { rows } = await db.query(
+    `SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'
+       AND table_name IN ('kb_documents', 'kb_chunks', 'copilot_actions', 'chat_threads', 'chat_messages')`,
+  );
+  assert.deepEqual(rows.map((r) => r.table_name).sort(), ['chat_messages', 'chat_threads']);
+  const thread = await asRole('authenticated', BEN, () =>
+    db.query(`INSERT INTO chat_threads (title) VALUES ('Budgeting') RETURNING id`),
+  );
+  await assert.rejects(
+    asRole('authenticated', CAT, () =>
+      db.query(`INSERT INTO chat_messages (thread_id, role, content) VALUES ($1, 'user', 'hi')`, [thread.rows[0].id]),
+    ),
+    /row-level security/,
+  );
+  const seen = await asRole('authenticated', CAT, () => db.query('SELECT count(*)::int AS n FROM chat_threads'));
+  assert.equal(seen.rows[0].n, 0);
+  await assert.rejects(asRole('anon', null, () => db.query('SELECT * FROM chat_messages')), /permission denied/);
+});
+
 console.log(`\n${passed} checks passed`);

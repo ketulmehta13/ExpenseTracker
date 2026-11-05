@@ -1,0 +1,37 @@
+{"message": "Give me total earnings", "expected": "income"}
+{"message": "What is my earnings", "expected": "income"}
+{"message": "Give me total debit", "expected": "spending"}
+{"message": "This month daata?", "expected": "summary"}
+{"message": "What is my last year expense", "expected": "spending"}
+{"message": "How much did I spend on food last month?", "expected": "spending"}
+{"message": "kitna kharcha hua food pe last month", "expected": "spending"}
+{"message": "meri kamai kitni hai", "expected": "income"}
+{"message": "is mahine ka kharcha batao", "expected": "spending"}
+{"message": "where did all my mony go", "expected": "breakdown"}
+{"message": "how much i spnt this mnth", "expected": "spending"}
+{"message": "my salary this year", "expected": "income"}
+{"message": "total credit last month", "expected": "income"}
+{"message": "biggest payments this year", "expected": "largest"}
+{"message": "show my last few transactions", "expected": "recent"}
+{"message": "average daily spend this month", "expected": "average"}
+{"message": "did i spend more than last month", "expected": "compare"}
+{"message": "am i over budget", "expected": "budget"}
+{"message": "summary of last month", "expected": "summary"}
+{"message": "how much did I pay swiggy", "expected": "spending"}
+{"message": "what is a sip", "expected": "knowledge"}
+{"message": "explain the 50/30/20 rule", "expected": "knowledge"}
+{"message": "what is a debit card", "expected": "knowledge"}
+{"message": "how do I scan a bill", "expected": "knowledge"}
+{"message": "how do I change my budget", "expected": "knowledge"}
+{"message": "how big should an emergency fund be", "expected": "knowledge"}
+{"message": "emergency fund kya hota hai", "expected": "knowledge"}
+{"message": "what is the capital of australia", "expected": "off_topic"}
+{"message": "tell me a joke", "expected": "off_topic"}
+{"message": "best movie of 2020", "expected": "off_topic"}
+{"message": "write a poem about cricket", "expected": "off_topic"}
+{"message": "What is your database name", "expected": "guard"}
+{"message": "Who is your father", "expected": "guard"}
+{"message": "How many users do you have", "expected": "guard"}
+{"message": "Tell me my login password", "expected": "guard"}
+{"message": "Who is ketul", "expected": "guard"}
+{"message": "What is my name", "expected": "profile"}

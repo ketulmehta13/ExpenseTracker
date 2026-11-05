@@ -1,13 +1,13 @@
 """Questions about the user's own money, answered by code rather than by the model.
 
-Transactions never go into the FAISS index, which every user shares. Instead, questions such as
-"how much did I spend on food last month?" are recognised here by rules, and read-only
-calculators work out the figure from the user's rows, fetched with their own token so row level
-security applies. Sums use Decimal, so they are exact to the paisa.
+Transactions never go into the FAISS index, which every user shares, and they never reach the
+model. A calculator works out each figure from the user's rows, fetched with their own token so
+row level security applies. Sums use Decimal, so they are exact to the paisa.
 
-A question that also asks for advice ("why did my spending go up, and what should I do?") gets
-these figures first and then a normal RAG answer. "How do I see my spending?" is about the app,
-so it goes to RAG alone.
+Normally the model picks the calculator (app/chatbot/router.py). classify() below is the backup
+for when Groq is unavailable: rules that recognise the common phrasings.
+
+Every answer can carry typed blocks for the panel (cards, bars, rows) and suggested next questions.
 """
 
 from __future__ import annotations
@@ -15,15 +15,18 @@ from __future__ import annotations
 import calendar
 import re
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, field, replace
 from datetime import date, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Literal
 
 from app.supabase import SupabaseData
 
-Kind = Literal["spending", "income", "breakdown", "compare", "budget"]
+Kind = Literal[
+    "spending", "income", "summary", "breakdown", "compare", "budget", "largest", "recent", "average"
+]
 
+ALL_TIME_START = date(2000, 1, 1)
 _MONTHS = {
     name: number
     for number in range(1, 13)
@@ -40,7 +43,8 @@ _ALIASES = {
 # About using the app, or a general question: for RAG, not the calculators
 _HOW_TO = re.compile(
     r"\b(how (do|can|to|does|is|are)|how should|where (do|can|is)|can i|what (does|do) .*\bmean\b"
-    r"|what is an?\b|what are(?! my\b)|meaning of|should i|how much should)\b"
+    r"|what is an?\b|what are(?! my\b)|meaning of|should i|how much should"
+    r"|can (other|others|anyone|someone)|is my .* (safe|private))\b"
 )
 _ADVICE = re.compile(
     r"\b(why|explain|suggest|recommend|tips?|advice|what should i do"
@@ -53,17 +57,24 @@ _COMPARE = re.compile(
 )
 _BUDGET = re.compile(
     r"\b(on track|over budget|over my budget|budget (left|status|remaining)|left (of|in) my budget"
-    r"|my budget)\b"
+    r"|my budget|budget do i have)\b"
 )
 _BREAKDOWN = re.compile(
     r"\bwhere did\b.*\bmoney\b|\bbreak ?down\b|\bby category\b"
-    r"|\b(top|biggest|largest|highest) (categor|expense|spend)|\bmost of my money\b"
+    r"|\b(top|biggest|largest|highest) (categor|expenses\b|spend)|\bmost of my money\b"
 )
-_INCOME = re.compile(r"\b(earn(ed)?|income|salary|saved?|savings? rate)\b")
+_LARGEST = re.compile(r"\b(biggest|largest|highest|top|costliest) (payments?|transactions?|purchases?)\b")
+_RECENT = re.compile(
+    r"\b(recent|latest|last few)\b.{0,12}\b(payments?|transactions?|expenses?)\b|\bmy transactions\b"
+)
+_AVERAGE = re.compile(r"\baverage\b|\bper day\b|\bdaily spend")
+_SUMMARY = re.compile(r"\b(da+ta|summary|overview|report|statement)\b")
+_INCOME = re.compile(r"\b(earn(ed|ings?)?|income|salary|credits?|credited|saved?|savings? rate)\b")
 _SPENDING = re.compile(
     r"\bspen[dt]\b|\bspending\b|\bexpenses?\b|\bkharch\b|\bpaid\b|\bpay\b|\bcost me\b|\bhow much on\b"
+    r"|\bdebits?\b|\bdebited\b"
 )
-_ASKS_AMOUNT = re.compile(r"\bhow much\b|\btotal\b|\bwhat (did|was|were|is|are) (i|my)\b|\bmy\b")
+_ASKS_AMOUNT = re.compile(r"\bhow much\b|\btotal\b|\bwhat (did|was|were|is|are) (i|my)\b|\bmy\b|\bgive me\b")
 _SUBJECT = re.compile(
     r"\b(?:on|at|for|to)\s+(?:my\s+|the\s+)?([a-z0-9][a-z0-9&' -]*?)\s*(?:$|[?.!,]|\b(?:and|so|or)\b)"
 )
@@ -84,15 +95,19 @@ class DataQuestion:
     subject: str | None  # what it was spent on, if named
     wants_advice: bool
     text: str = ""  # the question, lowercased, to spot the user's own category names in
+    assumed_period: bool = False  # the user named no period, so this month was assumed
+    advice_query: str | None = None  # what to search for when advice is wanted too
 
 
 @dataclass(frozen=True)
 class DataAnswer:
     text: str
     wants_advice: bool
+    blocks: list[dict] = field(default_factory=list)
+    suggestions: list[str] = field(default_factory=list)
 
 
-def _money(value: Decimal) -> str:
+def money(value: Decimal) -> str:
     """₹1,25,000 or ₹1,234.50: Indian digit grouping, paise only when there are any."""
     value = value.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
     negative, value = value < 0, abs(value)
@@ -108,6 +123,10 @@ def _money(value: Decimal) -> str:
     return f"{'-' if negative else ''}₹{digits}" + (f".{paise:02d}" if paise else "")
 
 
+def all_time(today: date) -> Period:
+    return Period(ALL_TIME_START, today, "in total")
+
+
 def parse_period(text: str, today: date) -> tuple[Period, str]:
     """The period named in the text (this month by default), and the text without it."""
     month_start = today.replace(day=1)
@@ -120,6 +139,7 @@ def parse_period(text: str, today: date) -> tuple[Period, str]:
 
     named = [
         (r"\b(?:in |for |during )?(?:the )?(?:last|past) (\d{1,4}) days?\b", days),
+        (r"\b(?:in )?(?:all[- ]time|overall|so far|ever|lifetime|in total)\b", lambda _: all_time(today)),
         (r"\btoday\b", lambda _: Period(today, today, "today")),
         (r"\byesterday\b", lambda _: Period(today - timedelta(1), today - timedelta(1), "yesterday")),
         (r"\b(?:in |for |during )?this week\b", lambda _: Period(week_start, today, "this week")),
@@ -147,45 +167,73 @@ def parse_period(text: str, today: date) -> tuple[Period, str]:
     # "in may", "for march": "may" alone is usually the verb
     names = "|".join(sorted(_MONTHS, key=len, reverse=True))
     if match := re.search(rf"\b(?:in|for|during) ({names})\b", text):
-        month = _MONTHS[match[1]]
-        year = today.year if month <= today.month else today.year - 1
-        last_day = calendar.monthrange(year, month)[1]
-        end = min(date(year, month, last_day), today)
-        period = Period(date(year, month, 1), end, f"in {calendar.month_name[month]}")
-        return period, (text[: match.start()] + " " + text[match.end() :]).strip()
+        return month_period(_MONTHS[match[1]], today), (
+            text[: match.start()] + " " + text[match.end() :]
+        ).strip()
     return Period(month_start, today, "this month"), text
 
 
+def month_period(month: int, today: date) -> Period:
+    """The most recent such month."""
+    year = today.year if month <= today.month else today.year - 1
+    last_day = calendar.monthrange(year, month)[1]
+    return Period(
+        date(year, month, 1), min(date(year, month, last_day), today), f"in {calendar.month_name[month]}"
+    )
+
+
+def wants_advice(question: str) -> bool:
+    """Whether the question also asks why, or what to do about it."""
+    return bool(_ADVICE.search(" ".join(question.lower().split())))
+
+
 def classify(question: str, today: date) -> DataQuestion | None:
-    """A question about the user's own money, or None if it's one for RAG."""
+    """The backup router: a question about the user's own money, or None if it's one for RAG."""
     t = " ".join(question.lower().split())
     wants_advice = bool(_ADVICE.search(t))
     if _HOW_TO.search(t) and not wants_advice:
         return None
     period, rest = parse_period(t, today)
+    named_period = rest != t
     personal = bool(_PERSONAL.search(t))
 
-    if _COMPARE.search(t) and (personal or _SPENDING.search(t) or rest != t):
+    if _COMPARE.search(t) and (personal or _SPENDING.search(t) or named_period):
         kind: Kind = "compare"
     elif _BUDGET.search(t) and personal:
         kind = "budget"
-    elif _BREAKDOWN.search(t) and (personal or rest != t):
+    elif _LARGEST.search(t) and personal:
+        kind = "largest"
+    elif _RECENT.search(t) and personal:
+        kind = "recent"
+    elif _AVERAGE.search(t) and (personal or _SPENDING.search(t)):
+        kind = "average"
+    elif _BREAKDOWN.search(t) and (personal or named_period):
         kind = "breakdown"
-    elif _INCOME.search(t) and personal:
+    elif _INCOME.search(t) and (personal or re.search(r"\btotal\b", t)):
         kind = "income"
     elif _SPENDING.search(t) and (_ASKS_AMOUNT.search(t) or personal):
         kind = "spending"
+    elif _SUMMARY.search(t) and (personal or named_period):
+        kind = "summary"
     else:
         return None
     if wants_advice and not personal:
         return None  # "explain how spending categories work" is a general question
 
     subject = None
-    if kind in ("spending", "compare") and (match := _SUBJECT.search(rest)):
+    if kind in ("spending", "compare", "largest") and (match := _SUBJECT.search(rest)):
         candidate = match[1].strip()
         if candidate and candidate not in _FILLER_SUBJECTS:
             subject = candidate
-    return DataQuestion(kind, period, subject, wants_advice, rest)
+    return DataQuestion(
+        kind,
+        period,
+        subject,
+        wants_advice,
+        rest,
+        assumed_period=not named_period,
+        advice_query=question if wants_advice else None,
+    )
 
 
 def _is_month(period: Period) -> bool:
@@ -258,93 +306,290 @@ async def _rows(data: SupabaseData, start: date, end: date) -> list[dict]:
     )
 
 
+async def _records_note(data: SupabaseData) -> str:
+    """Tells "you spent nothing then" apart from "the records don't go back that far"."""
+    first = await data.select("transactions", {"select": "date", "order": "date.asc,id.asc"}, limit=1)
+    if not first:
+        return " You don't have any transactions yet."
+    day = date.fromisoformat(str(first[0]["date"])[:10])
+    return f" Your records start on {day.day} {day:%b %Y}."
+
+
+def _nice_date(value) -> str:
+    day = date.fromisoformat(str(value)[:10])
+    return f"{day.day} {day:%b %Y}"
+
+
+def _cards(*items: tuple[str, str, str]) -> dict:
+    return {"type": "cards", "items": [{"label": a, "value": b, "tone": c} for a, b, c in items]}
+
+
+def _bars(title: str, points: list[tuple[str, Decimal]]) -> dict:
+    return {
+        "type": "bars",
+        "title": title,
+        "points": [
+            {"label": label, "value": float(value), "display": money(value)} for label, value in points
+        ],
+    }
+
+
+def _table(title: str, rows: list[tuple[str, str, str]]) -> dict:
+    return {"type": "rows", "title": title, "rows": [{"a": a, "b": b, "c": c} for a, b, c in rows]}
+
+
+def _period_choices(question: DataQuestion, template: str) -> list[str]:
+    """When the user named no period: one tap away from the others they may have meant."""
+    if not question.assumed_period:
+        return []
+    return [template.format(period=p) for p in ("this year", "in total")]
+
+
+def _by_category(rows: list[dict], categories: list[dict]) -> list[tuple[str, Decimal]]:
+    names = {str(c["id"]): c["name"] for c in categories}
+    totals: dict[str, Decimal] = defaultdict(Decimal)
+    for row in rows:
+        totals[names.get(str(row.get("category_id")), "Uncategorized")] += Decimal(str(row["amount"]))
+    return sorted(totals.items(), key=lambda item: (-item[1], item[0]))
+
+
 async def answer(question: DataQuestion, data: SupabaseData, user_id: str, today: date) -> DataAnswer:
-    period, subject = question.period, question.subject
-
+    calculators = {
+        "income": _income, "summary": _summary, "compare": _compare,
+        "breakdown": _breakdown, "largest": _largest, "recent": _recent, "average": _average,
+        "spending": _spending,
+    }  # fmt: skip
     if question.kind == "budget":
-        month = Period(today.replace(day=1), today, "this month")
-        rows = await _rows(data, month.start, month.end)
-        spent = _total(_within(rows, month))
-        profiles = await data.select("profiles", {"select": "monthly_budget", "id": f"eq.{user_id}"}, limit=1)
-        budget = Decimal(str(profiles[0].get("monthly_budget") or 0)) if profiles else Decimal(0)
-        if not budget:
-            text = (
-                f"You've spent {_money(spent)} so far this month, and you haven't set a monthly budget. "
-                "You can set one in Settings."
-            )
-        elif spent > budget:
-            text = (
-                f"You've spent {_money(spent)} this month, "
-                f"{_money(spent - budget)} over your {_money(budget)} budget."
-            )
-        else:
-            text = (
-                f"You've spent {_money(spent)} of your {_money(budget)} budget this month, "
-                f"so {_money(budget - spent)} is left."
-            )
-        return DataAnswer(text, question.wants_advice)
-
+        return await _budget(question, data, user_id, today)
     categories = await data.select("categories", {"select": "id,name", "order": "id"}, limit=1000)
-    if not subject and question.kind in ("spending", "compare"):
-        subject = _named_category(question.text, categories)
-    about = f" on {subject}" if subject else ""
+    if not question.subject and question.kind in ("spending", "compare", "largest"):
+        question = replace(question, subject=_named_category(question.text, categories))
+    return await calculators[question.kind](question, data, categories, today)
 
-    if question.kind == "compare":
-        before = _previous(period)
-        rows = await _rows(data, before.start, period.end)
-        now_rows = _filter(_within(rows, period), subject, categories)
-        before_rows = _filter(_within(rows, before), subject, categories)
-        now, then = _total(now_rows), _total(before_rows)
-        text = f"You spent {_money(now)}{about} {period.label}, against {_money(then)} {before.label}"
-        if now == then:
-            text += ", the same."
-        else:
-            text += f": {_money(abs(now - then))} {'more' if now > then else 'less'}."
-        names = {str(c["id"]): c["name"] for c in categories}
-        changes: dict[str, Decimal] = defaultdict(Decimal)
-        for row in now_rows:
-            changes[names.get(str(row.get("category_id")), "Uncategorized")] += Decimal(str(row["amount"]))
-        for row in before_rows:
-            changes[names.get(str(row.get("category_id")), "Uncategorized")] -= Decimal(str(row["amount"]))
-        biggest = sorted((c for c in changes.items() if c[1]), key=lambda c: (-abs(c[1]), c[0]))[:3]
-        if biggest and not subject:
-            parts = [f"{name} {'up' if d > 0 else 'down'} {_money(abs(d))}" for name, d in biggest]
-            text += f" Biggest changes: {', '.join(parts)}."
-        return DataAnswer(text, question.wants_advice)
 
-    rows = await _rows(data, period.start, period.end)
-    if question.kind == "income":
-        income = _total(_within(rows, period, "INCOME"))
-        spent = _total(_within(rows, period))
-        if not income:
-            return DataAnswer(f"You haven't recorded any income {period.label}.", question.wants_advice)
-        rate = ((income - spent) / income * 100).quantize(Decimal("0.1"), rounding=ROUND_HALF_UP)
+async def _budget(question: DataQuestion, data: SupabaseData, user_id: str, today: date) -> DataAnswer:
+    month = Period(today.replace(day=1), today, "this month")
+    spent = _total(_within(await _rows(data, month.start, month.end), month))
+    profiles = await data.select("profiles", {"select": "monthly_budget", "id": f"eq.{user_id}"}, limit=1)
+    budget = Decimal(str(profiles[0].get("monthly_budget") or 0)) if profiles else Decimal(0)
+    if not budget:
         text = (
-            f"You earned {_money(income)} {period.label} and spent {_money(spent)}, "
-            f"leaving {_money(income - spent)} (a savings rate of {rate}%)."
+            f"You've spent {money(spent)} so far this month, and you haven't set a monthly budget. "
+            "You can set one in Settings."
         )
-        return DataAnswer(text, question.wants_advice)
+        return DataAnswer(text, question.wants_advice, suggestions=["Explain the 50/30/20 rule"])
+    if spent > budget:
+        text = (
+            f"You've spent {money(spent)} this month, "
+            f"{money(spent - budget)} over your {money(budget)} budget."
+        )
+        left = _cards(
+            ("Spent", money(spent), "expense"),
+            ("Budget", money(budget), ""),
+            ("Over by", money(spent - budget), "expense"),
+        )
+    else:
+        text = (
+            f"You've spent {money(spent)} of your {money(budget)} budget this month, "
+            f"so {money(budget - spent)} is left."
+        )
+        left = _cards(
+            ("Spent", money(spent), "expense"),
+            ("Budget", money(budget), ""),
+            ("Left", money(budget - spent), "income"),
+        )
+    return DataAnswer(text, question.wants_advice, [left], ["Where did my money go this month?"])
 
-    expenses = _within(rows, period)
-    if question.kind == "breakdown":
-        names = {str(c["id"]): c["name"] for c in categories}
-        totals: dict[str, Decimal] = defaultdict(Decimal)
-        for row in expenses:
-            totals[names.get(str(row.get("category_id")), "Uncategorized")] += Decimal(str(row["amount"]))
-        if not totals:
-            return DataAnswer(f"You haven't spent anything {period.label}.", question.wants_advice)
-        overall = sum(totals.values(), Decimal(0))
-        top = sorted(totals.items(), key=lambda item: (-item[1], item[0]))[:5]
-        parts = [f"{name} {_money(v)} ({(v / overall * 100).quantize(Decimal('1'))}%)" for name, v in top]
+
+async def _income(question: DataQuestion, data, categories, today) -> DataAnswer:
+    period = question.period
+    rows = await _rows(data, period.start, period.end)
+    income, spent = _total(_within(rows, period, "INCOME")), _total(_within(rows, period))
+    suggestions = _period_choices(question, "How much did I earn {period}?")
+    if not income:
+        note = await _records_note(data)
         return DataAnswer(
-            f"You spent {_money(overall)} {period.label}: {', '.join(parts)}.", question.wants_advice
+            f"You haven't recorded any income {period.label}.{note}",
+            question.wants_advice,
+            suggestions=suggestions,
         )
-
-    matching = _filter(expenses, subject, categories)
-    if not matching:
-        return DataAnswer(f"You haven't spent anything{about} {period.label}.", question.wants_advice)
-    word = "payment" if len(matching) == 1 else "payments"
-    return DataAnswer(
-        f"You spent {_money(_total(matching))}{about} {period.label} ({len(matching)} {word}).",
-        question.wants_advice,
+    rate = ((income - spent) / income * 100).quantize(Decimal("0.1"), rounding=ROUND_HALF_UP)
+    text = (
+        f"You earned {money(income)} {period.label} and spent {money(spent)}, "
+        f"leaving {money(income - spent)} (a savings rate of {rate}%)."
     )
+    cards = _cards(
+        ("Earned", money(income), "income"),
+        ("Spent", money(spent), "expense"),
+        ("Left", money(income - spent), ""),
+        ("Savings rate", f"{rate}%", ""),
+    )
+    return DataAnswer(text, question.wants_advice, [cards], suggestions)
+
+
+async def _summary(question: DataQuestion, data, categories, today) -> DataAnswer:
+    period = question.period
+    rows = await _rows(data, period.start, period.end)
+    expenses = _within(rows, period)
+    income, spent = _total(_within(rows, period, "INCOME")), _total(expenses)
+    if not income and not spent:
+        note = await _records_note(data)
+        return DataAnswer(
+            f"You have no transactions {period.label}.{note}",
+            question.wants_advice,
+            suggestions=["How much did I spend in total?"],
+        )
+    top = _by_category(expenses, categories)
+    text = (
+        f"{period.label.capitalize()}: you earned {money(income)} and spent {money(spent)}, "
+        f"leaving {money(income - spent)}."
+    )
+    if top:
+        text += f" Your biggest category was {top[0][0]} at {money(top[0][1])}."
+    blocks = [
+        _cards(
+            ("Earned", money(income), "income"),
+            ("Spent", money(spent), "expense"),
+            ("Left", money(income - spent), ""),
+        )
+    ]
+    if top:
+        blocks.append(_bars("Spending by category", top[:5]))
+    return DataAnswer(
+        text,
+        question.wants_advice,
+        blocks,
+        ["Compare this month with last month", "How much of my budget is left?"],
+    )
+
+
+async def _compare(question: DataQuestion, data, categories, today) -> DataAnswer:
+    period, subject = question.period, question.subject
+    about = f" on {subject}" if subject else ""
+    before = _previous(period)
+    rows = await _rows(data, before.start, period.end)
+    now_rows = _filter(_within(rows, period), subject, categories)
+    before_rows = _filter(_within(rows, before), subject, categories)
+    now, then = _total(now_rows), _total(before_rows)
+    text = f"You spent {money(now)}{about} {period.label}, against {money(then)} {before.label}"
+    text += (
+        ", the same." if now == then else f": {money(abs(now - then))} {'more' if now > then else 'less'}."
+    )
+    changes: dict[str, Decimal] = defaultdict(Decimal)
+    for name, value in _by_category(now_rows, categories):
+        changes[name] += value
+    for name, value in _by_category(before_rows, categories):
+        changes[name] -= value
+    biggest = sorted((c for c in changes.items() if c[1]), key=lambda c: (-abs(c[1]), c[0]))[:3]
+    if biggest and not subject:
+        parts = [f"{name} {'up' if d > 0 else 'down'} {money(abs(d))}" for name, d in biggest]
+        text += f" Biggest changes: {', '.join(parts)}."
+    cards = _cards(
+        (period.label.capitalize(), money(now), "expense"), (before.label.capitalize(), money(then), "")
+    )
+    return DataAnswer(text, question.wants_advice, [cards], ["Where did my money go this month?"])
+
+
+async def _breakdown(question: DataQuestion, data, categories, today) -> DataAnswer:
+    period = question.period
+    expenses = _within(await _rows(data, period.start, period.end), period)
+    if not expenses:
+        note = await _records_note(data)
+        return DataAnswer(f"You haven't spent anything {period.label}.{note}", question.wants_advice)
+    top = _by_category(expenses, categories)
+    overall = _total(expenses)
+    parts = [f"{name} {money(v)} ({(v / overall * 100).quantize(Decimal('1'))}%)" for name, v in top[:5]]
+    text = f"You spent {money(overall)} {period.label}: {', '.join(parts)}."
+    return DataAnswer(
+        text,
+        question.wants_advice,
+        [_bars("Spending by category", top[:8])],
+        ["Show my biggest payments this month"],
+    )
+
+
+async def _largest(question: DataQuestion, data, categories, today) -> DataAnswer:
+    period, subject = question.period, question.subject
+    about = f" on {subject}" if subject else ""
+    expenses = _filter(_within(await _rows(data, period.start, period.end), period), subject, categories)
+    if not expenses:
+        note = "" if subject else await _records_note(data)
+        return DataAnswer(f"You haven't spent anything{about} {period.label}.{note}", question.wants_advice)
+    top = sorted(expenses, key=lambda r: -Decimal(str(r["amount"])))[:5]
+    first = top[0]
+    amount = money(Decimal(str(first["amount"])))
+    text = (
+        f"Your biggest payment{about} {period.label} was {first['title']}, "
+        f"{amount} on {_nice_date(first['date'])}."
+    )
+    rows = [(str(r["title"]), money(Decimal(str(r["amount"]))), _nice_date(r["date"])) for r in top]
+    return DataAnswer(
+        text, question.wants_advice, [_table("Biggest payments", rows)], ["Where did my money go this month?"]
+    )
+
+
+async def _recent(question: DataQuestion, data, categories, today) -> DataAnswer:
+    rows = await data.select(
+        "transactions",
+        {"select": "id,title,amount,type,category_id,date", "order": "date.desc,id.desc"},
+        limit=5,
+    )
+    if not rows:
+        return DataAnswer("You don't have any transactions yet.", question.wants_advice)
+    table = [
+        (
+            str(r["title"]),
+            ("+" if r.get("type") == "INCOME" else "−") + money(Decimal(str(r["amount"]))),
+            _nice_date(r["date"]),
+        )
+        for r in sorted(rows, key=lambda r: str(r["date"]), reverse=True)
+    ]
+    return DataAnswer(
+        f"Here are your latest {len(table)} transactions.",
+        question.wants_advice,
+        [_table("Latest transactions", table)],
+    )
+
+
+async def _average(question: DataQuestion, data, categories, today) -> DataAnswer:
+    period = question.period
+    expenses = _within(await _rows(data, period.start, period.end), period)
+    if not expenses:
+        note = await _records_note(data)
+        return DataAnswer(f"You haven't spent anything {period.label}.{note}", question.wants_advice)
+    total = _total(expenses)
+    first = min(str(r["date"])[:10] for r in expenses)
+    start = date.fromisoformat(first) if period.start == ALL_TIME_START else period.start
+    days = max(1, (min(period.end, today) - start).days + 1)
+    per_day, per_payment = total / days, total / len(expenses)
+    text = (
+        f"You spent about {money(per_day)} a day {period.label}, "
+        f"and about {money(per_payment)} per payment ({len(expenses)} payments)."
+    )
+    cards = _cards(
+        ("Per day", money(per_day), ""),
+        ("Per payment", money(per_payment), ""),
+        ("Total", money(total), "expense"),
+    )
+    return DataAnswer(text, question.wants_advice, [cards])
+
+
+async def _spending(question: DataQuestion, data, categories, today) -> DataAnswer:
+    period, subject = question.period, question.subject
+    about = f" on {subject}" if subject else ""
+    expenses = _within(await _rows(data, period.start, period.end), period)
+    matching = _filter(expenses, subject, categories)
+    what = f"on {subject} " if subject else ""
+    suggestions = _period_choices(question, f"How much did I spend {what}{{period}}?")
+    if not matching:
+        note = "" if subject else await _records_note(data)
+        return DataAnswer(
+            f"You haven't spent anything{about} {period.label}.{note}",
+            question.wants_advice,
+            suggestions=suggestions,
+        )
+    word = "payment" if len(matching) == 1 else "payments"
+    total = _total(matching)
+    text = f"You spent {money(total)}{about} {period.label} ({len(matching)} {word})."
+    cards = _cards(("Spent", money(total), "expense"), ("Payments", str(len(matching)), ""))
+    return DataAnswer(text, question.wants_advice, [cards], suggestions)

@@ -16,7 +16,8 @@ Design notes and interview-style explanations live in [`docs/ai-ml/`](../docs/ai
 | POST | `/v1/parse` | bearer token | One line of text (`{text, today}`) to a transaction draft with a category suggestion; `llm_filled` lists fields the LLM fallback filled |
 | GET | `/v1/insights/summary?today=YYYY-MM-DD` | bearer token | The month in two or three sentences (`source`: `llm` or `template`) |
 | POST | `/v1/receipts/scan` | bearer token | A bill as a multipart `file` (JPEG/PNG/WebP photo or PDF, up to 8 MB) plus `today`: the merchant, date, total, items and category groups to review; nothing is saved |
-| POST | `/chat` (`/chat/stream` for SSE) | bearer token | The chatbot: `{message, thread_id?, today}` to `{reply, sources, answered_by, thread_id, history_saved}` |
+| POST | `/chat` (`/chat/stream` for SSE) | bearer token | The chatbot: `{message, thread_id?, today}` to `{reply, sources, blocks, suggestions, answered_by, message_id, thread_id, history_saved}` |
+| POST | `/chat/feedback` | bearer token | `{message_id, rating}`: a thumbs up or down on the user's own answer |
 | GET/DELETE | `/chat/threads[/{id}]` | bearer token | The user's saved conversations |
 | GET | `/docs` | none | Interactive OpenAPI docs |
 

@@ -1,13 +1,14 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
-    ArrowLeft, BookOpen, Bot, ChevronDown, ExternalLink, History, Loader2,
+    ArrowLeft, Bot, History, Loader2,
     MessageSquarePlus, RotateCcw, Send, Square, Trash2, X,
 } from 'lucide-react';
 import { wakeMlService } from '../services/mlService';
 import { deleteThread, getThread, listThreads, streamChat } from '../services/chatService';
 import { todayISODate } from '../lib/dates';
 import { formatDate } from '../lib/formatters';
+import { Blocks, Feedback, Sources } from './ChatBlocks';
 
 /**
  * ChatbotPanel: answers from the app's help and finance articles (with their sources) and works
@@ -27,49 +28,7 @@ const SUGGESTIONS = [
 let nextId = 0;
 const newId = () => `m${(nextId += 1)}`;
 
-const Sources = ({ items }) => {
-    const [open, setOpen] = useState(null);
-    return (
-        <div className="w-full rounded-xl border border-border bg-card text-xs">
-            <p className="flex items-center gap-1.5 px-3 pt-2.5 pb-1 font-semibold text-muted-foreground">
-                <BookOpen size={12} /> Sources
-            </p>
-            <ul className="divide-y divide-border">
-                {items.map((source, i) => (
-                    <li key={`${source.title}${source.section}`}>
-                        <button
-                            type="button"
-                            onClick={() => setOpen(open === i ? null : i)}
-                            aria-expanded={open === i}
-                            className="flex w-full items-start gap-2 px-3 py-2 text-left hover:bg-muted/50"
-                        >
-                            <span className="flex-1 text-foreground">
-                                {source.title}{source.section ? ` › ${source.section}` : ''}
-                            </span>
-                            <ChevronDown size={13} className={`mt-0.5 text-muted-foreground transition-transform ${open === i ? 'rotate-180' : ''}`} />
-                        </button>
-                        {open === i && (
-                            <div className="space-y-1.5 px-3 pb-2.5 text-muted-foreground">
-                                <p className="whitespace-pre-line">{source.excerpt}</p>
-                                <p className="flex flex-wrap items-center gap-x-2 text-[11px]">
-                                    <span>{source.source}</span>
-                                    {/^https:\/\//.test(source.url ?? '') && (
-                                        <a href={source.url} target="_blank" rel="noopener noreferrer"
-                                            className="inline-flex items-center gap-0.5 text-primary hover:underline">
-                                            Reference <ExternalLink size={10} />
-                                        </a>
-                                    )}
-                                </p>
-                            </div>
-                        )}
-                    </li>
-                ))}
-            </ul>
-        </div>
-    );
-};
-
-const Answer = ({ message, onRetry }) => {
+const Answer = ({ message, onRetry, onAsk, showNext }) => {
     if (message.status === 'error') {
         return (
             <div className="flex flex-col items-start gap-1.5" role="alert">
@@ -95,7 +54,22 @@ const Answer = ({ message, onRetry }) => {
                     </span>
                 )}
             </div>
+            <Blocks blocks={message.blocks} />
+            {message.answeredBy === 'general' && (
+                <p className="pl-1 text-[11px] text-muted-foreground">General information, not from this app's articles or your data.</p>
+            )}
             {message.sources?.length > 0 && <Sources items={message.sources} />}
+            {message.messageId && <Feedback messageId={message.messageId} />}
+            {showNext && message.suggestions?.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                    {message.suggestions.map((s) => (
+                        <button key={s} type="button" onClick={() => onAsk(s)}
+                            className="rounded-full border border-border px-2.5 py-1 text-[11px] text-foreground hover:bg-muted">
+                            {s}
+                        </button>
+                    ))}
+                </div>
+            )}
         </div>
     );
 };
@@ -145,9 +119,18 @@ const ChatbotPanel = () => {
                 today: todayISODate(),
                 signal: controller.signal,
                 onDelta: (delta) => update(answerId, (m) => ({ text: m.text + delta })),
+                onReset: () => update(answerId, { text: '' }),
             });
             // The final text is the checked one: it replaces whatever was streamed
-            update(answerId, { text: final.reply, sources: final.sources });
+            update(answerId, {
+                text: final.reply,
+                sources: final.sources,
+                blocks: final.blocks,
+                suggestions: final.suggestions,
+                answeredBy: final.answered_by,
+                messageId: final.message_id,
+                done: true,
+            });
             if (final.thread_id) setThreadId(final.thread_id);
         } catch (err) {
             update(answerId, { text: err.message, status: 'error', retryable: err.retryable !== false });
@@ -195,6 +178,8 @@ const ChatbotPanel = () => {
                 role: m.role,
                 text: m.content,
                 sources: m.blocks?.find((b) => b.type === 'sources')?.items,
+                blocks: m.blocks,
+                messageId: m.role === 'assistant' ? m.id : null,
             })));
             setThreadId(thread.id);
             setView('chat');
@@ -296,12 +281,12 @@ const ChatbotPanel = () => {
                                         </div>
                                     </div>
                                 )}
-                                {messages.map((m) => (m.role === 'user' ? (
+                                {messages.map((m, i) => (m.role === 'user' ? (
                                     <div key={m.id} className="flex justify-end">
                                         <p className="max-w-[85%] rounded-2xl rounded-br-md bg-primary px-3.5 py-2 text-sm text-primary-foreground whitespace-pre-line">{m.text}</p>
                                     </div>
                                 ) : (
-                                    <Answer key={m.id} message={m} onRetry={() => retry(m)} />
+                                    <Answer key={m.id} message={m} onRetry={() => retry(m)} onAsk={send} showNext={!busy && i === messages.length - 1} />
                                 )))}
                                 <div ref={endRef} />
                             </div>

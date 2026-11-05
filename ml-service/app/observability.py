@@ -3,8 +3,8 @@
 Metrics answer "how is it doing?" across all requests, scraped by Prometheus from GET /metrics:
 - request counts by route and status, and latency histograms per route;
 - what each ML feature did, e.g. where a category suggestion came from (history, model or
-  none), whether help answered or declined, which assistant intents come up, and whether
-  an LLM's output was used. A drop in model suggestions or a rise in declined help questions
+  none), how the chatbot answered (documents, your data, or not at all), and whether
+  an LLM's output was used. A drop in model suggestions or a rise in failed chatbot answers
   is visible here before anyone files a bug.
 
 Logs answer "what happened in this request?": one JSON object per line. They never contain

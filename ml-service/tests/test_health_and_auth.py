@@ -15,6 +15,7 @@ def test_health_needs_no_auth(client):
         "version": __version__,
         "models": {"categorizer": "test-model"},
         "llm": False,
+        "chatbot": {"groq": False, "index": False},
     }
 
 

@@ -133,7 +133,7 @@ MLflow does this, and much more, for teams. For one service a JSON-lines file pe
 **Render** (the blueprint is in [`render.yaml`](../../render.yaml)):
 1. Click [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/ketulmehta13/ExpenseTracker) (or choose **New → Blueprint** in the Render dashboard and pick this repository). Enter `SUPABASE_URL` and `SUPABASE_ANON_KEY`: the same public values as the frontend's `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
 2. The first build installs the dependencies, bakes the embedding model and trains the categorizer: about 5–10 minutes. When it's live, `https://<service>.onrender.com/health` returns `"status": "ok"`.
-3. On the free plan (512 MB) the blueprint sets `EMBEDDING_MODEL=none`, so help search runs on keywords alone. On test questions that's 0.73 hit@1 instead of 0.83. With 1 GB or more, delete that entry.
+3. On the free plan (512 MB) the service with the chatbot's MiniLM model and FAISS index uses about 350 MB (about 410 MB once a bill has been scanned).
 4. Free services sleep after 15 minutes, and waking one takes about a minute (measured: 52 s). Keep it awake with a ping from Supabase every 5 minutes. Run this once in the SQL editor:
 
    ```sql

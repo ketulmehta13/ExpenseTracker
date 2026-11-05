@@ -15,6 +15,10 @@ async def health(request: Request) -> dict:
         "version": __version__,
         "models": {"categorizer": categorizer.version if categorizer else None},
         "llm": request.app.state.llm is not None,
+        "chatbot": {
+            "groq": request.app.state.chat_llm is not None,
+            "index": request.app.state.chat_retriever is not None,
+        },
     }
 
 

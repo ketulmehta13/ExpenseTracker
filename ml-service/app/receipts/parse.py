@@ -68,8 +68,9 @@ def amounts_in(line: str) -> list[Amount]:
 
 _TOTAL_KEYWORDS = [  # (pattern, strength): the strongest keyword on the bill wins
     (re.compile(r"grand\s*total"), 10),
-    (re.compile(r"net\s*payable|amount\s*payable|total\s*payable|payable\s*amount|net\s*to\s*pay"), 9),
-    (re.compile(r"net\s*(?:amount|amt|total|value)|invoice\s*(?:total|value|amount)"
+    (re.compile(r"nett?\s*payable|am(?:oun)?t\s*payable|total\s*payable|payable\s*amount"
+                r"|nett?\s*to\s*pay"), 9),
+    (re.compile(r"nett?\s*(?:amount|amt|total|value)|invoice\s*(?:total|value|amount)"
                 r"|bill\s*(?:amount|amt|total|value)"), 8),
     (re.compile(r"total\s*(?:amount|amt|value|rs|inr)|amount\s*due|total\s*due|order\s*total"), 7),
     (re.compile(r"\bto\s*pay\b|amount\s*paid|paid\s*amount|you\s*pay"), 6),
@@ -81,8 +82,16 @@ _NOT_TOTAL = re.compile(
     r"|\bsav(?:ed|ings?)\b|discount|\bdisc\b|round(?:ed)?\s*(?:off|ing)|\b[csiu]?gst\b|\btax(?:able)?\b|\bvat\b|\bcess\b"
     r"|tender|\bchange\b|\bmrp\b|cash\s*back|balance|points|loyalty|\bpaid\s*by\b"
 )
-# "Total (incl. GST)" is a total, not a tax line: the tax words are dropped before the check
-_TAX_INCLUDED = re.compile(r"incl(?:\.|uding|usive)?\s*(?:of\s*)?(?:all\s*)?(?:taxes|tax|gst)")
+# "Total (incl. GST)" is a total, not a tax line: the tax words are dropped before the check. Also
+# "includes GST 0%", "inc.GST", "with GST @ 6%" and OCR's "lnclusive"
+_PERCENT = r"(?:\s*@?\s*\d+(?:\.\d+)?\s*%)?"
+_TAX_INCLUDED = re.compile(
+    r"(?:[il]ncl|inc)(?:\.|udes?|uded|uding|usive)?\s*\.?\s*(?:of\s*)?(?:all\s*)?(?:taxes|tax|gst)" + _PERCENT
+    + r"|\bwith\s*(?:gst|tax)" + _PERCENT
+)
+# A tax summary table at the end of a bill has its own "Total" row ("Total: 411.50 24.69"), which is
+# not the bill's total
+_TAX_TABLE = re.compile(r"(?:gst|tax)\s*(?:summary|analysis)|\btax\s*code\b|summary\s*amount")
 _SUMMARY = re.compile(
     r"total|\b[csiu]?gst\b|\btax\b|\bvat\b|discount|round\s*off|payable|savings|\bnet\b|tender|\bchange\b"
     r"|\bgross\b"
@@ -341,11 +350,16 @@ def _line_amount(lines: list[str], index: int) -> Amount | None:
 def find_total(lines: list[str]) -> tuple[float | None, bool]:
     """(total, guessed): guessed when no total keyword was found and the largest amount was used."""
     best: tuple[int, int, float] | None = None
+    in_tax_table = False
     for index, line in enumerate(lines):
-        lowered = _TAX_INCLUDED.sub(" ", line.lower())
+        original = line.lower()
+        in_tax_table = in_tax_table or bool(_TAX_TABLE.search(original))
+        lowered = _TAX_INCLUDED.sub(" ", original)
         if _NOT_TOTAL.search(lowered):
             continue
         strength = max((weight for pattern, weight in _TOTAL_KEYWORDS if pattern.search(lowered)), default=0)
+        if strength and (in_tax_table or sum(a.has_decimals for a in amounts_in(line)) >= 2):
+            strength = min(strength, 2)  # a row of a tax table, not the bill's total
         if strength and (amount := _line_amount(lines, index)) is not None:
             candidate = (strength, index, amount.value)
             if best is None or candidate[:2] > best[:2]:

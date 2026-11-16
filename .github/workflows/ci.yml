@@ -81,7 +81,7 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: ${{ steps.ocr.outputs.dir }}
-          key: rapidocr-models-3.10.0
+          key: rapidocr-models-3.10.0-tiny
 
       - name: Lint
         run: ruff check .

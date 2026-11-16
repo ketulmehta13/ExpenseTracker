@@ -20,7 +20,14 @@ from app.receipts.parse import (
     fix_digits,
     parse_receipt,
 )
-from app.receipts.preprocess import _profile_score, _rotate, estimate_skew, find_document, warp_document
+from app.receipts.preprocess import (
+    _profile_score,
+    _rotate,
+    estimate_skew,
+    find_document,
+    resize,
+    warp_document,
+)
 
 TODAY = date(2026, 10, 19)
 DMART = [
@@ -113,6 +120,28 @@ def test_without_any_keyword_the_largest_amount_is_a_flagged_guess():
     draft = parse_receipt(["Sharma General Store", "Sugar 45.00", "Tea 120.00", "245.00"], TODAY)
     assert draft.total == 245.0 and "total_guessed" in draft.warnings and draft.found["total"] is False
 
+
+
+# Layouts from real receipts (SROIE) that the parser used to get wrong
+@pytest.mark.parametrize("lines, total", [
+    (["Total Sales (Inclusive of GST) 35.03", "Rounding 0.02", "Total 35.05"], 35.05),
+    (["Total Amt Payable 21.60", "Cash 50.00", "Change 28.40"], 21.6),
+    (["Nett Total 82.00", "Paid 100.00", "Change 18.00"], 82.0),
+    (["Total (incl. GST 6%) 12.72", "Cash 20.00"], 12.72),
+    (["Total with GST @6% 9.54", "Cash 10.00"], 9.54),
+])
+def test_real_receipt_total_labels(lines, total):
+    assert find_total(lines) == (total, False)
+
+
+def test_the_tax_summary_table_after_the_total_is_not_the_total():
+    lines = ["Total 53.00", "Cash 60.00", "Change 7.00", "GST Summary Amount(RM) Tax(RM)",
+             "SR @ 6% 50.00 3.00", "Total 50.00 3.00"]
+    assert find_total(lines) == (53.0, False)
+
+
+def test_a_row_with_two_amounts_is_not_the_bill_total():
+    assert find_total(["Grand Total 412.00", "Total Qty 4 Total Tax 18.00 22.00"]) == (412.0, False)
 
 # ---------- merchant ----------
 
@@ -382,3 +411,10 @@ def test_real_ocr_reads_a_rendered_bill():
     draft = parse_receipt(read.lines, TODAY)
     assert (draft.merchant, draft.date, draft.total) == ("DMart", date(2026, 10, 14), 1019.0)
     assert read.confidence > 0.9
+
+
+def test_resize_only_shrinks():
+    small = np.zeros((800, 600, 3), np.uint8)
+    assert resize(small) is small
+    big = np.zeros((4000, 3000, 3), np.uint8)
+    assert resize(big).shape[:2] == (1800, 1350)

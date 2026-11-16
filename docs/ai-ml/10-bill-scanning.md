@@ -30,6 +30,8 @@
 
 **End to end** (OpenCV → OCR → parsing) on rendered "phone photos": see [§6](#6-the-whole-pipeline-on-photos-and-what-opencv-adds).
 
+**On real receipt photos** (50 from the public SROIE set, never used for tuning): the total was right on **42 of 50 (84%)**, in **2.1 s** per receipt on one CPU thread. See [§6b](#6b-real-receipt-photos).
+
 ## 1. The pipeline
 
 ```
@@ -52,6 +54,7 @@ The server only reads. The browser stores the file and creates the transactions,
 - **OCR engine: RapidOCR**, PaddleOCR's PP-OCR models run by ONNX Runtime on the CPU:
   - a **text detector** (DB, "differentiable binarization") finds every piece of text as a four-cornered box, tilted if the photo is;
   - a **recogniser** reads each box.
+  - Both are the **tiny PP-OCRv6 models**. The small ones found one more total in 50 real receipts but were 7× slower (15.7 s against 2.1 s per receipt on one thread), which on the free server's tenth of a CPU meant minutes per bill and timeouts.
 - **Why not Tesseract,** which was the first plan:
   - Tesseract needs a system binary, so it couldn't run on the development machine. Every experiment would have meant a CI round trip.
   - RapidOCR installs with pip on every OS, uses the ONNX Runtime the service already has for embeddings, and is built for photos of real-world text.
@@ -67,7 +70,7 @@ Each step can be switched off, to measure what it adds:
 
 | Step | What it does | Why |
 |---|---|---|
-| size | Long side to about 1,800 px | Bigger photos only cost time; small ones are upscaled so thin thermal print survives |
+| size | Photos larger than about 2,000 px are shrunk to 1,800 px; smaller ones are left alone | Bigger photos only cost time. Enlarging small scans was tried and removed: it added no accuracy on real receipts and made OCR slower |
 | perspective | Edges → largest four-sided contour → `warpPerspective` | A bill on a table becomes a flat, top-down page with the table cut away |
 | deskew | Projection profile: the rotation that makes row sums peak sharpest | Level text lines read better and rebuild into rows reliably |
 | contrast | CLAHE on grayscale | Evens out shadows and faded print. There is no hard black/white threshold, because the OCR model reads grey levels better than a binarised page |
@@ -79,8 +82,9 @@ Each step can be switched off, to measure what it adds:
   - Indian digit grouping (1,24,500) and a decimal comma (12,40) are both read.
   - Phone numbers, GSTINs, tax rates and pack sizes are not amounts.
 - **Total: by keyword strength, never by size.**
-  - Grand total > net payable > net amount / bill amount > total amount > total > a fuel slip's "Amount:".
-  - Never totals: sub total, total qty/items, total MRP, savings, discount, round off, tax lines, cash tendered, change. "Total (incl. GST)" counts as a total, not as a tax line.
+  - Grand total > net payable / amount payable / nett to pay > net (nett) total or amount, bill amount, invoice value > total amount > total > a fuel slip's "Amount:".
+  - Never totals: sub total, total qty/items, total MRP, savings, discount, round off, tax lines, cash tendered, change. "Total (incl. GST)", "Total inclusive of GST", "Total with GST @6%" count as totals, not as tax lines.
+  - Rows of a tax summary table (after "GST Summary", "Tax code"), and any "total" row carrying two decimal amounts, are demoted: they are tax breakdowns, not the bill's total.
   - Among candidates, the strongest keyword wins, then the later line.
   - With no keyword at all, the largest amount is used and flagged as a guess, so the review screen warns about it.
 - **Date:** the printed date nearest a "date / dt" label (day first, as in India), never in the future.
@@ -114,15 +118,15 @@ Each step can be switched off, to measure what it adds:
 
 It then runs the real models through the whole pipeline.
 
-On 24 rendered photos (4 threads on a laptop):
+On 24 rendered photos, with the tiny OCR models (times are from a busy laptop and only roughly comparable):
 
 | Pipeline | Merchant | Date | Total | Items F1 | Time per bill |
 |---|---|---|---|---|---|
-| No preprocessing | 100% | 100% | 100% | 1.00 | 2.2 s |
-| + size | 100% | 100% | 100% | 1.00 | 2.3 s |
-| + perspective | 100% | 100% | 100% | 1.00 | (timing noise) |
-| + deskew | 100% | 100% | 100% | 1.00 | 2.2 s |
-| Full (+ contrast) | 100% | 100% | 100% | 1.00 | 2.3 s |
+| No preprocessing | 100% | 100% | 100% | 0.98 | 5.7 s |
+| + size | 100% | 100% | 100% | 0.98 | 4.5 s |
+| + perspective | 100% | 100% | 100% | 0.98 | 5.7 s |
+| + deskew | 100% | 100% | 100% | 0.97 | 5.0 s |
+| Full (+ contrast) | 100% | 100% | 100% | 0.98 | 3.2 s |
 
 **The honest reading.**
 - On these synthetic photos the OCR model is robust enough that the OpenCV steps make **no measurable difference**. The detector handles 7° tilts and mild perspective on its own, and rows are rebuilt from the tilted boxes anyway.
@@ -131,9 +135,29 @@ On 24 rendered photos (4 threads on a laptop):
 
 **Speed decisions, measured single-threaded** (like the free server's CPU):
 - By default the detector runs on the full-size photo.
-- Capping detection at 960 px and skipping the per-box rotation classifier brought a bill to **about 2 s on one laptop thread**, with the same accuracy.
-- On Render's free plan (a tenth of a CPU) that's roughly 20 s.
+- Capping detection at 960 px and skipping the per-box rotation classifier made rendered bills fast with the same accuracy.
+- Real receipts were still slow with the small models (about 14–16 s each on one laptop thread). The tiny models and shrink-only resizing brought them to **1–2 s**; on Render's free plan (a tenth of a CPU) that is roughly 10–20 s instead of minutes.
 - One bug the photos exposed: OCR dropping the gap in "Total 703" ("Total703"). Labels glued to their numbers are now split before parsing.
+
+## 6b. Real receipt photos
+
+Rendered bills are clean compared with a real thermal-paper photo, so the pipeline was also run on real receipts from **SROIE** (ICDAR 2019, scanned shop receipts from Malaysia; total and date labelled). The images are not committed.
+
+| Set | How it was used | Totals right |
+|---|---|---|
+| Dev: 50 receipts | Misses read and the parser fixed | 36 → **43 of 50** |
+| Second: 50 receipts | Looked at once, so no longer clean | 40 of 50 |
+| Final: 50 receipts | Run once, after all changes | **42 of 50 (84%)** |
+
+What the real receipts taught (each a general rule, see §4):
+- "Total Amt Payable", "Nett Total", "Total Sales (Inclusive of GST)" and "Total with GST @6%" were missed or lost to a weaker line.
+- The GST summary table printed **after** the total ("Total 50.00 3.00") was taken as the total.
+- A boost for tax-inclusive totals was tried and **removed**: it picked the amount before rounding.
+- The small OCR models were too slow for the free server (see §6).
+
+The remaining misses are mostly OCR reading a digit wrong on faded print, and receipts whose total line has no keyword. The review screen shows every field for correction before anything is saved.
+
+Also checked in a real browser (Chrome, phone and desktop sizes): the Transactions page's **Scan bill** button → a photo, a PDF invoice and two real receipts through the real API and OCR → review → Save. Every total matched; the file was uploaded and the transactions inserted with the bill attached; split bills saved one transaction per category; nothing overflowed at 390 px.
 
 ## 7. Evaluation done honestly
 

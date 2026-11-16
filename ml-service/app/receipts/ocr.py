@@ -58,11 +58,16 @@ _engine_lock = threading.Lock()
 
 def load_engine(threads: int = 1) -> Any:
     """The OCR engine. Its models are downloaded on first use (the Docker build does it once)."""
-    from rapidocr import RapidOCR
+    from rapidocr import ModelType, RapidOCR
 
     with _engine_lock:
         return RapidOCR(params={
             "Global.log_level": "critical",
+            # The tiny PP-OCRv6 models: on 50 real receipts never used for tuning they found 42 totals
+            # in 2.1 s each, against 43 in 15.7 s for the small models (one CPU thread). The free
+            # server has a fraction of a CPU, so the small models could take minutes per bill
+            "Det.model_type": ModelType.TINY,
+            "Rec.model_type": ModelType.TINY,
             # Bills are upright: skip the per-box rotation classifier
             "Global.use_cls": False,
             # By default detection runs on the full-size photo; capping it at 960 px made a bill

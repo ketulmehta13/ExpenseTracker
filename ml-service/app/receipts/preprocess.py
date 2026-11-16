@@ -3,8 +3,8 @@
 Each step can be switched off, so the evaluation can measure what it adds
 (`python -m training.evaluate_receipt_ocr --ablation`):
 
-- size: the long side is brought to about 1,800 px. Bigger photos only cost time on a small
-  server; small ones are scaled up so thin thermal-printer text survives.
+- size: photos much larger than 1,800 px on the long side are shrunk to it; bigger photos only
+  cost time on a small server. Smaller ones are left alone (enlarging them added nothing).
 - perspective: if the bill stands out from the table behind it, its four corners are found
   (edges -> the largest four-sided contour) and it is warped to a flat, top-down rectangle.
 - deskew: the tilt of the text lines is measured with a projection profile (rows of text give
@@ -42,12 +42,13 @@ def decode_image(data: bytes) -> np.ndarray:
 
 
 def resize(image: np.ndarray, long_side: int = TARGET_LONG_SIDE) -> np.ndarray:
+    """Shrink large photos; small ones are left as they are. Enlarging a small scan added no accuracy
+    on real receipts but made OCR slower, since every text box got bigger."""
     height, width = image.shape[:2]
     scale = long_side / max(height, width)
-    if 0.9 <= scale <= 1.1:
+    if scale >= 0.9:
         return image
-    interpolation = cv2.INTER_AREA if scale < 1 else cv2.INTER_CUBIC
-    return cv2.resize(image, (round(width * scale), round(height * scale)), interpolation=interpolation)
+    return cv2.resize(image, (round(width * scale), round(height * scale)), interpolation=cv2.INTER_AREA)
 
 
 def _order_corners(points: np.ndarray) -> np.ndarray:

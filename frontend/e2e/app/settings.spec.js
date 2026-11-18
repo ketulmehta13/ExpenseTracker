@@ -23,6 +23,8 @@ test('all sections are present', async ({ page }) => {
     for (const name of ['Profile', 'Security', 'Preferences', 'Data & Exports', 'Danger Zone']) {
         await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
     }
+    // The "Help improve category suggestions" opt-in was removed (task A2)
+    await expect(page.getByText('Help improve category suggestions')).toHaveCount(0);
 });
 
 test('profile name saves and persists', async ({ page }) => {

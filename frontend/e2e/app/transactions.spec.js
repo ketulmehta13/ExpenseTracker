@@ -161,3 +161,33 @@ test.describe('with seeded data', () => {
         expect(lines[1]).toContain(`"E2E ${tag} cab","Travel",EXPENSE,250`);
     });
 });
+
+test('a category suggestion still applies, and saving sends nothing to ml_feedback', async ({ page }) => {
+    const food = await categoryId('Food');
+    // Answer this test's category suggestion with "Food" (added last, so it runs before the fixture's route)
+    await page.route('http://ml.e2e.invalid/v1/categorize', (route) => route.fulfill({
+        status: 200,
+        headers: { 'access-control-allow-origin': '*' },
+        contentType: 'application/json',
+        body: JSON.stringify({
+            suggestion: { category_id: food, category_name: 'Food', label: 'food', confidence: 0.92, source: 'model' },
+            model_version: 'e2e',
+        }),
+    }));
+    const feedbackCalls = [];
+    page.on('request', (r) => { if (r.url().includes('/rest/v1/ml_feedback')) feedbackCalls.push(r.url()); });
+
+    const title = `E2E ${tag} masala chai`;
+    await page.goto('/dashboard/transactions');
+    await openAdd(page);
+    await page.locator('#tx-title').fill(title);
+    await page.locator('#tx-amount').fill('25');
+    await expect(modal(page).getByText('tap to apply')).toBeVisible();
+    await modal(page).getByRole('button', { name: 'Food' }).click();
+    await expect(page.locator('#tx-category')).toHaveValue(String(food));
+    await modal(page).getByRole('button', { name: 'Save' }).click();
+    await expect(modal(page)).toBeHidden();
+    await search(page, title);
+    await expect(page.getByRole('row', { name: new RegExp(title) })).toContainText('Food');
+    expect(feedbackCalls).toEqual([]);
+});

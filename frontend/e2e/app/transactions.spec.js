@@ -149,6 +149,8 @@ test.describe('with seeded data', () => {
     test('CSV export downloads the filtered list', async ({ page }) => {
         await page.goto('/dashboard/transactions');
         await search(page, `${tag} cab`);
+        // Export only once the list has loaded: before that the filtered list is empty
+        await expect(counter(page)).toHaveText(/^1 of \d+ transactions$/);
         const [download] = await Promise.all([
             page.waitForEvent('download'),
             page.getByRole('button', { name: 'CSV' }).click(),

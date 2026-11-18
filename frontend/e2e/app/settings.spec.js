@@ -1,8 +1,8 @@
-// Settings baseline: profile, password validation, monthly budget, currency, CSV export.
-// Every value changed here is put back afterwards.
+// Settings baseline: profile, password validation, monthly budget, currency, and the full
+// CSV export (now on the Transactions page). Every value changed here is put back afterwards.
 import fs from 'node:fs';
 import { test, expect } from '../fixtures.js';
-import { cleanup, getProfile, updateProfile, seed, todayIST } from '../db.js';
+import { cleanup, getProfile, updateProfile, seed, todayIST, dbTotals } from '../db.js';
 
 let original;
 
@@ -20,9 +20,11 @@ test.afterAll(async () => {
 test('all sections are present', async ({ page }) => {
     await page.goto('/dashboard/settings');
     await expect(page.getByRole('heading', { name: 'Settings', level: 1 })).toBeVisible();
-    for (const name of ['Profile', 'Security', 'Preferences', 'Data & Exports', 'Danger Zone']) {
+    for (const name of ['Profile', 'Security', 'Preferences', 'Danger Zone']) {
         await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
     }
+    // The duplicate "Data & Exports" section was removed (task A3)
+    await expect(page.getByRole('heading', { name: 'Data & Exports' })).toHaveCount(0);
     // The "Help improve category suggestions" opt-in was removed (task A2)
     await expect(page.getByText('Help improve category suggestions')).toHaveCount(0);
 });
@@ -73,13 +75,22 @@ test('display currency changes only the symbol, and INR is the default', async (
     await expect(page.getByText(/^Spent ₹/)).toBeVisible();
 });
 
-test('Settings CSV export downloads every transaction', async ({ page }) => {
+// Settings' own "Export as CSV" was removed (task A3). The full export it gave is the
+// Transactions page's CSV with no filters on "All time", which this checks.
+test('full export: Transactions CSV with no filters has every transaction', async ({ page }) => {
     await page.goto('/dashboard/settings');
+    await expect(page.getByRole('button', { name: 'Export as CSV' })).toHaveCount(0);
+
+    const { count } = await dbTotals();
+    await page.goto('/dashboard/transactions');
+    await expect(page.getByText(new RegExp(`^${count} of ${count} transactions$`))).toBeVisible();
     const [download] = await Promise.all([
         page.waitForEvent('download'),
-        page.getByRole('button', { name: 'Export as CSV' }).click(),
+        page.getByRole('button', { name: 'CSV' }).click(),
     ]);
     const csv = fs.readFileSync(await download.path(), 'utf8').trimStart(); // also drops the byte-order mark
-    expect(csv.split('\n')[0]).toBe('Date,Title,Category,Type,Amount,Is Recurring');
+    const lines = csv.trim().split('\n');
+    expect(lines[0]).toBe('Date,Title,Category,Type,Amount,Is Recurring');
+    expect(lines).toHaveLength(count + 1);
     expect(csv).toContain('tea"');
 });

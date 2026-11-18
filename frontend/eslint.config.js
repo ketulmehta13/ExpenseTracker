@@ -31,6 +31,12 @@ export default defineConfig([
     },
   },
   {
+    // Playwright tests and config run in Node
+    files: ['e2e/**/*.js', 'playwright.config.js'],
+    languageOptions: { globals: globals.node },
+    rules: { 'react-hooks/rules-of-hooks': 'off' },
+  },
+  {
     // Context modules export a provider together with its context and hook
     files: ['src/context/**/*.{js,jsx}'],
     rules: { 'react-refresh/only-export-components': 'off' },

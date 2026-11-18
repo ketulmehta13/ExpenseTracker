@@ -4,15 +4,14 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
 import {
-    Loader2, Save, Camera, Eye, EyeOff, Download,
-    Shield, User, Palette, Database, AlertTriangle,
+    Loader2, Save, Camera, Eye, EyeOff,
+    Shield, User, Palette, AlertTriangle,
     Mail, Phone, BadgeCheck, Crown, CreditCard
 } from 'lucide-react';
-import { getProfile, updateProfile, getTransactions, authChangePassword, exportTransactionsCSV, deleteAccount, cancelSubscription } from '../services/api';
+import { getProfile, updateProfile, authChangePassword, deleteAccount, cancelSubscription } from '../services/api';
 import { Skeleton } from '../components/ui/Skeleton';
 import ConfirmModal from '../components/ConfirmModal';
 import { usePlan } from '../context/PlanContext';
-import ProGate from '../components/ProGate';
 import PlanBadge from '../components/PlanBadge';
 
 /* ── Section wrapper ── */
@@ -181,17 +180,6 @@ const Profile = () => {
         setCurrency(code);
         localStorage.setItem('et-currency', code);
         toast.success(`Currency set to ${code}`);
-    };
-
-    /* ── Export ── */
-    const handleExportCSV = async () => {
-        try {
-            const txs = await getTransactions();
-            exportTransactionsCSV(txs);
-            toast.success('CSV exported!');
-        } catch {
-            toast.error('Failed to export.');
-        }
     };
 
     /* ── Delete account ── */
@@ -510,25 +498,7 @@ const Profile = () => {
             </Section>
             )}
 
-            {/* 5. Data */}
-            <Section title="Data & Exports" icon={Database}>
-                <div className="space-y-3">
-                    <p className="text-sm text-muted-foreground">Export your complete financial transaction history as a CSV spreadsheet.</p>
-                    {isPro ? (
-                        <button
-                            onClick={handleExportCSV}
-                            className="flex items-center gap-2 rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-muted transition-colors"
-                        >
-                            <Download size={15} />
-                            Export as CSV
-                        </button>
-                    ) : (
-                        <ProGate featureName="CSV Data Export" compact={true} />
-                    )}
-                </div>
-            </Section>
-
-            {/* 6. Danger zone */}
+            {/* 5. Danger zone (CSV/PDF export lives on the Transactions page) */}
             <Section title="Danger Zone" icon={AlertTriangle}>
                 <div className="space-y-3">
                     <p className="text-sm text-muted-foreground">

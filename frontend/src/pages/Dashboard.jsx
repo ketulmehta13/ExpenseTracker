@@ -14,9 +14,8 @@ import { SkeletonDashboard } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/ui/EmptyState';
 import TransactionModal from '../components/TransactionModal';
 import QuickAdd from '../components/QuickAdd';
-import AIInsightsCard from '../components/AIInsightsCard';
 import SpendingInsights from '../components/SpendingInsights';
-import { AI_ENABLED, ML_ENABLED } from '../lib/features';
+import { ML_ENABLED } from '../lib/features';
 
 /* ── Color palette for category donut chart (Brand #0d3a35 Teal-Green) ── */
 const CAT_COLORS = [
@@ -99,9 +98,6 @@ const Dashboard = () => {
     const [profile, setProfile] = useState(null);
     const [dateRange, setDateRange] = useState('this_month');
     const [txModal, setTxModal] = useState({ open: false, type: 'EXPENSE', prefill: null });
-
-    // Current month key for AI insight caching (e.g. '2026-08')
-    const currentMonth = todayISODate().slice(0, 7);
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -251,8 +247,8 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* ── Quick Add (natural-language entry: the ML service, or the LLM proxy) ── */}
-            {(ML_ENABLED || AI_ENABLED) && <QuickAdd onParsed={handleQuickAddParsed} />}
+            {/* ── Quick Add (natural-language entry, read by the ML service) ── */}
+            {ML_ENABLED && <QuickAdd onParsed={handleQuickAddParsed} />}
 
             {/* ── Date range selector ── */}
             <div className="flex items-center gap-2 flex-wrap">
@@ -308,9 +304,6 @@ const Dashboard = () => {
 
             {/* ── ML insights: month-end forecast, subscriptions & bills, unusual spending ── */}
             {ML_ENABLED && <SpendingInsights refreshKey={allTransactions} />}
-
-            {/* ── AI Insights card ── */}
-            {AI_ENABLED && <AIInsightsCard summary={summary} month={currentMonth} />}
 
             {/* ── Charts row ── */}
             {allTransactions.length === 0 ? (

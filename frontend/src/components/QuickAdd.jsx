@@ -1,18 +1,15 @@
 import React, { useState, useRef } from 'react';
 import { Sparkles, Loader2, X, Zap, ScanLine } from 'lucide-react';
 import { toast } from 'sonner';
-import { parseTransaction } from '../services/aiService';
 import { parseQuickAdd } from '../services/mlService';
-import { ML_ENABLED } from '../lib/features';
 import { todayISODate } from '../lib/dates';
 import { openReceiptScanner } from '../lib/receipts';
 
 /**
- * Parse with the ML service when it's configured (rules + the user's own categories),
- * otherwise with the LLM proxy. Both resolve to { type, amount, description, category, date }.
+ * Parse with the ML service (rules, an LLM only for gaps, and the user's own categories).
+ * Resolves to { type, amount, description, category, date }, or null when it's unavailable.
  */
 async function parseText(text) {
-    if (!ML_ENABLED) return parseTransaction(text);
     const draft = await parseQuickAdd(text, todayISODate());
     if (!draft) return null;
     if (draft.llm_filled?.length) {
@@ -65,11 +62,6 @@ const QuickAdd = ({ onParsed }) => {
                 return;
             }
 
-            if (result.error) {
-                setError(result.error);
-                return;
-            }
-
             // All good — pass parsed data up to parent
             onParsed(result);
             setText('');
@@ -104,12 +96,6 @@ const QuickAdd = ({ onParsed }) => {
                     <p className="text-sm font-semibold text-foreground leading-none">Quick Add</p>
                     <p className="text-[10px] text-muted-foreground mt-0.5">Describe a transaction in plain English</p>
                 </div>
-                {!ML_ENABLED && (
-                    <div className="ml-auto flex items-center gap-1 text-[10px] text-muted-foreground/60 font-medium">
-                        <Sparkles size={9} className="text-primary/60" />
-                        Powered by AI
-                    </div>
-                )}
             </div>
 
             {/* Input area */}
@@ -144,17 +130,15 @@ const QuickAdd = ({ onParsed }) => {
                             </button>
                         )}
                     </div>
-                    {ML_ENABLED && (
-                        <button
-                            type="button"
-                            onClick={openReceiptScanner}
-                            aria-label="Scan a bill"
-                            title="Scan a bill"
-                            className="flex items-center justify-center rounded-xl border border-border px-3 text-muted-foreground hover:text-primary hover:border-primary/40 transition"
-                        >
-                            <ScanLine size={16} />
-                        </button>
-                    )}
+                    <button
+                        type="button"
+                        onClick={openReceiptScanner}
+                        aria-label="Scan a bill"
+                        title="Scan a bill"
+                        className="flex items-center justify-center rounded-xl border border-border px-3 text-muted-foreground hover:text-primary hover:border-primary/40 transition"
+                    >
+                        <ScanLine size={16} />
+                    </button>
                     <button
                         type="submit"
                         disabled={loading || !text.trim()}

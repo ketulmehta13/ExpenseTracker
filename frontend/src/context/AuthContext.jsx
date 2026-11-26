@@ -67,6 +67,33 @@ export const AuthProvider = ({ children }) => {
         return data;
     }, []);
 
+    // The code from the "confirm your sign-up" email. A correct code confirms the address and
+    // signs the user in, and onAuthStateChange then sets `user`.
+    const verifyEmailCode = useCallback(async (email, code) => {
+        const { data, error } = await supabase.auth.verifyOtp({
+            email: email.toLowerCase(),
+            token: code.replace(/\s/g, ''),
+            type: 'email',
+        });
+        if (error) throw error;
+        return data;
+    }, []);
+
+    const resendEmailCode = useCallback(async (email) => {
+        const { error } = await supabase.auth.resend({ type: 'signup', email: email.toLowerCase() });
+        if (error) throw error;
+    }, []);
+
+    // Leaves the app for Google's sign-in page. Supabase sends the user back to /login, which
+    // moves on to the dashboard once the session is in place (or shows the error, if any).
+    const loginWithGoogle = useCallback(async () => {
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: { redirectTo: `${window.location.origin}/login` },
+        });
+        if (error) throw error;
+    }, []);
+
     // scope 'local' ends only this browser's session; the default ('global') signs out every device
     const logout = useCallback(async ({ scope } = {}) => {
         const { error } = await supabase.auth.signOut(scope ? { scope } : undefined);
@@ -75,8 +102,8 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const value = useMemo(
-        () => ({ user, login, register, logout, loading }),
-        [user, login, register, logout, loading]
+        () => ({ user, login, register, logout, verifyEmailCode, resendEmailCode, loginWithGoogle, loading }),
+        [user, login, register, logout, verifyEmailCode, resendEmailCode, loginWithGoogle, loading]
     );
 
     return (

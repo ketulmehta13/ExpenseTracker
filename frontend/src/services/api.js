@@ -22,44 +22,8 @@ const invokeFunction = async (name, body = {}) => {
 };
 
 // ============================================================
-// AUTH SERVICES
+// AUTH SERVICES (sign-up, sign-in and sign-out live in context/AuthContext.jsx)
 // ============================================================
-
-/**
- * Register a new user with email, password, and username.
- * Username is stored in user_metadata and auto-copied to profiles table via DB trigger.
- */
-export const authRegister = async (username, email, password) => {
-    const { data, error } = await supabase.auth.signUp({
-        email: email.toLowerCase(),
-        password,
-        options: {
-            data: { username: username.toLowerCase() },
-        },
-    });
-    if (error) throw error;
-    return data;
-};
-
-/**
- * Sign in with email + password.
- */
-export const authLogin = async (email, password) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.toLowerCase(),
-        password,
-    });
-    if (error) throw error;
-    return data;
-};
-
-/**
- * Sign out the current user.
- */
-export const authLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
-};
 
 /**
  * Permanently delete the current user's account via the delete-account Edge Function:
@@ -168,93 +132,6 @@ export const getTransactions = async (filterType = '', historyMonths = null) => 
 
     // Flatten category name for frontend compatibility
     return rows.map(t => ({
-        ...t,
-        category_name: t.categories?.name || null,
-    }));
-};
-
-/**
- * Server-side paginated & filtered transactions query using Supabase .range().
- * Enables high performance for large datasets (>10,000 transactions).
- */
-export const getTransactionsPaginated = async ({
-    page = 1,
-    pageSize = 25,
-    type = '',
-    categoryId = '',
-    startDate = '',
-    endDate = '',
-    minAmount = null,
-    maxAmount = null,
-    search = '',
-    sortBy = 'date',
-    sortAsc = false,
-    historyMonths = null,
-} = {}) => {
-    const from = (page - 1) * pageSize;
-    const to = from + pageSize - 1;
-
-    let query = supabase
-        .from('transactions')
-        .select('*, categories(name)', { count: 'exact' });
-
-    if (type) query = query.eq('type', type);
-    if (categoryId) query = query.eq('category_id', categoryId);
-
-    // Apply cutoff limit if user is on restricted plan
-    let effectiveStartDate = startDate;
-    if (historyMonths) {
-        const cutoffStr = historyCutoffISODate(historyMonths);
-        if (!effectiveStartDate || effectiveStartDate < cutoffStr) {
-            effectiveStartDate = cutoffStr;
-        }
-    }
-
-    if (effectiveStartDate) query = query.gte('date', effectiveStartDate);
-    if (endDate) query = query.lte('date', endDate);
-    if (minAmount !== null && minAmount !== '') query = query.gte('amount', parseFloat(minAmount));
-    if (maxAmount !== null && maxAmount !== '') query = query.lte('amount', parseFloat(maxAmount));
-    if (search) query = query.ilike('title', `%${search}%`);
-
-    query = query
-        .order(sortBy, { ascending: sortAsc })
-        .range(from, to);
-
-    const { data, count, error } = await query;
-    if (error) throw error;
-
-    const formattedData = (data || []).map(t => ({
-        ...t,
-        category_name: t.categories?.name || null,
-    }));
-
-    return {
-        data: formattedData,
-        count: count || 0,
-        page,
-        pageSize,
-        totalPages: count ? Math.ceil(count / pageSize) : 1,
-    };
-};
-
-/**
- * Fetch filtered transactions directly from Supabase for date-range CSV exports.
- */
-export const getTransactionsFiltered = async ({ startDate = '', endDate = '', type = '', categoryId = '' } = {}) => {
-    let query = supabase
-        .from('transactions')
-        .select('*, categories(name)')
-        .order('date', { ascending: false });
-
-    if (type) query = query.eq('type', type);
-    if (categoryId) query = query.eq('category_id', categoryId);
-    if (startDate) query = query.gte('date', startDate);
-    if (endDate) query = query.lte('date', endDate);
-
-    const { data, error } = await query;
-    if (error) throw error;
-
-    return (data || []).map(t => ({
         ...t,
         category_name: t.categories?.name || null,
     }));
@@ -452,8 +329,8 @@ export const reassignTransactionsCategory = async (oldCategoryId, newCategoryId)
 // ============================================================
 
 /**
- * Compute a dashboard summary from raw transactions — replaces the Django /transactions/summary/ endpoint.
- * Returns the same shape the frontend expects.
+ * Compute the dashboard summary (this and last month's totals, budget, category breakdown)
+ * from the user's transactions, in the browser.
  */
 export const computeSummary = (transactions, monthlyBudget = 0) => {
     const now = new Date();
@@ -548,40 +425,6 @@ const csvTextCell = (value) => {
 /**
  * Generate and download a CSV file from transactions array.
  */
-// ============================================================
-// AI INSIGHTS CACHE
-// ============================================================
-
-/**
- * Get cached AI insight for a given user + month ('YYYY-MM').
- * Returns null if not found.
- */
-export const getAIInsight = async (userId, month) => {
-    const { data, error } = await supabase
-        .from('ai_insights')
-        .select('insight, generated_at')
-        .eq('user_id', userId)
-        .eq('month', month)
-        .maybeSingle();
-    if (error) throw error;
-    return data;
-};
-
-/**
- * Upsert a cached AI insight for a user + month.
- */
-export const saveAIInsight = async (userId, month, insight) => {
-    const { error } = await supabase
-        .from('ai_insights')
-        .upsert({
-            user_id: userId,
-            month,
-            insight,
-            generated_at: new Date().toISOString(),
-        }, { onConflict: 'user_id,month' });
-    if (error) throw error;
-};
-
 export const exportTransactionsCSV = (transactions) => {
 
     const headers = ['Date', 'Title', 'Category', 'Type', 'Amount', 'Is Recurring'];

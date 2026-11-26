@@ -12,8 +12,6 @@ __pycache__/
 
 # Local databases & scratch output
 *.sqlite3
-backend/token.txt
-backend/check_output.txt
 
 # Supabase CLI local state
 supabase/.temp/

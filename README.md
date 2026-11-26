@@ -10,7 +10,7 @@ A modern, production-grade expense tracker and personal finance management syste
 
 - **Frontend:** React + Vite, Tailwind CSS v4 `@theme` design tokens, Sonner toast notifications, Recharts analytics, jsPDF reports.
 - **Backend / Database:** Supabase (Managed PostgreSQL 15+).
-- **Authentication:** Supabase Auth (JWT tokens, session auto-refresh, email password reset).
+- **Authentication:** Supabase Auth (JWT tokens, session auto-refresh, a 6-digit email code to confirm sign-up, optional Google sign-in, email password reset). Setup: [docs/auth-setup.md](docs/auth-setup.md).
 - **Security:** Strict PostgreSQL **Row Level Security (RLS)** on all tables (`transactions`, `categories`, `profiles`), ensuring 100% data isolation per user.
 - **Hosting:**
   - Frontend: Vercel with automated CI/CD branch previews and production deployments.
@@ -113,8 +113,10 @@ Execute `supabase/tests/rls_security_test.sql` in the Supabase SQL editor to run
 │   │   └── services/              # api.js (Supabase queries & pagination)
 ├── supabase/
 │   ├── migrations/                # Versioned SQL migrations & RLS policies
+│   ├── functions/                 # Edge Functions (delete-account, plan checks, Razorpay)
 │   └── tests/                     # RLS security verification suite
-└── backend/                       # Legacy Django project (kept for reference)
+├── ml-service/                    # FastAPI ML service (suggestions, insights, bill scanning, chatbot)
+└── docs/                          # Auth setup and AI/ML write-ups
 ```
 
 ---

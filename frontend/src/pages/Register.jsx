@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Loader2, Eye, EyeOff, Check, MailCheck, ArrowLeft } from 'lucide-react';
+import { Loader2, Eye, EyeOff, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { checkUsernameAvailable } from '../services/api';
 import { getAuthErrorMessage } from '../lib/authErrors';
 import logoIcon from '../assets/logo-icon.webp';
+import EmailCodeForm from '../components/auth/EmailCodeForm';
+import GoogleButton from '../components/auth/GoogleButton';
 
 const passwordStrength = (pwd) => {
     if (pwd.length < 6) return { score: 0, label: 'Too short', color: 'bg-destructive' };
@@ -26,9 +28,9 @@ const Register = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [fieldErrors, setFieldErrors] = useState({});
-    // Set when email confirmation is required: there is no session until the link is clicked
+    // Set when email confirmation is required: there is no session until the code is entered
     const [confirmationSentTo, setConfirmationSentTo] = useState('');
-    const { register } = useAuth();
+    const { user, register } = useAuth();
     const navigate = useNavigate();
 
     const strength = passwordStrength(password);
@@ -70,6 +72,8 @@ const Register = () => {
             setIsLoading(false);
         }
     };
+
+    if (user) return <Navigate to="/dashboard" replace />;
 
     const field = (key) => ({
         onChange: (e) => {
@@ -138,23 +142,15 @@ const Register = () => {
                 </div>
 
                 {confirmationSentTo ? (
-                    <div className="w-full max-w-sm text-center space-y-4">
-                        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-income/10 text-income">
-                            <MailCheck size={32} />
-                        </div>
-                        <h2 className="font-display text-2xl font-bold text-foreground">Check your inbox</h2>
-                        <p className="text-sm text-muted-foreground">
-                            We sent a confirmation link to <strong className="text-foreground">{confirmationSentTo}</strong>.
-                            Click it to activate your account, then sign in.
-                        </p>
-                        <Link
-                            to="/login"
-                            className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors mt-2"
-                        >
-                            <ArrowLeft size={15} />
-                            Back to login
-                        </Link>
-                    </div>
+                    <EmailCodeForm
+                        email={confirmationSentTo}
+                        onVerified={() => {
+                            toast.success('Email confirmed. Welcome aboard 🎉');
+                            navigate('/dashboard');
+                        }}
+                        onBack={() => setConfirmationSentTo('')}
+                        backLabel="Use a different email"
+                    />
                 ) : (
                     <div className="w-full max-w-sm">
                         <div className="mb-7">
@@ -256,6 +252,8 @@ const Register = () => {
                                 {isLoading ? 'Creating account…' : 'Create account'}
                             </button>
                         </form>
+
+                        <GoogleButton label="Sign up with Google" />
 
                         <p className="mt-6 text-center text-sm text-muted-foreground">
                             Already have an account?{' '}

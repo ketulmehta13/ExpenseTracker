@@ -5,40 +5,25 @@ import { toast } from 'sonner';
 import { createTransaction, updateTransaction, getCategories, createCategory } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { todayISODate } from '../lib/dates';
-import { suggestCategory } from '../services/aiService';
 import { suggestCategoryML } from '../services/mlService';
-import { AI_ENABLED, ML_ENABLED } from '../lib/features';
+import { ML_ENABLED } from '../lib/features';
 import { openReceipt, openReceiptScanner } from '../lib/receipts';
 
-const SUGGESTIONS_ENABLED = ML_ENABLED || AI_ENABLED;
-
 /**
- * A category suggestion in the chip's shape. The ML service is preferred: it checks the
- * user's own history before its model. The LLM proxy is the fallback when only AI is on.
+ * A category suggestion from the ML service, in the chip's shape. The service checks the
+ * user's own history before its model.
  */
-async function fetchCategorySuggestion({ title, amount, type }, categories, signal) {
-    if (ML_ENABLED) {
-        const suggestion = await suggestCategoryML({ title, amount, type }, signal);
-        if (!suggestion) return null;
-        return {
-            category: suggestion.category_name,
-            confidence: suggestion.confidence,
-            matchedId: suggestion.category_id ?? null,
-            isNew: suggestion.category_id == null,
-            source: suggestion.source,
-            label: suggestion.label,
-            modelVersion: suggestion.model_version,
-        };
-    }
-    const result = await suggestCategory(title, categories.map((c) => c.name));
-    if (!result) return null;
-    const matched = categories.find((c) => c.name.toLowerCase() === result.category.toLowerCase());
+async function fetchCategorySuggestion({ title, amount, type }, signal) {
+    const suggestion = await suggestCategoryML({ title, amount, type }, signal);
+    if (!suggestion) return null;
     return {
-        category: result.category,
-        confidence: result.confidence,
-        matchedId: matched?.id ?? null,
-        isNew: !matched,
-        source: 'llm',
+        category: suggestion.category_name,
+        confidence: suggestion.confidence,
+        matchedId: suggestion.category_id ?? null,
+        isNew: suggestion.category_id == null,
+        source: suggestion.source,
+        label: suggestion.label,
+        modelVersion: suggestion.model_version,
     };
 }
 
@@ -173,7 +158,7 @@ const TransactionModal = ({
     useEffect(() => {
         const title = form.title.trim();
         // Only in Add mode, once a few characters are typed, while no category is picked
-        if (!SUGGESTIONS_ENABLED || isEdit || !isOpen || title.length < 3 || form.category_id) {
+        if (!ML_ENABLED || isEdit || !isOpen || title.length < 3 || form.category_id) {
             setAiSuggestion(null);
             return;
         }
@@ -183,7 +168,6 @@ const TransactionModal = ({
             setAiLoading(true);
             const suggestion = await fetchCategorySuggestion(
                 { title, amount: form.amount, type: form.type },
-                categories,
                 controller.signal,
             );
             if (!controller.signal.aborted) {
@@ -196,7 +180,7 @@ const TransactionModal = ({
             controller.abort();
             setAiLoading(false);
         };
-    }, [isEdit, isOpen, form.title, form.amount, form.type, form.category_id, categories]);
+    }, [isEdit, isOpen, form.title, form.amount, form.type, form.category_id]);
 
     /** Apply the AI suggested category — create it first if it's new */
     const applyAiSuggestion = async () => {

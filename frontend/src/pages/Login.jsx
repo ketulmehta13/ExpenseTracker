@@ -1,18 +1,39 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Loader2, Eye, EyeOff, TrendingUp, PieChart, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { getAuthErrorMessage } from '../lib/authErrors';
 import logoIcon from '../assets/logo-icon.webp';
+import EmailCodeForm from '../components/auth/EmailCodeForm';
+import GoogleButton from '../components/auth/GoogleButton';
+
+/** An error Supabase sent back after Google sign-in (in the URL's query or #fragment), if any. */
+const takeRedirectError = () => {
+    const params = new URLSearchParams(window.location.search);
+    const fragment = new URLSearchParams(window.location.hash.slice(1));
+    const message = params.get('error_description') || fragment.get('error_description');
+    if (message) window.history.replaceState(null, '', window.location.pathname); // show it once
+    return message;
+};
 
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-    const { login } = useAuth();
+    // Set when the account exists but its email was never confirmed: a code was sent to it
+    const [confirmEmail, setConfirmEmail] = useState('');
+    const { user, login, resendEmailCode } = useAuth();
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const message = takeRedirectError();
+        if (message) toast.error(getAuthErrorMessage({ message }, "Google sign-in didn't work. Please try again."));
+    }, []);
+
+    // Signed in already, or just back from Google with a session
+    if (user) return <Navigate to="/dashboard" replace />;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -22,7 +43,18 @@ const Login = () => {
             toast.success('Welcome back! 👋');
             navigate('/dashboard');
         } catch (err) {
-            toast.error(getAuthErrorMessage(err, 'Invalid email or password'));
+            if (/email not confirmed/i.test(err?.message || '')) {
+                // Send a fresh code and ask for it here, instead of a dead end
+                try {
+                    await resendEmailCode(email);
+                } catch (resendErr) {
+                    // Usually "wait a minute": an earlier code may still be in the inbox
+                    toast.info(getAuthErrorMessage(resendErr, "Couldn't send a new code yet."));
+                }
+                setConfirmEmail(email.trim().toLowerCase());
+            } else {
+                toast.error(getAuthErrorMessage(err, 'Invalid email or password'));
+            }
         } finally {
             setIsLoading(false);
         }
@@ -85,6 +117,17 @@ const Login = () => {
                     <h1 className="font-display text-2xl font-bold text-foreground">Expense Tracker</h1>
                 </div>
 
+                {confirmEmail ? (
+                    <EmailCodeForm
+                        email={confirmEmail}
+                        onVerified={() => {
+                            toast.success('Email confirmed. Welcome! 👋');
+                            navigate('/dashboard');
+                        }}
+                        onBack={() => setConfirmEmail('')}
+                        backLabel="Back to sign in"
+                    />
+                ) : (
                 <div className="w-full max-w-sm">
                     <div className="mb-7">
                         <h2 className="font-display text-3xl font-bold text-foreground">Welcome back</h2>
@@ -157,6 +200,8 @@ const Login = () => {
                         </button>
                     </form>
 
+                    <GoogleButton />
+
                     <p className="mt-6 text-center text-sm text-muted-foreground">
                         Don't have an account?{' '}
                         <Link to="/register" className="font-semibold text-primary hover:underline transition-colors">
@@ -164,6 +209,7 @@ const Login = () => {
                         </Link>
                     </p>
                 </div>
+                )}
             </div>
         </div>
     );

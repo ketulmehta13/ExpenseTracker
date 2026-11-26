@@ -3,7 +3,8 @@
 #
 # Needs two repository secrets (Settings > Secrets and variables > Actions):
 #   SUPABASE_URL       e.g. https://<project-ref>.supabase.co
-#   SUPABASE_ANON_KEY  the public anon key (the same one the website uses)
+#   SUPABASE_ANON_KEY  the publishable key (sb_publishable_...) or the legacy anon key; never a secret key
+#                      (sent only as the apikey header, which accepts both kinds)
 # (VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY work too.)
 #
 # GitHub turns scheduled workflows off after 60 days without commits; re-enable it in the Actions tab.
@@ -34,7 +35,6 @@ jobs:
           status=$(curl --silent --show-error --max-time 60 --retry 3 --retry-delay 20 \
             --output /dev/null --write-out '%{http_code}' \
             --header "apikey: $SUPABASE_ANON_KEY" \
-            --header "Authorization: Bearer $SUPABASE_ANON_KEY" \
             "${SUPABASE_URL%/}/rest/v1/categories?select=id&limit=1")
           echo "Supabase answered HTTP $status"
           # A paused project doesn't answer 200; the failed run (and GitHub's email) is the warning

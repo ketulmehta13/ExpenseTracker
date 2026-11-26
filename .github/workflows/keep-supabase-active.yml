@@ -1,0 +1,41 @@
+# Supabase pauses a free project after about a week without API requests. A cron job inside the
+# database doesn't count, so this makes a small real read through the REST API twice a day.
+#
+# Needs two repository secrets (Settings > Secrets and variables > Actions):
+#   SUPABASE_URL       e.g. https://<project-ref>.supabase.co
+#   SUPABASE_ANON_KEY  the publishable key (sb_publishable_...) or the legacy anon key; never a secret key
+#                      (sent only as the apikey header, which accepts both kinds)
+# (VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY work too.)
+#
+# GitHub turns scheduled workflows off after 60 days without commits; re-enable it in the Actions tab.
+name: Keep Supabase active
+
+on:
+  schedule:
+    - cron: "17 3,15 * * *"  # 03:17 and 15:17 UTC
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Read one default category
+        env:
+          # Falls back to the secrets the CI build already uses, if those are set
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || secrets.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::error::Add the SUPABASE_URL and SUPABASE_ANON_KEY repository secrets."
+            exit 1
+          fi
+          status=$(curl --silent --show-error --max-time 60 --retry 3 --retry-delay 20 \
+            --output /dev/null --write-out '%{http_code}' \
+            --header "apikey: $SUPABASE_ANON_KEY" \
+            "${SUPABASE_URL%/}/rest/v1/categories?select=id&limit=1")
+          echo "Supabase answered HTTP $status"
+          # A paused project doesn't answer 200; the failed run (and GitHub's email) is the warning
+          test "$status" = "200"
